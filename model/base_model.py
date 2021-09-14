@@ -2,8 +2,15 @@
 
 class BaseModel:
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, config):
+
+        """
+
+        :param config: dictionary of {config_name: config_value}
+        """
+
+        self.config = config
+        self.name = config.name
 
     def generate_model(self):
 
