@@ -2,7 +2,7 @@
 
 class TrainerBase:
 
-    def __init__(self, checkpoints_dir, logs_dir):
+    def __init__(self, checkpoints_dir, logs_dir, config):
 
         """
         handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), training
@@ -12,10 +12,12 @@ class TrainerBase:
 
         :param checkpoints_dir: checkpoints directory
         :param logs_dir: logs directory
+        :param config: dictionary of {config_name: config_value}
         """
 
         self.checkpoints_dir = checkpoints_dir
         self.logs_dir = logs_dir
+        self.config = config
 
     def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
 

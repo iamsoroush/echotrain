@@ -2,8 +2,16 @@
 
 class InferenceBase:
 
-    def __init__(self, model_dir):
+    def __init__(self, model_dir, config):
+
+        """
+
+        :param model_dir:
+        :param config: dictionary of {config_name: config_value}
+        """
+
         self.model_dir = model_dir
+        self.config = config
         self.model = None
 
     def pre_process(self, image):

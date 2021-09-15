@@ -41,9 +41,11 @@ if __name__ == '__main__':
     checkpoints_dir = args.checkpoints_dir
     logs_dir = args.logs_dir
 
-    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file.batch_size, config_file.input_res)
-    model_class = get_model_by_name(config_file.model_name)(config_file.model_name)
-    trainer = TrainerBase(checkpoints_dir=checkpoints_dir, logs_dir=logs_dir)
+    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file.batch_size,
+                                                                  config_file.input_res,
+                                                                  config_file)
+    model_class = get_model_by_name(config_file.model_name)(config_file)
+    trainer = TrainerBase(checkpoints_dir=checkpoints_dir, logs_dir=logs_dir, config=config_file)
 
     train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators(dataset_dir=dataset_dir)
     model = model_class.generate_model()
