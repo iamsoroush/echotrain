@@ -1,5 +1,7 @@
 # requirements
 
+from .dataset_generator import DatasetGenerator
+
 from glob import glob  # for listing the directory of dataset
 import skimage.io as io  # to read the .mhd and .raw data
 import SimpleITK  # plugin for skimage.io
@@ -13,7 +15,7 @@ import os
 class DatasetBase:
 
     def __init__(self, dataset_dir, list_images_dir, list_labels_dir,
-                 batch_size, input_size, n_channels, shuffle=True, seed=None, to_fit=True):
+                 batch_size, input_size, n_channels, split_ratio=1, to_fit=True, shuffle=True, seed=None):
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
@@ -23,23 +25,25 @@ class DatasetBase:
         :param batch_size: batch size, int
         :param input_size: input image resolution, (h, w)
         :param n_channels: number of channels, int
+        :param split_ratio: ratio of splitting into train and validation, float
+        :param to_fit: for predicting time, bool
         :param shuffle: if True the dataset will shuffle with random_state of seed, bool
         :param seed: seed, int
         // changing from "input_res" to "input_size"
         """
+
         self.dataset_dir = dataset_dir
         self.list_images_dir = list_images_dir
         self.list_labels_dir = list_labels_dir
         self.batch_size = batch_size
         self.input_size = input_size
         self.n_channels = n_channels
+        self.split_ratio = split_ratio
         self.seed = seed
         self.shuffle = shuffle
-        self.to_fit=to_fit
-        self.on_epoch_end()
+        self.to_fit = to_fit
 
-
-    def create_data_generators(self ):
+    def create_data_generators(self):
         """Creates data generators based on batch_size, input_size
 
         :param dataset_dir: dataset's directory
@@ -50,50 +54,23 @@ class DatasetBase:
         :returns n_iter_val: number of iterations per epoch for val_data_gen
 
         """
-        training_generator= self.getitem(tain_idx)
-        validation_generator= self.getitem(val_idx)
-        iteration= self.__len__()
-
-        return training_generator, validation_generator, iteration
-
-    def getitem(self,index):
-        """Generate one batch of data
-        
-        :param index: index of the batch
-        :return: X and y when fitting. X only when predicting
-        """
-        #fetch data
-        self.fetch_data(self.dataset_dir)
-
-        # Generate indexes of the batch
-        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
-
-        # Find list of IDs
-        batch_dir_list = [self.list_images_dir[k] for k in indexes]
-
-        # Generate data
-        X = self._generate_X(batch_dir_list)
-
-        if self.to_fit:
-            y = self._generate_y(batch_dir_list)
-            return X, y
+        # shuffling
+        if self.shuffle:
+            self.list_images_dir, self.list_labels_dir = self.unison_shuffle(self.list_images_dir,
+                                                                             self.list_labels_dir)
+        # splitting
+        if self.split_ratio != 1:
+            X_train_dir, y_train_dir, X_val_dir, y_val_dir = self.split(self.list_images_dir,
+                                                                        self.list_labels_dir,
+                                                                        self.split_ratio)
+            train_data_gen = DatasetGenerator(X_train_dir, y_train_dir, self.batch_size,
+                                              self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
+            val_data_gen = DatasetGenerator(X_val_dir, y_val_dir, self.batch_size,
+                                            self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
         else:
-            return X
+            raise Exception('there is no data for not splitting part')
 
-    def on_epoch_end(self):
-        """Updates indexes after each epoch
-        """
-
-        self.indexes = np.arange(len(self.list_images_dir))
-        if self.shuffle == True:
-            np.random.shuffle(self.indexes)
-
-    def __len__(self):
-        """Denotes the number of batches per epoch
-        :return: number of batches per epoch
-        """
-
-        return int(np.floor(len(self.list_images_dir) / self.batch_size))
+        return train_data_gen, val_data_gen  # , iteration
 
     def fetch_data(self, dataset_dir):
         """
@@ -125,63 +102,47 @@ class DatasetBase:
         for i in range(len(y_4CH_dir)):
             self.list_labels_dir[X_4CH_dir[i]] = y_4CH_dir[i]
 
-    def generate_X(self, batch_dir_list):
+    def unison_shuffle(self, x, y):
         """
-        reads A4C view images of CAMUS dataset
+        makes a shuffle index array to make a fixed shuffling order for both X, y
 
-        :param batch_dir_list:
+        :param x: list of images, np.ndarray
+        :param y: list of segmentation labels, np.ndarray
 
-        :return X_4CH_preprocessed: array of preprocessed images
+        :return x: shuffled list of images, np.ndarray
+        :return y: shuffled list of segmentation labels, np.ndarray
         """
 
-        # reading images of .mhd format with the help of SimpleITK plugin,
-        # and makes all of them channel last order.
-        # X_4CH_ED: list[numpy.ndarray]
-        X_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         batch_dir_list))
+        idx = np.random.RandomState(self.seed).permutation(x.shape[0])
+        return x[idx], y[idx]
 
-        # Pre-processing labels
-        # X_4CH_ED_resized: list[numpy.ndarray]
-        X_4CH_preprocessed = np.array(list(map(self.pre_process, X_4CH)))
-
-        return X_4CH_preprocessed
-
-    def generate_y(self, batch_dir_list):
+    def split(self, x, y, split_ratio):
         """
-        reads A4C view segmentation labels of CAMUS dataset
+        splits the dataset into train and validation set by the corresponding ratio
 
-        :param batch_dir_list:
+        :param x: list of images, np.ndarray
+        :param y: list of segmentation labels, np.ndarray
+        :param split_ratio: split ratio for trainset, float
 
-        :return y_4CH_preprocessed: array of preprocessed images
+        :return X_train: images train_set, np.ndarray
+        :return y_train: segmentation labels train_set, np.ndarray
+        :return X_val: images validation_set, np.ndarray
+        :return y_val: segmentation labels validation_set, np.ndarray
         """
-        # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
-        # and makes all of them channel last order.
-        # y_4CH: list[numpy.ndarray]
-        y_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         [self.list_labels_dir[image_path] for image_path in batch_dir_list]))
+        train_size = round(x.shape[0] * split_ratio)
 
-        # Pre-processing labels
-        # X_4CH_ED_resized: list[numpy.ndarray]
-        y_4CH_preprocessed = np.array(list(map(self.pre_process, y_4CH)))
+        X_train = x[:train_size]
+        y_train = y[:train_size]
 
-        return y_4CH_preprocessed
+        X_val = x[train_size:]
+        y_val = y[train_size:]
 
-    def pre_process(self, image):
-        """
-        pre-processes images mentioned by the user
+        return X_train, y_train, X_val, y_val
 
-        :param image: input image, np.ndarray
+    def random_visualization(self):
 
-        :return: image_pre_processed: pre-processed image, np.ndarray
-        """
-        # resizing image into the input_size ( target_size ) dimensions.
-        image_resized = tf.image.resize(image,
-                                        self.input_size,
-                                        antialias=False,
-                                        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+        raise Exception('not implemented')
 
-        image_pre_processed = image_resized
-        return image_pre_processed
 
 '''
         ######### END-DIASTOLE #########
