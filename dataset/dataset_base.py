@@ -13,7 +13,7 @@ import os
 class DatasetBase:
 
     def __init__(self, dataset_dir, list_images_dir, list_labels_dir,
-                 batch_size, input_size, n_channels, shuffle=True, seed=None):
+                 batch_size, input_size, n_channels, shuffle=True, seed=None, to_fit=True):
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
@@ -35,8 +35,11 @@ class DatasetBase:
         self.n_channels = n_channels
         self.seed = seed
         self.shuffle = shuffle
+        self.to_fit=to_fit
+        self.on_epoch_end()
 
-    def create_data_generators(self, dataset_dir, ):
+
+    def create_data_generators(self, index ):
         """Creates data generators based on batch_size, input_size
 
         :param dataset_dir: dataset's directory
@@ -47,6 +50,42 @@ class DatasetBase:
         :returns n_iter_val: number of iterations per epoch for val_data_gen
 
         """
+
+        """Generate one batch of data
+        
+        :param index: index of the batch
+        :return: X and y when fitting. X only when predicting
+        """
+
+        # Generate indexes of the batch
+        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
+
+        # Find list of IDs
+        batch_dir_list = [self.list_images_dir[k] for k in indexes]
+
+        # Generate data
+        X = self._generate_X(batch_dir_list)
+
+        if self.to_fit:
+            y = self._generate_y(batch_dir_list)
+            return X, y
+        else:
+            return X
+
+    def on_epoch_end(self):
+        """Updates indexes after each epoch
+        """
+
+        self.indexes = np.arange(len(self.list_images_dir))
+        if self.shuffle == True:
+            np.random.shuffle(self.indexes)
+
+    def __len__(self):
+        """Denotes the number of batches per epoch
+        :return: number of batches per epoch
+        """
+
+        return int(np.floor(len(self.list_images_dir) / self.batch_size))
 
     def fetch_data(self, dataset_dir):
         """
