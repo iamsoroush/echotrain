@@ -39,7 +39,7 @@ class DatasetBase:
         self.on_epoch_end()
 
 
-    def create_data_generators(self, index ):
+    def create_data_generators(self ):
         """Creates data generators based on batch_size, input_size
 
         :param dataset_dir: dataset's directory
@@ -50,12 +50,20 @@ class DatasetBase:
         :returns n_iter_val: number of iterations per epoch for val_data_gen
 
         """
+        training_generator= self.getitem(tain_idx)
+        validation_generator= self.getitem(val_idx)
+        iteration= self.__len__()
 
+        return training_generator, validation_generator, iteration
+
+    def getitem(self,index):
         """Generate one batch of data
         
         :param index: index of the batch
         :return: X and y when fitting. X only when predicting
         """
+        #fetch data
+        self.fetch_data(self.dataset_dir)
 
         # Generate indexes of the batch
         indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
