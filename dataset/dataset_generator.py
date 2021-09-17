@@ -3,7 +3,9 @@
 from glob import glob  # for listing the directory of dataset
 import skimage.io as io  # to read the .mhd and .raw data
 import SimpleITK  # plugin for skimage.io
+import random
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
 import os
@@ -61,7 +63,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         """shuffles indexes after each epoch
         """
-        # ????????
+
         self.indexes = np.arange(len(self.list_images_dir))
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
@@ -111,8 +113,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # X_4CH_ED_resized: list[numpy.ndarray]
         y_4CH_preprocessed = np.array(list(map(self.pre_process, y_4CH)))
 
-        #to categorical
-        y_4CH_preprocessed=to_categorical(y_4CH_preprocessed)
+        # to categorical
+        y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
 
         return y_4CH_preprocessed
 
@@ -132,3 +134,22 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         image_pre_processed = image_resized
         return image_pre_processed
+
+    def random_visualization(self):
+        """
+        random visualization of an image
+        """
+        # choosing random image from dataset directory by list of images directory
+        random_image_dir = random.choice(self.list_images_dir)
+        image_label_dir = self.list_labels_dir[random_image_dir]
+        random_image = self.pre_process(np.moveaxis(io.imread(random_image_dir, plugin='simpleitk'), 0, -1))
+        image_label = self.pre_process(np.moveaxis(io.imread(image_label_dir, plugin='simpleitk'), 0, -1))
+
+        # setting a two-frame-image to plotting both the image and its segmentation labels
+        fig, ax = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        ax[0].imshow(random_image, cmap='gray')
+        plt.axis('off')
+        ax[1].imshow(image_label, cmap='gray')
+        plt.axis('off')
+        plt.show()
