@@ -2,22 +2,20 @@
 
 class TrainerBase:
 
-    def __init__(self, checkpoints_dir, logs_dir, config):
+    def __init__(self, config):
 
         """
         handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), training
 
-        model's checkpoints => checkpoints_dir/{model.name}
-        model's logs (tensorboard) => logs_dir/{model.name}
+        :param config: a Python object with attributes as config values
 
-        :param checkpoints_dir: checkpoints directory
-        :param logs_dir: logs directory
-        :param config: dictionary of {config_name: config_value}
+        Attributes
+            epochs int: number of epochs for training
+
         """
 
-        self.checkpoints_dir = checkpoints_dir
-        self.logs_dir = logs_dir
-        self.config = config
+        self.epochs = config.epochs
+        self.callbacks_config = config.callbacks
 
     def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
 
