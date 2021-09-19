@@ -7,6 +7,8 @@ from glob import glob  # for listing the directory of dataset
 import numpy as np
 import os
 import random
+
+
 # import matplotlib.pyplot as plt
 # import segmentation_models as sm
 # from segmentation_models import Unet
@@ -16,7 +18,7 @@ import random
 # sm.set_framework("tf.keras")
 
 
-class CAMUS_dataset(DatasetBase):
+class CAMUSDataset(DatasetBase):
 
     def __init__(self, batch_size, input_size, n_channels, split_ratio=1, to_fit=True, shuffle=True,
                  seed=None):
@@ -43,6 +45,7 @@ class CAMUS_dataset(DatasetBase):
         self.to_fit = to_fit
 
     def create_data_generators(self, dataset_dir):
+
         """Creates data generators based on batch_size, input_size
 
         :param dataset_dir: dataset directory
@@ -61,12 +64,12 @@ class CAMUS_dataset(DatasetBase):
                                                                  list_labels_dir)
         # splitting
         if self.split_ratio != 1:
-            X_train_dir, y_train_dir, X_val_dir, y_val_dir = self.split(list_images_dir,
+            x_train_dir, y_train_dir, x_val_dir, y_val_dir = self.split(list_images_dir,
                                                                         list_labels_dir,
                                                                         self.split_ratio)
-            train_data_gen = DatasetGenerator(X_train_dir, y_train_dir, self.batch_size,
+            train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
                                               self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-            val_data_gen = DatasetGenerator(X_val_dir, y_val_dir, self.batch_size,
+            val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
                                             self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
             n_iter_train = train_data_gen.__len__()
             n_iter_val = val_data_gen.__len__()
@@ -74,14 +77,16 @@ class CAMUS_dataset(DatasetBase):
             return train_data_gen, val_data_gen, n_iter_train, n_iter_val
         else:
             dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
-                                              self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
+                                           self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
             n_iter_dataset = dataset_gen.__len__()
             print("The iteration of the dataset is:")
             print(n_iter_dataset)
 
             return dataset_gen, n_iter_dataset
 
-    def fetch_data(self, dataset_dir):
+    @staticmethod
+    def fetch_data(dataset_dir):
+
         """
         fetches data from directory of A4C view images of CAMUS dataset
 
@@ -92,29 +97,30 @@ class CAMUS_dataset(DatasetBase):
         """
 
         # Directory list of the A4C view of the ED ( End Diastole ) frame images.
-        # X_4CH_ED_dir: list[str]
-        # y_4CH_ED_dir: list[str]
-        X_4CH_ED_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED.mhd'))  # images directory
-        y_4CH_ED_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED_gt.mhd'))  # segmentation labels directory
+        # x_4ch_ed_dir: list[str]
+        # y_4ch_ed_dir: list[str]
+        x_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED.mhd'))  # images directory
+        y_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED_gt.mhd'))  # segmentation labels directory
 
         # Directory list of the A4C view of the ES ( End Systole ) frame images.
-        # X_4CH_ES_dir: list[str]
-        # y_4CH_ES_dir: list[str]
-        X_4CH_ES_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES.mhd'))  # images directory
-        y_4CH_ES_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES_gt.mhd'))  # segmentation labels directory
+        # x_4ch_es_dir: list[str]
+        # y_4ch_es_dir: list[str]
+        x_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES.mhd'))  # images directory
+        y_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES_gt.mhd'))  # segmentation labels directory
 
         # Concatenating ES and ED images and labels
-        X_4CH_dir = np.concatenate((X_4CH_ED_dir, X_4CH_ES_dir), axis=0)
-        y_4CH_dir = np.concatenate((y_4CH_ED_dir, y_4CH_ES_dir), axis=0)
+        x_4ch_dir = np.concatenate((x_4ch_ed_dir, x_4ch_es_dir), axis=0)
+        y_4ch_dir = np.concatenate((y_4ch_ed_dir, y_4ch_es_dir), axis=0)
 
-        list_images_dir = X_4CH_dir
+        list_images_dir = x_4ch_dir
         list_labels_dir = {}
-        for i in range(len(y_4CH_dir)):
-            list_labels_dir[X_4CH_dir[i]] = y_4CH_dir[i]
+        for i in range(len(y_4ch_dir)):
+            list_labels_dir[x_4ch_dir[i]] = y_4ch_dir[i]
 
         return list_images_dir, list_labels_dir
 
     def shuffle_func(self, x, y):
+
         """
         makes a shuffle index array to make a fixed shuffling order for both X, y
 
@@ -138,7 +144,9 @@ class CAMUS_dataset(DatasetBase):
         y = dict(y_list)
         return x, y
 
-    def split(self, x, y, split_ratio):
+    @staticmethod
+    def split(x, y, split_ratio):
+
         """
         splits the dataset into train and validation set by the corresponding ratio
         the ratio is "train portion/whole data"
@@ -147,22 +155,22 @@ class CAMUS_dataset(DatasetBase):
         :param y: list of segmentation labels, np.ndarray
         :param split_ratio: split ratio for trainset, float
 
-        :return X_train: images train_set, np.ndarray
+        :return x_train: images train_set, np.ndarray
         :return y_train: segmentation labels train_set, np.ndarray
-        :return X_val: images validation_set, np.ndarray
+        :return x_val: images validation_set, np.ndarray
         :return y_val: segmentation labels validation_set, np.ndarray
         """
         # set train size by split_ratio var
         train_size = round(len(x) * split_ratio)
 
         # splitting
-        X_train = x[:train_size]
+        x_train = x[:train_size]
         y_train = dict(list(y.items())[:train_size])
 
-        X_val = x[train_size:]
+        x_val = x[train_size:]
         y_val = dict(list(y.items())[train_size:])
 
-        return X_train, y_train, X_val, y_val
+        return x_train, y_train, x_val, y_val
 
 # dataset_dir="D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
 # train_gen, val_gen, n_iter_train, n_iter_val= CAMUS_dataset(batch_size=100, input_size=(128, 128),
