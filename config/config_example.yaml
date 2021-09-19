@@ -4,9 +4,11 @@ n_channels: 1
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_class_name: "CAMUSV0"
+  dataset_class_name: "CAMUSDataset"
   dataset_dir: "/datasets/CAMUS"
-  batch_size: 8
+  batch_size: 10
+  input_size: (input_h, input_w)
+  n_channels: n_channels
   split_ratio: 1
   to_fit: True
   shuffle: True

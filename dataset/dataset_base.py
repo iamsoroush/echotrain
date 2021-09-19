@@ -5,7 +5,7 @@ class DatasetBase:
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-        :param config: python object
+        :param config: dictionary of {config_name: config_value}
         """
 
         self.config = config

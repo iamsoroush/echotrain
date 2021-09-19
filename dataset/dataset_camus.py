@@ -1,6 +1,5 @@
 # requirements
 
-
 from dataset_generator import DatasetGenerator
 from dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset
@@ -9,19 +8,16 @@ import os
 import random
 
 
-# import matplotlib.pyplot as plt
-# import segmentation_models as sm
-# from segmentation_models import Unet
-# from segmentation_models.losses import bce_jaccard_loss
-# from segmentation_models.metrics import iou_score
-#
-# sm.set_framework("tf.keras")
-
-
 class CAMUSDataset(DatasetBase):
+    """
+    HOW TO:
+    train_gen, val_gen, n_iter_train, n_iter_val= CAMUSDataset(batch_size, input_size, n_channels, split_ratio,
+                                                               seed=None, shuffle=True, to_fit=True,
+                                                               config=None).create_data_generators(dataset_dir)
+    """
 
-    def __init__(self, batch_size, input_size, n_channels, split_ratio=1, to_fit=True, shuffle=True,
-                 seed=None):
+    def __init__(self, batch_size, input_size, n_channels, split_ratio, seed=None,
+                 shuffle=True, to_fit=True, config=None):
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
@@ -35,7 +31,7 @@ class CAMUSDataset(DatasetBase):
         // changing from "input_res" to "input_size"
         """
 
-        super().__init__(batch_size)
+        super(CAMUSDataset, self).__init__(config)
         self.batch_size = batch_size
         self.input_size = input_size
         self.n_channels = n_channels
@@ -63,30 +59,38 @@ class CAMUSDataset(DatasetBase):
             list_images_dir, list_labels_dir = self.shuffle_func(list_images_dir,
                                                                  list_labels_dir)
         # splitting
-        if self.split_ratio != 1:
-            x_train_dir, y_train_dir, x_val_dir, y_val_dir = self.split(list_images_dir,
-                                                                        list_labels_dir,
-                                                                        self.split_ratio)
-            train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
-                                              self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-            val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
-                                            self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-            n_iter_train = train_data_gen.__len__()
-            n_iter_val = val_data_gen.__len__()
+        x_train_dir, y_train_dir, x_val_dir, y_val_dir = self.split(list_images_dir,
+                                                                    list_labels_dir,
+                                                                    self.split_ratio)
+        train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
+                                          self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
+        val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
+                                        self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
+        n_iter_train = train_data_gen.__len__()
+        n_iter_val = val_data_gen.__len__()
 
-            return train_data_gen, val_data_gen, n_iter_train, n_iter_val
-        else:
-            dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
-                                           self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-            n_iter_dataset = dataset_gen.__len__()
-            print("The iteration of the dataset is:")
-            print(n_iter_dataset)
+        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
-            return dataset_gen, n_iter_dataset
+    def test_create_data_generator(self, dataset_dir):
+        """
+        Creates data generators based on batch_size, input_size
+
+        :param dataset_dir: dataset directory
+
+        :returns dataset_gen: training data generator which yields (batch_size, h, w, c) tensors
+        :returns n_iter_dataset: number of iterations per epoch for train_data_gen
+        """
+        list_images_dir, list_labels_dir = self.fetch_data(dataset_dir)
+
+        dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
+                                       self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
+
+        n_iter_dataset = dataset_gen.__len__()
+
+        return dataset_gen, n_iter_dataset
 
     @staticmethod
     def fetch_data(dataset_dir):
-
         """
         fetches data from directory of A4C view images of CAMUS dataset
 
@@ -172,35 +176,11 @@ class CAMUSDataset(DatasetBase):
 
         return x_train, y_train, x_val, y_val
 
-# dataset_dir="D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
-# train_gen, val_gen, n_iter_train, n_iter_val= CAMUS_dataset(batch_size=100, input_size=(128, 128),
-#                                                           shuffle=True, n_channels=1,
-#                                                           split_ratio=8 / 9).create_data_generators(dataset_dir)
-
-# def iter_seq(seq):
-#     while True:
-#         for item in seq:
-#             print(item[0].shape)
-#             print(item[1].shape)
-#             yield item
-
-# items = next(train_gen)
-# for i in range(10):
-#     item = next(train_gen)
-#     # print(train_gen)
-#     plt.title(i)
-#     plt.imshow(item[0][0])
-#     plt.show()
-
-
-# train_gen.random_visualization()
-# model = Unet(
-#     'resnet34',
-#     input_shape=(128, 128, 1),
-#     classes=4,
-#     activation='softmax',
-#     encoder_freeze=False,
-#     encoder_weights=None
-# )
-# model.compile('Adam', loss=bce_jaccard_loss, metrics=[iou_score])
-# model.fit(train_gen, validation_data=val_gen, steps_per_epoch=80, epochs=3)
+#
+# # from config import config_example
+# if __name__ == '__main__':
+#     # config_path = "D:/AIMedic/FinalProject_echocardiogram/echoC_Codes/main/echotrain/config"
+#     dataset_dir = "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
+#     dataset = CAMUSDataset(batch_size=10, input_size=(128, 128), n_channels=1, split_ratio=8 / 9)
+#     train_gen, val_gen, n_iter_train, n_iter_val = dataset.create_data_generators(dataset_dir)
+#     train_gen.random_visualization()
