@@ -1,0 +1,31 @@
+data_handler:
+  target_dataset_name: "CAMUS"
+  dataset_class_name: "CAMUSV0"
+  dataset_dir: "/datasets/CAMUS"
+  batch_size: 8
+  input_size: 212
+  n_channels: 1
+  split_ratio: 1
+  to_fit: True
+  shuffle: True
+  seed: null
+  augmentation:
+    rotation_range: 0
+
+model:
+  name: "unet"
+  optimizer:
+    type: "adam"
+    initial_lr: 0.001
+  loss_type: "binary_crossentropy"
+  metrics: ["dice", "2d_hausdorff", "iou"]
+
+trainer:
+  epochs: 100
+#  checkpoints_dir: "./checkpoints"
+#  logs_dir: "./logs"
+  callbacks:
+    checkpoints:
+      save_freq: "epoch"
+    tensorboard:
+      update_freq: "epoch"
