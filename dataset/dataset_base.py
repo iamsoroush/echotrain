@@ -5,13 +5,9 @@ class DatasetBase:
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-        :param batch_size: batch size, int
-        :param input_res: input image resolution, (h, w, c)
-        :param config: dictionary of {config_name: config_value}
+        :param config: python object
         """
 
-        self.batch_size = config.batch_size
-        self.input_res = config.input_res
         self.config = config
 
     def create_data_generators(self, dataset_dir):
