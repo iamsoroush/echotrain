@@ -18,16 +18,30 @@ class BaseModel:
         """
 
         self.name = config.name
-        self.optimizer_type = config.optimizer.type
-        self.learning_rate = config.optimizer.initial_lr
-        self.loss_type = config.loss_type
-        self.metrics = config.metrics
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.optimizer_type = config.model.optimizer.type
+        self.learning_rate = config.model.optimizer.initial_lr
+        self.loss_type = config.model.loss_type
+        self.metrics = config.model.metrics
+        self.config = config
 
-    def generate_model(self):
+    def generate_training_model(self):
 
-        """Generates the model, and returns the compiled model.
+        """Generates the model for training, and returns the compiled model.
 
         :returns model: the final model which is ready to be trained.
         """
 
         raise Exception('not implemented')
+
+    def get_inference_model(self):
+
+        """Loads the best model and returns the ready-to-use model.
+
+
+
+
+
+        :return:
+        """

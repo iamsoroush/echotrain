@@ -6,9 +6,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
+import sys
+# to import PreProcess from 'model' file
+model_dir = 'D:/AIMedic/FinalProject_echocardiogram/echoC_Codes/main/echotrain/model'
+sys.path.insert(0, model_dir)
+from pre_processing import PreProcessor
 
 
 class DatasetGenerator(tf.keras.utils.Sequence):
+    """
+    HOW TO:
+    train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
+                                      input_size, n_channels, to_fit, shuffle, seed)
+    val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
+                                    input_size, n_channels, to_fit, shuffle, seed)
+    """
     def __init__(self, list_images_dir, list_labels_dir,
                  batch_size, input_size, n_channels, to_fit=True, shuffle=True, seed=None):
         """
@@ -22,7 +34,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         :param to_fit: for predicting time, bool
         :param shuffle: if True the dataset will shuffle with random_state of seed, bool
         :param seed: seed, int
-        :param self.batch_index, keeping the current batch index using in next function, int
+        :param self.batch_index: keeping the current batch index using in next function, int
+        :param self.indexes: index list of our dataset directory
         // changing from "input_res" to "input_size"
         """
 
@@ -35,6 +48,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.to_fit = to_fit
         self.batch_index = 0
+        self.indexes = np.arange(len(self.list_images_dir))
         self.on_epoch_end()
 
     def __getitem__(self, index):
@@ -55,6 +69,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         if self.to_fit:
             y = self.generate_y(batch_dir_list)
+
+            # Pre-processing
+            X, y = PreProcessor().batch_pre_process((X, y))
             return X, y
         else:
             return X
@@ -62,8 +79,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         """shuffles indexes after each epoch
         """
-        self.indexes = np.arange(len(self.list_images_dir))
-        if self.shuffle == True:
+        if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __len__(self):
@@ -77,14 +93,26 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         return self.next()
 
     def next(self):
+        """
+
+        :return:
+        """
         index = next(self.flow_index())
         return self.__getitem__(index)
 
     def reset(self):
+        """
+
+        :return:
+        """
         self.batch_index = 0
 
     def flow_index(self):
-        if len(self.list_images_dir)-1 < self.batch_index * self.batch_size:
+        """
+
+        :return:
+        """
+        if len(self.list_images_dir) - 1 < self.batch_index * self.batch_size:
             self.reset()
         batch_index = self.batch_index
         self.batch_index += 1
@@ -107,7 +135,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
-        X_4CH_preprocessed = np.array(list(map(self.pre_process, X_4CH))) / 255.
+        X_4CH_preprocessed = np.array(list(map(self.resizing, X_4CH)))
         return X_4CH_preprocessed
 
     def generate_y(self, batch_dir_list):
@@ -126,28 +154,26 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
-        y_4CH_preprocessed = np.array(list(map(self.pre_process, y_4CH)))
+        y_4CH_preprocessed = np.array(list(map(self.resizing, y_4CH)))
         # to categorical
         y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
 
         return y_4CH_preprocessed
 
-    def pre_process(self, image):
+    def resizing(self, image):
         """
-        pre-processes images mentioned by the user
+        resizing image into the target_size dimensions
 
         :param image: input image, np.ndarray
 
-        :return image_pre_processed: pre-processed image, np.ndarray
+        :return image_resized: resized image, np.ndarray
         """
-        # resizing image into the input_size ( target_size ) dimensions.
-        image_resized = tf.image.resize(image,
-                                        self.input_size,
-                                        antialias=False,
-                                        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-        image_pre_processed = image_resized
-        return image_pre_processed
+        image_resized = np.array(tf.image.resize(image,
+                                                 self.input_size,
+                                                 antialias=False,
+                                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
+        return image_resized
 
     def random_visualization(self):
         """
@@ -156,9 +182,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # choosing random image from dataset directory by list of images directory
         random_image_dir = random.choice(self.list_images_dir)
         image_label_dir = self.list_labels_dir[random_image_dir]
-        random_image = self.pre_process(np.moveaxis(io.imread(random_image_dir, plugin='simpleitk'), 0, -1))
-        image_label = self.pre_process(np.moveaxis(io.imread(image_label_dir, plugin='simpleitk'), 0, -1))
-
+        random_image = PreProcessor().pre_process(self.resizing(np.moveaxis(io.imread(random_image_dir,
+                                                                                      plugin='simpleitk'), 0, -1)))
+        image_label = self.resizing(np.moveaxis(io.imread(image_label_dir, plugin='simpleitk'), 0, -1))
         # setting a two-frame-image to plotting both the image and its segmentation labels
         fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(10, 5)

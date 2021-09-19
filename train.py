@@ -47,10 +47,10 @@ if __name__ == '__main__':
     config_path = check(model_dir)
     config_file = load_config_file(config_path.absolute())
 
-    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file.data_handler)
+    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file)
     train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators()
 
-    model_class = get_model_by_name(config_file.model_name)(config_file.model)
+    model_class = get_model_by_name(config_file.model_name)(config_file)
     model = model_class.generate_model()
 
     trainer = TrainerBase(config_file.trainer)
