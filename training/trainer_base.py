@@ -5,7 +5,7 @@ class TrainerBase:
     def __init__(self, config):
 
         """
-        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), training
+        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), continous training
 
         :param config: a Python object with attributes as config values
 
