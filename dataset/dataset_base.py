@@ -1,6 +1,6 @@
 class DatasetBase:
 
-    def __init__(self, batch_size, input_res, config):
+    def __init__(self, config):
 
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
@@ -10,8 +10,8 @@ class DatasetBase:
         :param config: dictionary of {config_name: config_value}
         """
 
-        self.batch_size = batch_size
-        self.input_res = input_res
+        self.batch_size = config.batch_size
+        self.input_res = config.input_res
         self.config = config
 
     def create_data_generators(self, dataset_dir):
