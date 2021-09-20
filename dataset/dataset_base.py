@@ -1,19 +1,13 @@
-
-
 class DatasetBase:
 
-    def __init__(self, batch_size, input_res, config):
+    def __init__(self, config):
 
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-        :param batch_size: batch size, int
-        :param input_res: input image resolution, (h, w, c)
         :param config: dictionary of {config_name: config_value}
         """
 
-        self.batch_size = batch_size
-        self.input_res = input_res
         self.config = config
 
     def create_data_generators(self, dataset_dir):

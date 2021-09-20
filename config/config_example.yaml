@@ -1,0 +1,39 @@
+input_h: 256
+input_w: 256
+n_channels: 1
+
+data_handler:
+  target_dataset_name: "CAMUS"
+  dataset_class_name: "CAMUSDataset"
+  dataset_dir: "/datasets/CAMUS"
+  batch_size: 10
+  input_size: (input_h, input_w)
+  n_channels: n_channels
+  split_ratio: 1
+  to_fit: True
+  shuffle: True
+  seed: null
+
+model:
+  name: "unet"
+  optimizer:
+    type: "adam"
+    initial_lr: 0.001
+  loss_type: "binary_crossentropy"
+  metrics: ["dice", "2d_hausdorff", "iou"]
+
+pre_process:
+  normalization: True
+  augmentation:
+    rotation_range: 0
+
+trainer:
+  epochs: 100
+#  checkpoints_dir: "./checkpoints"
+#  logs_dir: "./logs"
+  callbacks:
+    checkpoints:
+      save_freq: "epoch"
+    tensorboard:
+      update_freq: "epoch"
+

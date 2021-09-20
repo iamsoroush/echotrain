@@ -1,54 +1,59 @@
+"""
+1- Put your config.yaml file into a directory:
+    /experiments/unet_0/config.yaml
+2- Run this file:
+    python train.py --experiment_dir /experiments/unet_0
+
+"""
+
+import pathlib
 import argparse
 
 from dataset import get_dataset_by_name
 from model import get_model_by_name
 from training import TrainerBase
-from utils import load_config_file
+from utils.handling_yaml import load_config_file
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--dataset_dir',
+    parser.add_argument('--experiment_dir',
                         type=str,
-                        help='directory of dataset',
-                        required=True)
-
-    parser.add_argument('--checkpoints_dir',
-                        type=str,
-                        help='directory of checkpoints',
-                        required=True)
-
-    parser.add_argument('--logs_dir',
-                        type=str,
-                        help='directory for tensorboard logs',
-                        required=True)
-
-    parser.add_argument('--config_path',
-                        type=str,
-                        help='path to config file',
+                        help='directory of the config file',
                         required=True)
 
     args = parser.parse_args()
     return args
 
 
+def check(model_dir: pathlib.Path):
+    if not model_dir.is_dir():
+        raise Exception(f'{model_dir} is not a directory.')
+
+    yaml_files = list(model_dir.glob('*.yaml'))
+    if not any(yaml_files):
+        raise Exception(f'no .yaml files found.')
+    elif len(yaml_files) > 1:
+        raise Exception(f'found two .yaml files.')
+
+    return yaml_files[0]
+
+
 if __name__ == '__main__':
     args = parse_args()
 
-    config_file = load_config_file(args.config_path)
-    dataset_dir = args.dataset_dir
-    checkpoints_dir = args.checkpoints_dir
-    logs_dir = args.logs_dir
+    model_dir = pathlib.Path(args.experiment_dir)
+    config_path = check(model_dir)
+    config_file = load_config_file(config_path.absolute())
 
-    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file.batch_size,
-                                                                  config_file.input_res,
-                                                                  config_file)
+    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file)
+    train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators()
+
     model_class = get_model_by_name(config_file.model_name)(config_file)
-    trainer = TrainerBase(checkpoints_dir=checkpoints_dir, logs_dir=logs_dir, config=config_file)
-
-    train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators(dataset_dir=dataset_dir)
     model = model_class.generate_model()
+
+    trainer = TrainerBase(config_file.trainer)
 
     trainer.train(model=model,
                   train_data_gen=train_data_gen,
