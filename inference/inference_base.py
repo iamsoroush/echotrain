@@ -1,4 +1,12 @@
+import sys
+dataset_file_dir = 'D:\AIMedic\FinalProject_echocardiogram\echoC_Codes\main\echotrain\dataset'
+sys.path.insert(0, dataset_dir)
+model_file_dir = 'D:\AIMedic\FinalProject_echocardiogram\echoC_Codes\main\echotrain\model'
+sys.path.insert(0, model_dir)
 
+from dataset_camus import CAMUSDataset
+from pre_processing import PreProcessor
+import numpy as np
 
 class InferenceBase:
 

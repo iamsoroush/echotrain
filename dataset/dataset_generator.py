@@ -3,28 +3,26 @@
 import skimage.io as io  # to read the .mhd and .raw data
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
-import sys
-# to import PreProcess from 'model' file
-model_dir = 'D:/AIMedic/FinalProject_echocardiogram/echoC_Codes/main/echotrain/model'
-sys.path.insert(0, model_dir)
-from pre_processing import PreProcessor
+import matplotlib.pyplot as plt
 
 
 class DatasetGenerator(tf.keras.utils.Sequence):
     """
+    making data generators for both train_set and test_set
+
     HOW TO:
     train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
                                       input_size, n_channels, to_fit, shuffle, seed)
     val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
                                     input_size, n_channels, to_fit, shuffle, seed)
     """
+
     def __init__(self, list_images_dir, list_labels_dir,
                  batch_size, input_size, n_channels, to_fit=True, shuffle=True, seed=None):
         """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
+        Handles data generators
 
         :param list_images_dir: list of images directory, list
         :param list_labels_dir: segmentation labels directory as values with the list_images_dir as keys, dict
@@ -36,6 +34,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         :param seed: seed, int
         :param self.batch_index: keeping the current batch index using in next function, int
         :param self.indexes: index list of our dataset directory
+        :param self.x: dataset image generated from list_images_dir by generate_X
+        :param self.y: image labels generated from list_labels_dir by generate_y
         // changing from "input_res" to "input_size"
         """
 
@@ -50,6 +50,10 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_index = 0
         self.indexes = np.arange(len(self.list_images_dir))
         self.on_epoch_end()
+        self.x = np.zeros(self.input_size)
+        self.y = np.zeros(self.input_size)
+        self.generate_X(self.list_images_dir)
+        self.generate_y(self.list_labels_dir)
 
     def __getitem__(self, index):
         """Generate one batch of data
@@ -59,19 +63,20 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         """
 
         # Generate indexes of the batch
-        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
+        first_index = index * self.batch_size
 
-        # Find list of the data
-        batch_dir_list = [self.list_images_dir[k] for k in indexes]
+        if (index + 1) * self.batch_size > len(self.list_images_dir):
+            last_index = len(self.list_images_dir)
+        else:
+            last_index = (index + 1) * self.batch_size
 
-        # Generate data
-        X = self.generate_X(batch_dir_list)
+        # selected indexes
+        indexes = self.indexes[first_index: last_index]
 
+        # returning the data using the selected indexes
+        X = self.x[indexes]
         if self.to_fit:
-            y = self.generate_y(batch_dir_list)
-
-            # Pre-processing
-            X, y = PreProcessor().batch_pre_process((X, y))
+            y = self.y[indexes]
             return X, y
         else:
             return X
@@ -79,6 +84,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         """shuffles indexes after each epoch
         """
+        self.indexes = np.arange(len(self.list_images_dir))
         if self.shuffle:
             np.random.shuffle(self.indexes)
 
@@ -86,43 +92,37 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         """Denotes the number of batches per epoch
         :return: number of batches per epoch
         """
-        return int(np.floor(len(self.list_images_dir) / self.batch_size))
+        return int(np.ceil(len(self.list_images_dir) / self.batch_size))
 
     def __next__(self):
-        """Create a generator that iterate over the Sequence."""
+        """create a generator that iterate over the Sequence."""
         return self.next()
 
     def next(self):
         """
-
-        :return:
+        Create iteration through batches of the generator
+        :return: next batch, np.ndarray
         """
         index = next(self.flow_index())
         return self.__getitem__(index)
 
     def reset(self):
-        """
-
-        :return:
-        """
+        """reset indexes for iteration"""
         self.batch_index = 0
 
     def flow_index(self):
-        """
-
-        :return:
-        """
+        """:yield: indexes for next function to iterate through indexes of data"""
         if len(self.list_images_dir) - 1 < self.batch_index * self.batch_size:
             self.reset()
         batch_index = self.batch_index
         self.batch_index += 1
         yield batch_index
 
-    def generate_X(self, batch_dir_list):
+    def generate_X(self, dir_list):
         """
         reads A4C view images of CAMUS dataset
 
-        :param batch_dir_list
+        :param dir_list:
 
         :return X_4CH_preprocessed: array of preprocessed images
         """
@@ -131,18 +131,18 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # and makes all of them channel last order.
         # X_4CH_ED: list[numpy.ndarray]
         X_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         batch_dir_list))
+                         dir_list))
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
         X_4CH_preprocessed = np.array(list(map(self.resizing, X_4CH)))
-        return X_4CH_preprocessed
+        self.x = X_4CH_preprocessed.astype('float64')
 
-    def generate_y(self, batch_dir_list):
+    def generate_y(self, dir_list):
         """
         reads A4C view segmentation labels of CAMUS dataset
 
-        :param batch_dir_list
+        :param dir_list
 
         :return y_4CH_preprocessed: array of preprocessed images
         """
@@ -150,7 +150,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # and makes all of them channel last order.
         # y_4CH: list[numpy.ndarray]
         y_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         [self.list_labels_dir[image_path] for image_path in batch_dir_list]))
+                         [self.list_labels_dir[image_path] for image_path in dir_list]))
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
@@ -158,7 +158,25 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # to categorical
         y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
 
-        return y_4CH_preprocessed
+        self.y = y_4CH_preprocessed
+
+    def batch_gen_copy(self, batch, idx):
+        """Copy the input batch into the dataset using the input index
+
+        :param batch: batches of data consists of image and labels as tuple, np.ndarray
+        :param idx: index for finding the start point to copy the batch into dataset, int
+        """
+        first_index = idx * self.batch_size
+
+        if (idx + 1) * self.batch_size > len(self.list_images_dir):
+            last_index = len(self.list_images_dir)
+        else:
+            last_index = (idx + 1) * self.batch_size
+
+        # copy batch[0] as images into the generator x
+        np.copyto(self.x[first_index: last_index], batch[0], casting='safe')
+        # copy batch[1] as labels into the generator y
+        np.copyto(self.y[first_index: last_index], batch[1], casting='safe')
 
     def resizing(self, image):
         """
@@ -179,17 +197,18 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         """
         random visualization of an image
         """
-        # choosing random image from dataset directory by list of images directory
-        random_image_dir = random.choice(self.list_images_dir)
-        image_label_dir = self.list_labels_dir[random_image_dir]
-        random_image = PreProcessor().pre_process(self.resizing(np.moveaxis(io.imread(random_image_dir,
-                                                                                      plugin='simpleitk'), 0, -1)))
-        image_label = self.resizing(np.moveaxis(io.imread(image_label_dir, plugin='simpleitk'), 0, -1))
+        # seed initialization
+        seed = random.Random(None).getstate()
+
+        # choosing random image from dataset random indexes
+        random_image = random.Random(seed).choice(self.x)
+        image_label = random.Random(seed).choice(self.y)
+
         # setting a two-frame-image to plotting both the image and its segmentation labels
         fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(10, 5)
         ax[0].imshow(random_image, cmap='gray')
-        plt.axis('off')
-        ax[1].imshow(image_label, cmap='gray')
-        plt.axis('off')
+        ax[0].axis('off')
+        ax[1].imshow(np.argmax(image_label, axis=2), cmap='gray')
+        ax[1].axis('off')
         plt.show()
