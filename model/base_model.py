@@ -1,5 +1,4 @@
 
-
 class BaseModel:
 
     def __init__(self, config):
@@ -17,9 +16,10 @@ class BaseModel:
 
         """
 
-        self.name = config.name
+        self.name = config.model.name
         self.input_h = config.input_h
         self.input_w = config.input_w
+        self.n_channels=config.n_channels
         self.optimizer_type = config.model.optimizer.type
         self.learning_rate = config.model.optimizer.initial_lr
         self.loss_type = config.model.loss_type
@@ -45,3 +45,4 @@ class BaseModel:
 
         :return:
         """
+
