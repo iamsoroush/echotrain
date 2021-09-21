@@ -55,13 +55,24 @@ class UNet(BaseModel):
             self.metrics = ['iou']
 
     def generate_training_model(self):
+        """
+        compile model from get_model_graph method with the optimizer,
+        metrics and loss function written in config_example.yaml file
+
+        :return: compiled model
+        """
         model = self.get_model_graph()
         optimizer = self._get_optimizer()
         metrics = self._get_metrics()
         loss = self._get_loss()
-        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        return model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     def get_model_graph(self):
+        """
+        create a unet model for images with input_h height, input_w width
+        and n_channels channels written in config_example.yaml file
+        :return:unet model with 24 conv layer
+        """
         inputs = Input((self.input_h, self.input_w, self.n_channels))
         conv1 = Conv2D(64, 3, activation='relu', padding='same')(inputs)
         conv1 = Conv2D(64, 3, activation='relu', padding='same')(conv1)
@@ -106,6 +117,9 @@ class UNet(BaseModel):
         return model
 
     def _get_metrics(self):
+        """
+        :return:all metrics chosen in config file in a python list suitable for compile method of keras
+        """
         metrics = []
         if 'iou' in self.metrics:
             metrics.append(self._iou_coef)
@@ -118,28 +132,56 @@ class UNet(BaseModel):
         return metrics
 
     def _get_optimizer(self):
+        """
+
+        :return:the optimizer with learning rate that were designated in config file
+        """
         if self.optimizer_type == 'adam':
             return Adam(learning_rate=self.learning_rate)
 
     def _get_loss(self):
+        """
+
+        :return:the loss function that is designated in config file
+        """
         if self.loss_type == 'binary_crossentropy':
             return 'binary_crossentropy'
         if self.loss_type == 'dice_coef_loss':
             return self._dice_coef_loss
 
     def _iou_coef(self, y_true, y_pred, smooth=1):
+        """
+
+        :param y_true: label image from the dataset
+        :param y_pred: model segmented image prediction
+        :param smooth:
+        :return:calculate Intersection over Union for y_true and y_pred
+        """
         intersection = K.sum(K.abs(y_true * y_pred), axis=[1, 2, 3])
         union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
         iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
 
     def _dice_coef(self, y_true, y_pred, smooth=1):
+        """
+
+        :param y_true: label image from the dataset
+        :param y_pred: model segmented image prediction
+        :param smooth:
+        :return: calculate dice coefficient between y_true and y_pred
+        """
         y_true_f = K.flatten(y_true)
         y_pred_f = K.flatten(y_pred)
         intersection = K.sum(y_true_f * y_pred_f)
         return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
     def _dice_coef_loss(self, y_true, y_pred):
+        """
+
+        :param y_true: label image from the dataset
+        :param y_pred: model segmented image prediction
+        :return: dice coefficient loss function
+        """
         return -1 * (self._dice_coef(y_true, y_pred))
 
 
