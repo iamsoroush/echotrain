@@ -8,6 +8,7 @@ import re
 class TrainerBase:
 
     def __init__(self, base_dir, config):
+
         """
         handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), continous training
 
@@ -50,7 +51,8 @@ class TrainerBase:
                                         update_freq=self.callbacks_config.tensorboard.update_freq),
         ]
 
-    def _train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
+    def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
+
         """Trains the model on given data generators.
 
         Use Dataset and Model classes fir
@@ -62,6 +64,7 @@ class TrainerBase:
         :param n_iter_val: iterations per epoch for val_data_gen
 
         """
+
         initial_epoch = 0
         if len(os.listdir(self.checkpoints_addr)):
             checkpoints = [self.checkpoints_addr + '/' + p for p in os.listdir(self.checkpoints_addr)]
@@ -79,8 +82,10 @@ class TrainerBase:
                                 callbacks=self.my_callbacks)
         return history
 
-    def _export(self):
+    def export(self):
+
         """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory"""
+
         metric, mode = self.export_config.metric, self.export_config.mode
         metric_number = self.evaluation_metrics.index(metric)
 
