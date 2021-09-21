@@ -7,3 +7,4 @@ segmentation-models==1.0.1
 SimpleITK==2.1.1
 tensorflow==2.5.0
 tqdm==4.61.2
+pyyaml
