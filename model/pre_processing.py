@@ -18,6 +18,7 @@ class PreProcessor:
         :param target_size: image target size for resizing, tuple (image_height, image_width)
         """
         self.target_size = target_size
+        self.normalization = True
 
     def img_preprocess(self, image):
         """
@@ -28,7 +29,8 @@ class PreProcessor:
         :return: pre_processed_img: pre-processed image
         """
         # 1. normalization on the given image
-        normalized_image = self.rescaling(image, 1/255.)
+        if self.normalization:
+            normalized_image = self.rescaling(image, 1/255.)
 
         # preprocessed image
         pre_processed_img = normalized_image
@@ -64,13 +66,12 @@ class PreProcessor:
 
         :return: preprocessed_gen: preprocessed generator, data generator < class DataGenerator >
         """
-        # iterate through batches of the given generator
-        for i, batch in enumerate(generator):
-            # pre-processing and copying every batches
-            generator.batch_gen_copy(self.batch_preprocess(batch), i)
-
-        preprocessed_gen = generator
-        return preprocessed_gen
+        while True:
+            batch = next(generator)
+            pre_processed_batch = self.batch_preprocess(batch)
+            yield pre_processed_batch
+        # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
+        # return pre_processed_gen
 
     def resizing(self, image):
         """
@@ -100,5 +101,54 @@ class PreProcessor:
         return image * rescaling_ratio
 
     def augmentation(self):
-
         raise Exception('not implemented')
+
+
+class PreProcessedGen(tf.keras.utils.Sequence):
+    """
+
+    """
+
+    def __init__(self, generator, pre_processing):
+        self.generator = generator
+        self.pre_processing = pre_processing
+
+    def __len__(self):
+        return self.generator.get_n_iter()
+
+    def __getitem__(self, idx):
+        batch = self.generator[idx]
+        preprocessed_batch = self.pre_processing(batch)
+        return preprocessed_batch
+
+    def on_epoch_end(self):
+        self.generator.on_epoch_end()
+
+    def __next__(self):
+        """create a generator that iterate over the Sequence."""
+        return self.next()
+
+    def next(self):
+        """
+        Create iteration through batches of the generator
+        :return: next batch, np.ndarray
+        """
+        index = next(self.generator.flow_index())
+        return self.__getitem__(index)
+
+    def reset(self):
+        """reset indexes for iteration"""
+        self.generator.reset()
+
+    def random_visualization(self):
+        """random visualization of an image"""
+
+        # choosing random image from dataset random indexes
+        random_batch_index = np.random.randint(self.__len__())
+        random_batch = self.__getitem__(random_batch_index)
+        random_image_index = np.random.randint(len(random_batch[0]))
+        random_image = random_batch[0][random_image_index]
+        image_label = random_batch[1][random_image_index]
+
+        # setting a two-frame-image to plotting both the image and its segmentation labels
+        self.generator.visualization(random_image, image_label)

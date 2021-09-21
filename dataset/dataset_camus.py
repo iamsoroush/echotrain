@@ -78,8 +78,8 @@ class CAMUSDataset(DatasetBase):
         val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
                                         self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
 
-        n_iter_train = train_data_gen.__len__()
-        n_iter_val = val_data_gen.__len__()
+        n_iter_train = train_data_gen.get_n_iter()
+        n_iter_val = val_data_gen.get_n_iter()
 
         return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
@@ -95,7 +95,7 @@ class CAMUSDataset(DatasetBase):
         dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
                                        self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
 
-        n_iter_dataset = dataset_gen.__len__()
+        n_iter_dataset = dataset_gen.get_n_iter()
 
         return dataset_gen, n_iter_dataset
 
@@ -185,3 +185,6 @@ class CAMUSDataset(DatasetBase):
         y_val = dict(list(y.items())[train_size:])
 
         return x_train, y_train, x_val, y_val
+
+
+
