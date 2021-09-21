@@ -1,12 +1,15 @@
 from base_model import BaseModel
 from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Conv2D,Concatenate,Input,MaxPooling2D,UpSampling2D
+from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import backend as K
+from scipy.spatial.distance import directed_hausdorff
 
 
 class UNet(BaseModel):
 
-    def init(self, config):
+    def __init__(self, config):
 
         """
 
@@ -15,33 +18,48 @@ class UNet(BaseModel):
         :param config:
 
         Attributes:
-            input_h:description of input_h
+            input_h:height of your image
+            input_w:width of your image
+            n_channels:number of channels of image
+            optimizer:
+                type: can be "adam"
+                initial_lr:default would be 0.001
+            metrics: 'acc', 'dice_coef', 'iou', '2d_hausdorff' is supported
+            loss:'binary_crossentropy', 'dice_coef_loss' is supported
         """
 
-        super(UNet, self).init(config=config)
-        '''try:
-            self.optimizer_type = (config...)
+        super(UNet, self).__init__(config=config)
+
+        try:
+            self.optimizer_type = config.model.optimizer.type
 
         except AttributeError as e:
             self.optimizer_type = 'adam'
 
         try:
-            self.loss_type
+            self.learning_rate = config.model.optimizer.initial_lr
 
-        self.input_h = config.input_h'''
+        except AttributeError as e:
+            self.learning_rate = 0.001
 
-   #def _load_attributes(self):
-   #     pass
+        try:
+            self.loss_type = config.model.loss_type
+
+        except AttributeError as e:
+            self.loss_type = 'binary_crossentropy'
+
+        try:
+            self.metrics = config.model.metrics
+
+        except AttributeError as e:
+            self.metrics = ['iou']
 
     def generate_training_model(self):
         model = self.get_model_graph()
-
-        model.compile(optimizer='adam',loss=loss,metrics=['acc'])
-
-        #metrics = self.get_metrics()
-        #loss = self.get_loss()
-
-
+        optimizer = self._get_optimizer()
+        metrics = self._get_metrics()
+        loss = self._get_loss()
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     def get_model_graph(self):
         inputs = Input((self.input_h, self.input_w, self.n_channels))
@@ -88,7 +106,43 @@ class UNet(BaseModel):
         return model
 
     def _get_metrics(self):
-        pass
-path="../config/config_example.yaml"
-config=load_config_file(path)
+        metrics = []
+        if 'iou' in self.metrics:
+            metrics.append(self._iou_coef)
+        if 'acc' in self.metrics:
+            metrics.append('acc')
+        if 'dice_coef' in self.metrics:
+            metrics.append(self._dice_coef)
+        if '2d_hausdorff' in self.metrics:
+            metrics.append(directed_hausdorff)
+        return metrics
+
+    def _get_optimizer(self):
+        if self.optimizer_type == 'adam':
+            return Adam(learning_rate=self.learning_rate)
+
+    def _get_loss(self):
+        if self.loss_type == 'binary_crossentropy':
+            return 'binary_crossentropy'
+        if self.loss_type == 'dice_coef_loss':
+            return self._dice_coef_loss
+
+    def _iou_coef(self, y_true, y_pred, smooth=1):
+        intersection = K.sum(K.abs(y_true * y_pred), axis=[1, 2, 3])
+        union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
+        iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
+        return iou
+
+    def _dice_coef(self, y_true, y_pred, smooth=1):
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        intersection = K.sum(y_true_f * y_pred_f)
+        return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+    def _dice_coef_loss(self, y_true, y_pred):
+        return -1 * (self._dice_coef(y_true, y_pred))
+
+
+path = "../config/config_example.yaml"
+config = load_config_file(path)
 print(UNet(config=config).generate_training_model())

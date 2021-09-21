@@ -19,8 +19,8 @@ model:
   optimizer:
     type: "adam"
     initial_lr: 0.001
-  loss_type: "binary_crossentropy"
-  metrics: ["dice", "2d_hausdorff", "iou"]
+  loss_type: "dice_coef_loss"
+  metrics: ["dice_coef", "iou", "acc", '2d_hausdorff']
 
 pre_process:
   normalization: True
