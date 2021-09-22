@@ -34,6 +34,11 @@ trainer:
   callbacks:
     checkpoints:
       save_freq: "epoch"
+      evaluation_metrics: ["val_loss", "val_accuracy"]
     tensorboard:
       update_freq: "epoch"
+  export:
+    metric: "val_loss"
+    mode: "min"
+
 
