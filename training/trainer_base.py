@@ -74,6 +74,8 @@ class TrainerBase:
         :param n_iter_train: iterations per epoch for train_data_gen
         :param n_iter_val: iterations per epoch for val_data_gen
 
+        :returns fit history
+
         """
         initial_epoch = 0
         if len(os.listdir(self.checkpoints_addr)):
@@ -93,7 +95,9 @@ class TrainerBase:
         return history
 
     def export(self):
+
         """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory"""
+
         metric, mode = self.export_config.metric, self.export_config.mode
         metric_number = self.evaluation_metrics.index(metric)
 
