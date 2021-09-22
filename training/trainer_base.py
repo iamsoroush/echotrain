@@ -10,7 +10,7 @@ class TrainerBase:
     def __init__(self, base_dir, config):
 
         """
-        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), continous training
+        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
 
         tensorboard_logs => base_dir/logs
         checkpoints => base_dir/checkpoints
