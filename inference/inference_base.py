@@ -2,12 +2,15 @@ import sys
 import os
 import numpy as np
 import tensorflow as tf
+from model.base_model import UNet
+from model.pre_processing import PreProcessor
+from utils.handling_yaml import load_config_file
+
 
 # dataset_file_dir = 'D:\AIMedic\FinalProject_echocardiogram\echoC_Codes\source\echotrain\dataset'
 # sys.path.insert(0, dataset_dir)
-currentdir = os.path.abspath('/echotrain/model')
-sys.path.append(currentdir)
-from pre_processing import PreProcessor
+# currentdir = os.path.abspath('/echotrain/model')
+# sys.path.append(currentdir)
 
 
 class InferenceBase:
@@ -21,7 +24,8 @@ class InferenceBase:
 
         self.model_dir = model_dir
         self.config = config
-        self.model = None
+        self.checkpoints_dir = self.config.checkpoints_dir
+        self.model_graph = self.config
         self._load_model()
 
     @staticmethod
@@ -44,8 +48,9 @@ class InferenceBase:
 
         :returns processed_output: raw processed output.
         """
-        y_prob = self.model.predict(pre_processed_image)
-        processed_output = np.argmax(y_prob, axis=2)
+        model = self._load_model()
+        y_prob = model.predict(pre_processed_image)
+        processed_output = y_prob
 
         return processed_output
 
@@ -63,5 +68,7 @@ class InferenceBase:
 
     def _load_model(self):
         """Loads the best model and stores as self.model"""
-
-        self.model = tf.keras.models.load_model('../model.h5')
+        config_path = "../config/config_example.yaml"
+        config = load_config_file(config_path)
+        model = UNet(config).generate_training_model()
+        return model(self.checkpoints_dir)
