@@ -14,7 +14,7 @@ class PreProcessor:
     data_gen = preprocessor.add_preprocess(data_gen)
     """
 
-    def __init__(self,config):
+    def __init__(self, config):
         """
         target_size: image target size for resizing, tuple (image_height, image_width)
         min: minimum value of the image range, int
@@ -24,11 +24,11 @@ class PreProcessor:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.target_size = (self.input_h, self.input_w)
-        self.max= config.pre_process.max
+        self.max = config.pre_process.max
         self.min = config.pre_process.min
         self.normalization = config.pre_process.normalization
-        self.augmentation= config.pre_process.augmentation
-        self.rotation= self.augmentation.rotation
+        self.augmentation = config.pre_process.augmentation
+        self.rotation = self.augmentation.rotation
 
     def img_preprocess(self, image):
         """
@@ -39,8 +39,8 @@ class PreProcessor:
         :return: pre_processed_img
         """
         # converting the images to grayscale
-        if image.shape[-1] != 1:
-            image= self.convert_to_gray(image)
+        if image.shape[-1] != 1 or len(image.shape) != 2:
+            image = self.convert_to_gray(image)
 
         # normalization on the given image
         if self.normalization:
@@ -126,9 +126,8 @@ class PreProcessor:
 
         :return: converted image
         """
-        gray_image= rgb2gray(image)
+        gray_image = rgb2gray(image)
         return gray_image
-
 
     def augmentation(self):
         raise Exception('not implemented')
