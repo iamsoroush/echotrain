@@ -49,7 +49,6 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.to_fit = to_fit
         self.batch_index = 0
-        self.pre_processing = True
 
     def __getitem__(self, index):
         """Generate one batch of data
@@ -161,24 +160,6 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
 
         return y_4CH_preprocessed[:, :, :, 1]
-
-    def batch_gen_copy(self, batch, idx):
-        """Copy the input batch into the dataset using the input index
-
-        :param batch: batches of data consists of image and labels as tuple, np.ndarray
-        :param idx: index for finding the start point to copy the batch into dataset, int
-        """
-        first_index = idx * self.batch_size
-
-        if (idx + 1) * self.batch_size > len(self.list_images_dir):
-            last_index = len(self.list_images_dir)
-        else:
-            last_index = (idx + 1) * self.batch_size
-
-        # copy batch[0] as images into the generator x
-        np.copyto(self.x[first_index: last_index], batch[0], casting='safe')
-        # copy batch[1] as labels into the generator y
-        np.copyto(self.y[first_index: last_index], batch[1], casting='safe')
 
     def resizing(self, image):
         """

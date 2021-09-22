@@ -1,6 +1,6 @@
-from .base_model import BaseModel
+from .model_base import ModelBase
 
-MAPPER = {'model_base': BaseModel}
+MAPPER = {'model_base': ModelBase}
 
 
 def get_model_by_name(name):
