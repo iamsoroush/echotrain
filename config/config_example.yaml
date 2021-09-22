@@ -11,7 +11,7 @@ data_handler:
   split_ratio: 0.9
   to_fit: True
   shuffle: True
-  seed: None
+  seed: 101
 
 model:
   name: "unet"

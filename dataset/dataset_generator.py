@@ -41,6 +41,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         self.list_images_dir = list_images_dir
         self.list_labels_dir = list_labels_dir
+        self.indexes = np.arange(len(self.list_images_dir))
         self.batch_size = batch_size
         self.input_size = input_size
         self.n_channels = n_channels
@@ -48,12 +49,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.to_fit = to_fit
         self.batch_index = 0
-        self.indexes = np.arange(len(self.list_images_dir))
-        self.on_epoch_end()
-        self.x = np.zeros(self.input_size)
-        self.y = np.zeros(self.input_size)
-        self.generate_X(self.list_images_dir)
-        self.generate_y(self.list_labels_dir)
+        self.pre_processing = True
 
     def __getitem__(self, index):
         """Generate one batch of data
@@ -73,10 +69,13 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # selected indexes
         indexes = self.indexes[first_index: last_index]
 
-        # returning the data using the selected indexes
-        X = self.x[indexes]
+        batch_image_dir = [k for k in self.list_images_dir[indexes]]
+        X = self.generate_X(batch_image_dir)
+
+        # # returning the data using the selected indexes
         if self.to_fit:
-            y = self.y[indexes]
+            y = self.generate_y(batch_image_dir)
+            # y = self.y[indexes]
             return X, y
         else:
             return X
@@ -84,15 +83,17 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def on_epoch_end(self):
         """shuffles indexes after each epoch
         """
-        self.indexes = np.arange(len(self.list_images_dir))
         if self.shuffle:
-            np.random.shuffle(self.indexes)
+            np.random.RandomState(None).shuffle(self.indexes)
 
     def __len__(self):
         """Denotes the number of batches per epoch
         :return: number of batches per epoch
         """
         return int(np.ceil(len(self.list_images_dir) / self.batch_size))
+
+    def get_n_iter(self):
+        return self.__len__()
 
     def __next__(self):
         """create a generator that iterate over the Sequence."""
@@ -136,7 +137,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
         X_4CH_preprocessed = np.array(list(map(self.resizing, X_4CH)))
-        self.x = X_4CH_preprocessed.astype('float64')
+
+        return X_4CH_preprocessed.astype('float64')
 
     def generate_y(self, dir_list):
         """
@@ -158,7 +160,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # to categorical
         y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
 
-        self.y = y_4CH_preprocessed
+        return y_4CH_preprocessed[:, :, :, 1]
 
     def batch_gen_copy(self, batch, idx):
         """Copy the input batch into the dataset using the input index
@@ -197,18 +199,23 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         """
         random visualization of an image
         """
-        # seed initialization
-        seed = random.Random(None).getstate()
 
         # choosing random image from dataset random indexes
-        random_image = random.Random(seed).choice(self.x)
-        image_label = random.Random(seed).choice(self.y)
+        random_batch_index = np.random.randint(self.__len__())
+        random_batch = self.__getitem__(random_batch_index)
+        random_image_index = np.random.randint(len(random_batch[0]))
+        random_image = random_batch[0][random_image_index]
+        image_label = random_batch[1][random_image_index]
 
+        self.visualization(random_image, image_label)
+
+    @staticmethod
+    def visualization(image, label):
         # setting a two-frame-image to plotting both the image and its segmentation labels
         fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(10, 5)
-        ax[0].imshow(random_image, cmap='gray')
+        ax[0].imshow(image, cmap='gray')
         ax[0].axis('off')
-        ax[1].imshow(np.argmax(image_label, axis=2), cmap='gray')
+        ax[1].imshow(label, cmap='gray')
         ax[1].axis('off')
         plt.show()
