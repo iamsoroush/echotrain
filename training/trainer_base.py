@@ -8,8 +8,9 @@ import re
 class TrainerBase:
 
     def __init__(self, base_dir, config):
+
         """
-        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointin, ...), continous training
+        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
 
         tensorboard_logs => base_dir/logs
         checkpoints => base_dir/checkpoints
@@ -77,6 +78,7 @@ class TrainerBase:
         :returns fit history
 
         """
+
         initial_epoch = 0
         if len(os.listdir(self.checkpoints_addr)):
             checkpoints = [self.checkpoints_addr + '/' + p for p in os.listdir(self.checkpoints_addr)]

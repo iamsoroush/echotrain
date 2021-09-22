@@ -24,7 +24,7 @@ class ModelBase:
         # self.learning_rate = config.model.optimizer.initial_lr
         # self.loss_type = config.model.loss_type
         # self.metrics = config.model.metrics
-        # self.config = config
+        self.config = config
 
     def generate_training_model(self):
 
@@ -43,6 +43,26 @@ class ModelBase:
         graph)
 
         :return: a model of type tensorflow.keras.Model
+        """
+
+        raise Exception('not implemented')
+
+    def load_model(self, checkpoint_path):
+
+        """Loads the model using given checkpoint
+
+        :param checkpoint_path: path to .hdf5 file
+        """
+
+        raise Exception('not implemented')
+
+    def post_process(self, predicted):
+
+        """Post processes the output of self.model.predict
+
+        :param predicted: output of the model, (input_h, input_w, 1).float64
+        :returns ret: np.ndarray of size(input_h, input_w, 1).int8
+
         """
 
         raise Exception('not implemented')
