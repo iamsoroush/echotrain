@@ -25,6 +25,7 @@ class ModelBase:
         # self.loss_type = config.model.loss_type
         # self.metrics = config.model.metrics
         self.config = config
+        self.inference_threshold = 0.5
 
     def generate_training_model(self):
 
@@ -65,4 +66,4 @@ class ModelBase:
 
         """
 
-        raise Exception('not implemented')
+        return (predicted > self.inference_threshold).astype(int)
