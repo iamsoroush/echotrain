@@ -65,7 +65,8 @@ class UNet(BaseModel):
         optimizer = self._get_optimizer()
         metrics = self._get_metrics()
         loss = self._get_loss()
-        return model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        return model
 
     def get_model_graph(self):
         """
