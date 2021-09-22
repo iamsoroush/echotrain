@@ -19,7 +19,20 @@ class TrainerBase:
 
         Attributes
             epochs int: number of epochs for training
-
+            callbacks_config dict: contains some information for callbacks includes:
+                checkpoints dict: contains some information for checkpoints callback includes:
+                    save_freq str: determines when checkpoints saved it could have values like "epoch" or "batch"
+                    evaluation_metrics list: determines metrics which may be used for finding the best model weights in
+                     export function
+                tensorboard dict: contains information for tensorboard callback includes:
+                    update_freq: determines the frequency of time that tensorboard values will be updated it could be
+                     "epoch" or "batch"
+            export_config dict: contains some information for finding the best weights for model, includes:
+                metric str: one of the metrics that defined in the evaluation_metrics list
+                mode str: determine whether max value of the metric is appropriate or min,
+                 it could be "max" or "min" based on the chosen metric
+            checkpoints_addr: the path where the checkpoints is going to save
+            tensorboard_log:  the path where the tensorboard logs is going to save
         """
 
         self.base_dir = base_dir
@@ -50,7 +63,7 @@ class TrainerBase:
                                         update_freq=self.callbacks_config.tensorboard.update_freq),
         ]
 
-    def _train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
+    def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
         """Trains the model on given data generators.
 
         Use Dataset and Model classes fir
@@ -79,7 +92,7 @@ class TrainerBase:
                                 callbacks=self.my_callbacks)
         return history
 
-    def _export(self):
+    def export(self):
         """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory"""
         metric, mode = self.export_config.metric, self.export_config.mode
         metric_number = self.evaluation_metrics.index(metric)
@@ -97,7 +110,7 @@ class TrainerBase:
             selected_model = max(model_info, key=model_info.get)
         selected_checkpoint = checkpoints[int(selected_model)-1]
         chp_addr = self.checkpoints_addr+'/'+selected_checkpoint
-        dst = 'exported'
+        dst = self.base_dir + '/exported'
         if not os.path.isdir(dst):
             os.makedirs(dst)
         print(chp_addr)
