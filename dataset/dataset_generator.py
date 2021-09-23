@@ -1,7 +1,6 @@
 # requirements
 
 import skimage.io as io  # to read the .mhd and .raw data
-import random
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
@@ -52,6 +51,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.pre_processing = True
 
     def __getitem__(self, index):
+
         """Generate one batch of data
 
         :param index: index of the batch
@@ -70,104 +70,120 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         indexes = self.indexes[first_index: last_index]
 
         batch_image_dir = [k for k in self.list_images_dir[indexes]]
-        X = self.generate_X(batch_image_dir)
+        x = self.generate_x(batch_image_dir)
 
         # # returning the data using the selected indexes
         if self.to_fit:
             y = self.generate_y(batch_image_dir)
             # y = self.y[indexes]
-            return X, y
+            return x, y
         else:
-            return X
+            return x
 
     def on_epoch_end(self):
-        """shuffles indexes after each epoch
-        """
+
+        """shuffles indexes after each epoch"""
+
         if self.shuffle:
             np.random.RandomState(None).shuffle(self.indexes)
 
     def __len__(self):
+
         """Denotes the number of batches per epoch
         :return: number of batches per epoch
         """
+
         return int(np.ceil(len(self.list_images_dir) / self.batch_size))
 
     def get_n_iter(self):
         return self.__len__()
 
     def __next__(self):
+
         """create a generator that iterate over the Sequence."""
+
         return self.next()
 
     def next(self):
+
         """
         Create iteration through batches of the generator
         :return: next batch, np.ndarray
         """
+
         index = next(self.flow_index())
         return self.__getitem__(index)
 
     def reset(self):
+
         """reset indexes for iteration"""
+
         self.batch_index = 0
 
     def flow_index(self):
+
         """:yield: indexes for next function to iterate through indexes of data"""
+
         if len(self.list_images_dir) - 1 < self.batch_index * self.batch_size:
             self.reset()
         batch_index = self.batch_index
         self.batch_index += 1
         yield batch_index
 
-    def generate_X(self, dir_list):
+    def generate_x(self, dir_list):
+
         """
         reads A4C view images of CAMUS dataset
 
         :param dir_list:
 
-        :return X_4CH_preprocessed: array of preprocessed images
+        :return x_4_ch_preprocessed: array of preprocessed images
         """
 
         # reading images of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # X_4CH_ED: list[numpy.ndarray]
-        X_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         dir_list))
+        x_4_ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+                          dir_list))
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
-        X_4CH_preprocessed = np.array(list(map(self.resizing, X_4CH)))
+        x_4_ch_preprocessed = np.array(list(map(self.resizing, x_4_ch)))
 
-        return X_4CH_preprocessed.astype('float64')
+        return x_4_ch_preprocessed.astype('float64')
 
     def generate_y(self, dir_list):
+
         """
         reads A4C view segmentation labels of CAMUS dataset
 
         :param dir_list
 
-        :return y_4CH_preprocessed: array of preprocessed images
+        :return y_4_ch_preprocessed: array of preprocessed images
         """
+
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
-        # y_4CH: list[numpy.ndarray]
-        y_4CH = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                         [self.list_labels_dir[image_path] for image_path in dir_list]))
+        # y_4_ch: list[numpy.ndarray]
+        y_4_ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+                          [self.list_labels_dir[image_path] for image_path in dir_list]))
 
         # Pre-processing labels
         # X_4CH_ED_resized: list[numpy.ndarray]
-        y_4CH_preprocessed = np.array(list(map(self.resizing, y_4CH)))
+        y_4_ch_preprocessed = np.array(list(map(self.resizing, y_4_ch)))
         # to categorical
-        y_4CH_preprocessed = to_categorical(y_4CH_preprocessed)
+        y_4_ch_preprocessed = to_categorical(y_4_ch_preprocessed)
 
-        return y_4CH_preprocessed[:, :, :, 1]
+        return y_4_ch_preprocessed[:, :, :, 1]
 
     def batch_gen_copy(self, batch, idx):
+
         """Copy the input batch into the dataset using the input index
 
         :param batch: batches of data consists of image and labels as tuple, np.ndarray
         :param idx: index for finding the start point to copy the batch into dataset, int
         """
+
         first_index = idx * self.batch_size
 
         if (idx + 1) * self.batch_size > len(self.list_images_dir):
@@ -181,6 +197,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         np.copyto(self.y[first_index: last_index], batch[1], casting='safe')
 
     def resizing(self, image):
+
         """
         resizing image into the target_size dimensions
 
@@ -196,6 +213,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         return image_resized
 
     def random_visualization(self):
+
         """
         random visualization of an image
         """
