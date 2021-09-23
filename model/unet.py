@@ -1,5 +1,5 @@
 from base_model import BaseModel
-from utils.handling_yaml import load_config_file
+# from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
@@ -33,25 +33,25 @@ class UNet(BaseModel):
         try:
             self.optimizer_type = config.model.optimizer.type
 
-        except AttributeError as e:
+        except AttributeError:
             self.optimizer_type = 'adam'
 
         try:
             self.learning_rate = config.model.optimizer.initial_lr
 
-        except AttributeError as e:
+        except AttributeError:
             self.learning_rate = 0.001
 
         try:
             self.loss_type = config.model.loss_type
 
-        except AttributeError as e:
+        except AttributeError:
             self.loss_type = 'binary_crossentropy'
 
         try:
             self.metrics = config.model.metrics
 
-        except AttributeError as e:
+        except AttributeError:
             self.metrics = ['iou']
 
     def generate_training_model(self):
@@ -150,7 +150,8 @@ class UNet(BaseModel):
         if self.loss_type == 'dice_coef_loss':
             return self._dice_coef_loss
 
-    def _iou_coef(self, y_true, y_pred, smooth=1):
+    @staticmethod
+    def _iou_coef(y_true, y_pred, smooth=1):
         """
 
         :param y_true: label image from the dataset
@@ -163,7 +164,8 @@ class UNet(BaseModel):
         iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
 
-    def _dice_coef(self, y_true, y_pred, smooth=1):
+    @staticmethod
+    def _dice_coef(y_true, y_pred, smooth=1):
         """
 
         :param y_true: label image from the dataset
@@ -186,6 +188,6 @@ class UNet(BaseModel):
         return -1 * (self._dice_coef(y_true, y_pred))
 
 
-path = "../config/config_example.yaml"
-config = load_config_file(path)
-print(UNet(config=config).generate_training_model())
+# path = "../config/config_example.yaml"
+# config = load_config_file(path)
+# print(UNet(config=config).generate_training_model())
