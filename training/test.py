@@ -84,6 +84,6 @@ if __name__ == '__main__':
     base_addr = f'Experience/{model_name}'
     config = load_config_file('../config/config_example.yaml')
     trainer = TrainerBase(base_addr, config.trainer)
-    # trainer._train(model, train_data_gen=train_gen, val_data_gen=val_gen,
+    # trainer.train(model, train_data_gen=train_gen, val_data_gen=val_gen,
     #                n_iter_train=train_steps, n_iter_val=val_steps)
-    trainer._export()
+    trainer.export()
