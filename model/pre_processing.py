@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from skimage.color import rgb2gray
 
 
 class PreProcessor:
@@ -14,14 +15,23 @@ class PreProcessor:
     data_gen = preprocessor.add_preprocess(data_gen)
     """
 
-    def __init__(self, target_size=(128, 128)):
+    def __init__(self, config):
 
         """
-        :param target_size: image target size for resizing, tuple (image_height, image_width)
+        target_size: image target size for resizing, tuple (image_height, image_width)
+        min: minimum value of the image range, int
+        max: maximum value of the image range, int
+        normalization: for rescaling the image, bool
         """
 
-        self.target_size = target_size
-        self.normalization = True
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.target_size = (self.input_h, self.input_w)
+        self.max= config.pre_process.max
+        self.min = config.pre_process.min
+        self.normalization = config.pre_process.normalization
+        self.augmentation= config.pre_process.augmentation
+        self.rotation = self.augmentation.rotation
 
     def img_preprocess(self, image):
 
@@ -30,14 +40,17 @@ class PreProcessor:
 
         :param image: input image, np.array
 
-        :return: pre_processed_img: pre-processed image
+        :return: pre_processed_img
         """
 
-        # 1. normalization on the given image
+        pre_processed_img = image.copy()
+        # converting the images to grayscale
+        if image.shape[-1] != 1:
+            pre_processed_img = self.convert_to_gray(image)
+
+        # normalization on the given image
         if self.normalization:
             pre_processed_img = self.rescaling(image, 1/255.)
-        else:
-            pre_processed_img = image
 
         return pre_processed_img
 
@@ -98,41 +111,85 @@ class PreProcessor:
         return image_resized
 
     @staticmethod
-    def rescaling(image, rescaling_ratio=1/255.):
+    def rescaling(image, min_val, max_val):
 
         """
         rescaling the input image
 
-        :param rescaling_ratio: rescaling ratio to apply on the input image, float
         :param image: input image, np.array
+        :param min_val: minimum value of the image
+        :param max_val: maximum value of the image
 
         :return: rescaled image
         """
 
-        return image * rescaling_ratio
+        rescaled_image = (image - min_val) / (max_val - min_val)
+
+        return rescaled_image
+
+    @staticmethod
+    def convert_to_gray(image):
+
+        """
+        converting the input image to grayscale, if needed
+
+        :param image: input image, np array
+
+        :return: converted image
+        """
+
+        gray_image = rgb2gray(image)
+        return gray_image
 
     def augmentation(self):
         raise Exception('not implemented')
 
 
 class PreProcessedGen(tf.keras.utils.Sequence):
+
     """
+    this class makes the class PreProcessor output, a generator and makes it suitable to fit to the model
+
+    HOW TO:
+    pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
 
     """
 
     def __init__(self, generator, pre_processing):
+
+        """
+        :param generator: the output of the dataset_generator,generator <Class dataset_generator>
+        :param pre_processing: preprocessing functions from the class PreProcessor
+        """
+
         self.generator = generator
         self.pre_processing = pre_processing
 
     def __len__(self):
+
+        """
+        :return: number of the batches per epoch
+        """
+
         return self.generator.get_n_iter()
 
     def __getitem__(self, idx):
+
+        """
+        :param idx: the index of the batch
+        :return: preprocessed_batch
+        """
+
         batch = self.generator[idx]
         preprocessed_batch = self.pre_processing(batch)
         return preprocessed_batch
 
     def on_epoch_end(self):
+
+        """
+        :return: shuffle at the end of each epoch
+        """
+
         self.generator.on_epoch_end()
 
     def __next__(self):
