@@ -1,7 +1,6 @@
 # requirements
 
 import skimage.io as io  # to read the .mhd and .raw data
-import random
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
@@ -9,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 class DatasetGenerator(tf.keras.utils.Sequence):
+
     """
     making data generators for both train_set and test_set
 
@@ -21,6 +21,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
     def __init__(self, list_images_dir, list_labels_dir,
                  batch_size, input_size, n_channels, to_fit=True, shuffle=True, seed=None):
+
         """
         Handles data generators
 
