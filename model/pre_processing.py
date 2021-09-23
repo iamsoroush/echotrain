@@ -27,10 +27,10 @@ class PreProcessor:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.target_size = (self.input_h, self.input_w)
-        self.max= config.pre_process.max
+        self.max = config.pre_process.max
         self.min = config.pre_process.min
         self.normalization = config.pre_process.normalization
-        self.augmentation= config.pre_process.augmentation
+        self.augmentation = config.pre_process._augmentation
         self.rotation = self.augmentation.rotation
 
     def img_preprocess(self, image):
@@ -46,11 +46,11 @@ class PreProcessor:
         pre_processed_img = image.copy()
         # converting the images to grayscale
         if image.shape[-1] != 1:
-            pre_processed_img = self.convert_to_gray(image)
+            pre_processed_img = self._convert_to_gray(image)
 
         # normalization on the given image
         if self.normalization:
-            pre_processed_img = self.rescaling(image, 1/255.)
+            pre_processed_img = self._rescaling(image, 1 / 255.)
 
         return pre_processed_img
 
@@ -94,7 +94,7 @@ class PreProcessor:
         # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
         # return pre_processed_gen
 
-    def resizing(self, image):
+    def _resizing(self, image):
 
         """
         resizing image into the target_size dimensions
@@ -111,7 +111,7 @@ class PreProcessor:
         return image_resized
 
     @staticmethod
-    def rescaling(image, min_val, max_val):
+    def _rescaling(image, min_val, max_val):
 
         """
         rescaling the input image
@@ -128,7 +128,7 @@ class PreProcessor:
         return rescaled_image
 
     @staticmethod
-    def convert_to_gray(image):
+    def _convert_to_gray(image):
 
         """
         converting the input image to grayscale, if needed
@@ -141,7 +141,7 @@ class PreProcessor:
         gray_image = rgb2gray(image)
         return gray_image
 
-    def augmentation(self):
+    def _augmentation(self):
         raise Exception('not implemented')
 
 
