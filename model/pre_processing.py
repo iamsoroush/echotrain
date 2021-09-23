@@ -35,10 +35,9 @@ class PreProcessor:
 
         # 1. normalization on the given image
         if self.normalization:
-            normalized_image = self.rescaling(image, 1/255.)
-
-        # preprocessed image
-        pre_processed_img = normalized_image
+            pre_processed_img = self.rescaling(image, 1/255.)
+        else:
+            pre_processed_img = image
 
         return pre_processed_img
 
