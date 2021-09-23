@@ -10,7 +10,7 @@ class DatasetBase:
 
         self.config = config
 
-    def create_data_generators(self, dataset_dir):
+    def create_data_generators(self):
 
         """Creates data generators based on batch_size, input_res
 
