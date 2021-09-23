@@ -1,4 +1,4 @@
-from base_model import BaseModel
+from .model_base import ModelBase
 # from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
@@ -7,7 +7,7 @@ from tensorflow.keras import backend as K
 from scipy.spatial.distance import directed_hausdorff
 
 
-class UNet(BaseModel):
+class UNet(ModelBase):
 
     def __init__(self, config):
 

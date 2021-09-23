@@ -25,6 +25,9 @@ class ModelBase:
         # self.loss_type = config.model.loss_type
         # self.metrics = config.model.metrics
         self.config = config
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.n_channels = config.n_channels
         self.inference_threshold = 0.5
 
     def generate_training_model(self):
