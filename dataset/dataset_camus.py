@@ -9,6 +9,7 @@ import random
 
 
 class CAMUSDataset(DatasetBase):
+
     """
     This class makes our dataset ready to use by given desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
@@ -25,6 +26,7 @@ class CAMUSDataset(DatasetBase):
     """
 
     def __init__(self, config):
+
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
@@ -62,16 +64,16 @@ class CAMUSDataset(DatasetBase):
         """
         # dataset_dir = self.dataset_dir
 
-        list_images_dir, list_labels_dir = self.fetch_data()
+        list_images_dir, list_labels_dir = self._fetch_data()
 
         # shuffling
         if self.shuffle:
-            list_images_dir, list_labels_dir = self.shuffle_func(list_images_dir,
-                                                                 list_labels_dir)
+            list_images_dir, list_labels_dir = self._shuffle_func(list_images_dir,
+                                                                  list_labels_dir)
         # splitting
-        x_train_dir, y_train_dir, x_val_dir, y_val_dir = self.split(list_images_dir,
-                                                                    list_labels_dir,
-                                                                    self.split_ratio)
+        x_train_dir, y_train_dir, x_val_dir, y_val_dir = self._split(list_images_dir,
+                                                                     list_labels_dir,
+                                                                     self.split_ratio)
 
         train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
                                           self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
@@ -84,13 +86,15 @@ class CAMUSDataset(DatasetBase):
         return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
     def create_test_data_generator(self):
+
         """
         Creates data generators based on batch_size, input_size
 
         :returns dataset_gen: training data generator which yields (batch_size, h, w, c) tensors
         :returns n_iter_dataset: number of iterations per epoch for train_data_gen
         """
-        list_images_dir, list_labels_dir = self.fetch_data()
+
+        list_images_dir, list_labels_dir = self._fetch_data()
 
         dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
                                        self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
@@ -99,7 +103,8 @@ class CAMUSDataset(DatasetBase):
 
         return dataset_gen, n_iter_dataset
 
-    def fetch_data(self):
+    def _fetch_data(self):
+
         """
         fetches data from directory of A4C view images of CAMUS dataset
 
@@ -134,7 +139,7 @@ class CAMUSDataset(DatasetBase):
 
         return list_images_dir, list_labels_dir
 
-    def shuffle_func(self, x, y):
+    def _shuffle_func(self, x, y):
 
         """
         makes a shuffle index array to make a fixed shuffling order for both X, y
@@ -160,7 +165,7 @@ class CAMUSDataset(DatasetBase):
         return x, y
 
     @staticmethod
-    def split(x, y, split_ratio):
+    def _split(x, y, split_ratio):
 
         """
         splits the dataset into train and validation set by the corresponding ratio
@@ -175,6 +180,7 @@ class CAMUSDataset(DatasetBase):
         :return x_val: images validation_set, np.ndarray
         :return y_val: segmentation labels validation_set, np.ndarray
         """
+
         # set train size by split_ratio var
         train_size = round(len(x) * split_ratio)
         # splitting
@@ -185,6 +191,3 @@ class CAMUSDataset(DatasetBase):
         y_val = dict(list(y.items())[train_size:])
 
         return x_train, y_train, x_val, y_val
-
-
-
