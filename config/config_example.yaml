@@ -2,12 +2,15 @@ input_h: 128
 input_w: 128
 n_channels: 1
 
+model_class: model.unet.UNet
+preprocessor_class: model.pre_processing.PreProcessor
+dataset_class:
+
 data_handler:
   target_dataset_name: "CAMUS"
   dataset_class_name: "CAMUSDataset"
   dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
   batch_size: 100
-  n_channels: n_channels
   split_ratio: 0.9
   to_fit: True
   shuffle: True
