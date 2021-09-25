@@ -5,7 +5,7 @@ import os
 import re
 
 
-class TrainerBase:
+class Trainer:
 
     def __init__(self, base_dir, config):
 
