@@ -10,3 +10,7 @@ This repository mainly used four files for training process:
 
 Also Inference class could be used to perform the required processing to prepare data for the model and then do the lv semantic segmentation based on the trained model
 
+# installation
+
+This command could be used to create conda environment of the repository:
+`conda env create -f environment.yml`
