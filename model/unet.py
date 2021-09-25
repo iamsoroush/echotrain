@@ -1,5 +1,6 @@
 from .model_base import ModelBase
 # from utils.handling_yaml import load_config_file
+import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
@@ -191,7 +192,7 @@ class UNet(ModelBase):
     #     return -1 * (self._dice_coef(y_true, y_pred))
 
 
-def iou_coef(y_true, y_pred, smooth=1):
+def iou_coef(y_true, y_pred, smooth=1, threshlod=0.5):
     """
 
     :param y_true: label image from the dataset
@@ -199,13 +200,16 @@ def iou_coef(y_true, y_pred, smooth=1):
     :param smooth:
     :return:calculate Intersection over Union for y_true and y_pred
     """
-    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-    union = K.sum(K.abs(y_true) + K.abs(y_pred), axis=-1) - intersection
-    iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
+
+    y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
+
+    intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=-1)
+    union = K.sum(K.abs(y_true) + K.abs(y_pred_thresholded), axis=-1) - intersection
+    iou = (intersection + smooth) / (union + smooth)
     return iou
 
 
-def dice_coef(y_true, y_pred, smooth=1):
+def dice_coef(y_true, y_pred):
     """
 
     :param y_true: label image from the dataset
@@ -213,8 +217,12 @@ def dice_coef(y_true, y_pred, smooth=1):
     :param smooth:
     :return: calculate dice coefficient between y_true and y_pred
     """
+
+    smooth = 1
+    threshold = 0.5
+
     y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
+    y_pred_f = K.cast(K.flatten(y_pred) > threshold, tf.float32)
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
