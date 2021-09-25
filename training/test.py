@@ -1,10 +1,10 @@
 import tensorflow as tf
 from tensorflow import keras
-from keras.datasets import cifar10
+from tensorflow.keras.datasets import cifar10
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
 from tensorflow.keras.utils import to_categorical
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
 
 from echotrain.utils.handling_yaml import load_config_file
