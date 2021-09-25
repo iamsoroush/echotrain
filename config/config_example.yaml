@@ -4,7 +4,7 @@ n_channels: 1
 
 model_class: model.unet.UNet
 preprocessor_class: model.pre_processing.PreProcessor
-dataset_class:
+dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"

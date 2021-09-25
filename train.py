@@ -8,10 +8,9 @@
 
 import pathlib
 import argparse
+from pydoc import locate
 
-from dataset import get_dataset_by_name
-from model import get_model_by_name
-from training import TrainerBase
+from training import Trainer
 from utils.handling_yaml import load_config_file
 
 
@@ -23,19 +22,18 @@ def parse_args():
                         help='directory of the config file',
                         required=True)
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
-def check(model_dir: pathlib.Path):
-    if not model_dir.is_dir():
-        raise Exception(f'{model_dir} is not a directory.')
+def check(experiment_dir: pathlib.Path):
+    if not experiment_dir.is_dir():
+        raise Exception(f'{experiment_dir} is not a directory.')
 
-    yaml_files = list(model_dir.glob('*.yaml'))
+    yaml_files = list(experiment_dir.glob('*.yaml'))
     if not any(yaml_files):
         raise Exception(f'no .yaml files found.')
     elif len(yaml_files) > 1:
-        raise Exception(f'found two .yaml files.')
+        raise Exception(f'found more than one .yaml files.')
 
     return yaml_files[0]
 
@@ -43,20 +41,39 @@ def check(model_dir: pathlib.Path):
 if __name__ == '__main__':
     args = parse_args()
 
-    model_dir = pathlib.Path(args.experiment_dir)
-    config_path = check(model_dir)
+    experiment_dir = pathlib.Path(args.experiment_dir)
+    config_path = check(experiment_dir)
     config_file = load_config_file(config_path.absolute())
 
-    dataset = get_dataset_by_name(config_file.dataset_class_name)(config_file)
+    try:
+        model_class_path = config_file.model_class
+    except AttributeError:
+        raise Exception('could not find model_class')
+
+    try:
+        preprocessor_class_path = config_file.preprocessor_class
+    except AttributeError:
+        raise Exception('could not find preprocessor_class')
+
+    try:
+        dataset_class_path = config_file.dataset_class
+    except AttributeError:
+        raise Exception('could not find dataset_class')
+
+    dataset_class = locate(dataset_class_path)
+    dataset = dataset_class(config_file)
     train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators()
 
-    model_class = get_model_by_name(config_file.model_name)(config_file)
-    model = model_class.generate_model()
+    model_class = locate(model_class_path)
+    model_obj = model_class(config_file)
+    model = model_obj.generate_training_model()
 
-    trainer = TrainerBase(config_file.trainer)
+    trainer = Trainer(base_dir=experiment_dir, config=config_file)
 
-    trainer.train(model=model,
-                  train_data_gen=train_data_gen,
-                  val_data_gen=val_data_gen,
-                  n_iter_train=n_iter_train,
-                  n_iter_val=n_iter_val)
+    history = trainer.train(model=model,
+                            train_data_gen=train_data_gen,
+                            val_data_gen=val_data_gen,
+                            n_iter_train=n_iter_train,
+                            n_iter_val=n_iter_val)
+
+    trainer.export()
