@@ -12,7 +12,12 @@ class UNet(ModelBase):
     def __init__(self, config):
 
         """
-
+        HOWTO:
+        first you have to call UNet class: unet=UNet(config=config)
+        then 2 methods have been provided:
+                get_model_graph(): this method gives you non_compiled unet model
+                generate_training_model(): this method gives you compiled model with
+                attributes designated in config.(you can see options you have at Attributes section below.)
 
 
         :param config:
@@ -33,25 +38,25 @@ class UNet(ModelBase):
         try:
             self.optimizer_type = config.model.optimizer.type
 
-        except AttributeError:
+        except AttributeError as e:
             self.optimizer_type = 'adam'
 
         try:
             self.learning_rate = config.model.optimizer.initial_lr
 
-        except AttributeError:
+        except AttributeError as e:
             self.learning_rate = 0.001
 
         try:
             self.loss_type = config.model.loss_type
 
-        except AttributeError:
+        except AttributeError as e:
             self.loss_type = 'binary_crossentropy'
 
         try:
             self.metrics = config.model.metrics
 
-        except AttributeError:
+        except AttributeError as e:
             self.metrics = ['iou']
 
     def generate_training_model(self):
@@ -150,8 +155,7 @@ class UNet(ModelBase):
         if self.loss_type == 'dice_coef_loss':
             return self._dice_coef_loss
 
-    @staticmethod
-    def _iou_coef(y_true, y_pred, smooth=1):
+    def _iou_coef(self, y_true, y_pred, smooth=1):
         """
 
         :param y_true: label image from the dataset
@@ -164,8 +168,7 @@ class UNet(ModelBase):
         iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
 
-    @staticmethod
-    def _dice_coef(y_true, y_pred, smooth=1):
+    def _dice_coef(self, y_true, y_pred, smooth=1):
         """
 
         :param y_true: label image from the dataset
@@ -188,6 +191,3 @@ class UNet(ModelBase):
         return -1 * (self._dice_coef(y_true, y_pred))
 
 
-# path = "../config/config_example.yaml"
-# config = load_config_file(path)
-# print(UNet(config=config).generate_training_model())
