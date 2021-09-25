@@ -43,9 +43,9 @@ class Trainer:
         self.export_config = config.trainer.export
         self.checkpoints_addr = self.base_dir + '/checkpoints'
         self.tensorboard_log = self.base_dir + '/logs'
-        self.experiment_uri = config.trainer.experiment_uri
+        self.experiment_uri = config.trainer.mlflow.tracking_uri
         mlflow.set_tracking_uri(f'file:{self.experiment_uri}')
-        self.experiment_name = config.trainer.experiment_name
+        self.experiment_name = config.trainer.mlflow.experiment_name
 
         if not os.path.isdir(self.checkpoints_addr):
             os.makedirs(self.checkpoints_addr)
