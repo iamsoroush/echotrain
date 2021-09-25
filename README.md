@@ -13,4 +13,5 @@ Also Inference class could be used to perform the required processing to prepare
 # installation
 
 This command could be used to create conda environment of the repository:
+
 `conda env create -f environment.yml`
