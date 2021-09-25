@@ -8,10 +8,11 @@ This repository mainly used four files for training process:
 * **model**: Define the structure of the model that wants to be trained and metrics that wants to be used for evaluating the model during the training process
 * **training**: Train the given model based on the inputs, log the required information with mlflow and tensorboard during training, determine the best weights for the model, and store the config file
 
-Also Inference class could be used to perform the required processing to prepare data for the model and then do the lv semantic segmentation based on the trained model
+Also, Inference class could be used to perform the required processing to prepare data for the model and then do the lv semantic segmentation based on the trained model
+
 
 # Installation
 
-This command could be used to create conda environment of the repository:
+This command could be used to create a conda environment of the repository:
 
 `conda env create -f environment.yml`
