@@ -60,14 +60,23 @@ if __name__ == '__main__':
     except AttributeError:
         raise Exception('could not find dataset_class')
 
+    # Dataset
     dataset_class = locate(dataset_class_path)
     dataset = dataset_class(config_file)
     train_data_gen, val_data_gen, n_iter_train, n_iter_val = dataset.create_data_generators()
 
+    # Preprocessor
+    preprocessor_class = locate(preprocessor_class_path)
+    preprocessor = preprocessor_class(config_file)
+    train_data_gen = preprocessor.add_preprocess(train_data_gen)
+    val_data_gen = preprocessor.add_preprocess(val_data_gen)
+
+    # Model
     model_class = locate(model_class_path)
     model_obj = model_class(config_file)
     model = model_obj.generate_training_model()
 
+    # Trainer
     trainer = Trainer(base_dir=experiment_dir, config=config_file)
 
     history = trainer.train(model=model,
@@ -77,3 +86,5 @@ if __name__ == '__main__':
                             n_iter_val=n_iter_val)
 
     trainer.export()
+
+'model.unet.UNet'

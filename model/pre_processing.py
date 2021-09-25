@@ -27,11 +27,11 @@ class PreProcessor:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.target_size = (self.input_h, self.input_w)
-        self.max = config.pre_process.max
-        self.min = config.pre_process.min
+        # self.max = config.pre_process.max
+        # self.min = config.pre_process.min
         self.normalization = config.pre_process.normalization
-        self.augmentation = config.pre_process._augmentation
-        self.rotation = self.augmentation.rotation
+        self.augmentation = config.pre_process.augmentation
+        self.aug_rotation_range = self.augmentation.rotation_range
 
     def img_preprocess(self, image):
 
@@ -50,7 +50,7 @@ class PreProcessor:
 
         # normalization on the given image
         if self.normalization:
-            pre_processed_img = self._rescaling(image, 1 / 255.)
+            pre_processed_img = self._rescaling(image, 0, 255)
 
         return pre_processed_img
 
