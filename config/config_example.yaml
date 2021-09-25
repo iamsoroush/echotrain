@@ -8,9 +8,8 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_class_name: "CAMUSDataset"
-  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
-  batch_size: 100
+  dataset_dir: "/content/training"
+  batch_size: 8
   split_ratio: 0.9
   to_fit: True
   shuffle: True
@@ -21,8 +20,8 @@ model:
   optimizer:
     type: "adam"
     initial_lr: 0.001
-  loss_type: "dice_coef_loss"
-  metrics: ["dice_coef", "iou", "acc", '2d_hausdorff']
+  loss_type: "binary_crossentropy"
+  metrics: ["dice_coef", "iou", "acc"]
 
 pre_process:
   normalization: True
@@ -36,11 +35,12 @@ trainer:
   callbacks:
     checkpoints:
       save_freq: "epoch"
-      evaluation_metrics: ["val_loss", "val_accuracy"]
+      evaluation_metrics: ["val_loss", "val_dice_coef"]
     tensorboard:
       update_freq: "epoch"
   export:
     metric: "val_loss"
     mode: "min"
-
-
+  mlflow:
+    tracking_uri: 'echotrain/config'
+    experiment_name: 'unet'
