@@ -37,12 +37,16 @@ class Trainer:
         """
 
         self.base_dir = base_dir
-        self.epochs = config.epochs
-        self.callbacks_config = config.callbacks
+        self.epochs = config.trainer.epochs
+        self.callbacks_config = config.trainer.callbacks
         self.evaluation_metrics = self.callbacks_config.checkpoints.evaluation_metrics
-        self.export_config = config.export
+        self.export_config = config.trainer.export
         self.checkpoints_addr = self.base_dir + '/checkpoints'
         self.tensorboard_log = self.base_dir + '/logs'
+        self.experiment_uri = config.trainer.experiment_uri
+        mlflow.set_tracking_uri(f'file:{self.experiment_uri}')
+        self.experiment_name = config.trainer.experiment_name
+
         if not os.path.isdir(self.checkpoints_addr):
             os.makedirs(self.checkpoints_addr)
             os.makedirs(self.tensorboard_log)
@@ -65,6 +69,7 @@ class Trainer:
         ]
 
     def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
+
         """Trains the model on given data generators.
 
         Use Dataset and Model classes fir
@@ -87,8 +92,12 @@ class Trainer:
             initial_epoch = int(re.findall('model\\.([0-9]+)', latest_checkpoint.split('/')[-1])[0])
             model.load_weights(latest_checkpoint)
 
-        mlflow.set_experiment('BaseModel')
-        with mlflow.start_run(run_name='BaseModel'):
+        if mlflow.get_experiment_by_name(self.experiment_name) is None:
+
+            mlflow.create_experiment(self.experiment_name, self.experiment_uri)
+        else:
+            mlflow.set_experiment(self.experiment_name)
+        with mlflow.start_run():
             mlflow.tensorflow.autolog(every_n_iter=5, log_models=True, disable=False, exclusive=False,
                                       disable_for_unsupported_versions=False, silent=True)
             history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
