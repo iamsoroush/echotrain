@@ -24,6 +24,9 @@ model:
   metrics: ["dice_coef", "iou", "acc"]
 
 pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
   normalization: True
   augmentation:
     rotation_range: 0
