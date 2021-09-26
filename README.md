@@ -12,7 +12,7 @@ Also, Inference class could be used to perform the required processing to prepar
 
 ![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/raw/aboutme/attachments/data_ingestion.drawio.png)
 
-![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/blob/aboutme/attachments/data_ingestion.drawio.png)
+![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/raw/aboutme/attachments/training.drawio.png)
 
 # Installation
 
