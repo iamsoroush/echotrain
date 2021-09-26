@@ -58,7 +58,10 @@ class ModelBase:
         :param checkpoint_path: path to .hdf5 file
         """
 
-        raise Exception('not implemented')
+        model = self.get_model_graph()
+        model.load_weights(checkpoint_path)
+
+        return model
 
     def post_process(self, predicted):
 
