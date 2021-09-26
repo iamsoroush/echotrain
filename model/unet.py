@@ -192,7 +192,7 @@ class UNet(ModelBase):
     #     return -1 * (self._dice_coef(y_true, y_pred))
 
 
-def iou_coef(y_true, y_pred, smooth=1, threshlod=0.5):
+def iou_coef(y_true, y_pred, smooth=1):
     """
 
     :param y_true: label image from the dataset
@@ -201,11 +201,13 @@ def iou_coef(y_true, y_pred, smooth=1, threshlod=0.5):
     :return:calculate Intersection over Union for y_true and y_pred
     """
 
+    threshlod = 0.5
+
     y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
 
-    intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=-1)
-    union = K.sum(K.abs(y_true) + K.abs(y_pred_thresholded), axis=-1) - intersection
-    iou = (intersection + smooth) / (union + smooth)
+    intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=[1, 2])
+    union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2]) - intersection
+    iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
     return iou
 
 
@@ -221,10 +223,12 @@ def dice_coef(y_true, y_pred):
     smooth = 1
     threshold = 0.5
 
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.cast(K.flatten(y_pred) > threshold, tf.float32)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+    y_pred_thresholded = K.cast(y_pred > threshold, tf.float32)
+
+    intersection = K.sum(y_true * y_pred_thresholded, axis=[1, 2])
+    union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2])
+    dice = K.mean((2. * intersection + smooth)/(union + smooth), axis=0)
+    return dice
 
 
 def dice_coef_loss(y_true, y_pred):
