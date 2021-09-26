@@ -4,7 +4,6 @@ from skimage.color import rgb2gray
 
 
 class PreProcessor:
-
     """
      PreProcess module used for images, batches, generators
 
@@ -33,18 +32,23 @@ class PreProcessor:
         self.augmentation = config.pre_process.augmentation
         self.aug_rotation_range = self.augmentation.rotation_range
 
-    def img_preprocess(self, image):
+    def img_preprocess(self, image, inference=False):
 
         """
         pre-processing on input image
 
         :param image: input image, np.array
+        :param inference: resize if the user is in inference phase
 
         :return: pre_processed_img
         """
 
         pre_processed_img = image.copy()
         # converting the images to grayscale
+
+        if inference:
+            pre_processed_img = self._resizing(pre_processed_img)
+
         if image.shape[-1] != 1:
             pre_processed_img = self._convert_to_gray(image)
 
@@ -104,10 +108,10 @@ class PreProcessor:
         :return: resized image
         """
 
-        image_resized = np.array(image.resize(image,
-                                              self.target_size,
-                                              antialias=False,
-                                              method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
+        image_resized = np.array(tf.image.resize(image,
+                                                 self.target_size,
+                                                 antialias=False,
+                                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
         return image_resized
 
     @staticmethod
@@ -146,7 +150,6 @@ class PreProcessor:
 
 
 class PreProcessedGen(tf.keras.utils.Sequence):
-
     """
     this class makes the class PreProcessor output, a generator and makes it suitable to fit to the model
 
@@ -156,7 +159,6 @@ class PreProcessedGen(tf.keras.utils.Sequence):
     """
 
     def __init__(self, generator, pre_processing):
-
         """
         :param generator: the output of the dataset_generator,generator <Class dataset_generator>
         :param pre_processing: preprocessing functions from the class PreProcessor
@@ -166,7 +168,6 @@ class PreProcessedGen(tf.keras.utils.Sequence):
         self.pre_processing = pre_processing
 
     def __len__(self):
-
         """
         :return: number of the batches per epoch
         """
@@ -174,7 +175,6 @@ class PreProcessedGen(tf.keras.utils.Sequence):
         return self.generator.get_n_iter()
 
     def __getitem__(self, idx):
-
         """
         :param idx: the index of the batch
         :return: preprocessed_batch
@@ -185,7 +185,6 @@ class PreProcessedGen(tf.keras.utils.Sequence):
         return preprocessed_batch
 
     def on_epoch_end(self):
-
         """
         :return: shuffle at the end of each epoch
         """
@@ -193,13 +192,11 @@ class PreProcessedGen(tf.keras.utils.Sequence):
         self.generator.on_epoch_end()
 
     def __next__(self):
-
         """create a generator that iterate over the Sequence."""
 
         return self.next()
 
     def next(self):
-
         """
         Create iteration through batches of the generator
         :return: next batch, np.ndarray
@@ -209,13 +206,11 @@ class PreProcessedGen(tf.keras.utils.Sequence):
         return self.__getitem__(index)
 
     def reset(self):
-
         """reset indexes for iteration"""
 
         self.generator.reset()
 
     def random_visualization(self):
-
         """random visualization of an image"""
 
         # choosing random image from dataset random indexes
