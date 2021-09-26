@@ -107,7 +107,10 @@ class Trainer:
 
     def export(self):
 
-        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory"""
+        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory
+
+        :returns exported_dir
+        """
 
         metric, mode = self.export_config.metric, self.export_config.mode
         metric_number = self.evaluation_metrics.index(metric)
@@ -130,4 +133,8 @@ class Trainer:
             os.makedirs(dst)
         print(chp_addr)
         copy(chp_addr, dst+'/'+selected_checkpoint)
-        copy('../config/config_example.yaml', dst+'/config.yaml')
+
+        config_file_name = [i for i in os.listdir(self.base_dir) if i.endswith('.yaml')][0]
+        copy(os.path.join(self.base_dir, config_file_name), dst+'/config.yaml')
+
+        return dst
