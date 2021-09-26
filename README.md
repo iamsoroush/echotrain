@@ -16,6 +16,7 @@ Four classes mainly used for training process:
 * **PreProcessor**: Perform required processes before using the data generators in training
 * **Model**: Define and compile the model that wants to be trained
 * **Trainer**: Train the given model based on the inputs and store tensorboard and mlflow logs
+
 ![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/raw/aboutme/attachments/training.drawio.png)
 
 # Installation
