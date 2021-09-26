@@ -37,7 +37,7 @@ class EchoInference:
         :returns preprocessed_image: this image is ready for processing
         """
 
-        return self.preprocessor.pre_process(image)
+        return self.preprocessor.img_preprocess(image, inference=True)
 
     def process(self, pre_processed_image):
 
@@ -59,7 +59,7 @@ class EchoInference:
         :returns final_result: ready-to-go result
         """
 
-        raise self.model_obj.post_process(processed_image)
+        return self.model_obj.post_process(processed_image)
 
     def _check_config_file(self, base_dir):
 
