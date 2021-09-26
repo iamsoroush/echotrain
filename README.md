@@ -10,9 +10,9 @@ This repository mainly used four files for training process:
 
 Also, Inference class could be used to perform the required processing to prepare data for the model and then do the lv semantic segmentation based on the trained model
 
-![alt text](https://gitlab.aimedic.co/soroush.moazed/echotrain/-/blob/aboutme/attachments/training.drawio.png)
+![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/raw/aboutme/attachments/data_ingestion.drawio.png)
 
-![alt text](https://gitlab.aimedic.co/soroush.moazed/echotrain/-/blob/aboutme/attachments/data_ingestion.drawio.png)
+![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/blob/aboutme/attachments/data_ingestion.drawio.png)
 
 # Installation
 
