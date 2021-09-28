@@ -46,4 +46,4 @@ trainer:
     mode: "min"
   mlflow:
     tracking_uri: 'echotrain/config'
-    experiment_name: 'unet'
+    experiment_name: 'echo'
