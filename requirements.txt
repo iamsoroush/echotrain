@@ -1,7 +1,7 @@
 tensorflow-gpu
 imageio==2.9.0
-matplotlib==3.3.3
-numpy==1.19.5
+matplotlib==3.4.2
+numpy==1.20.3
 scikit-image==0.18.3
 scikit-learn==0.24.2
 segmentation-models==1.0.1
