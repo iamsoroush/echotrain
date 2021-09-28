@@ -37,8 +37,13 @@ class CAMUSDataset(DatasetBase):
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
-        // changing from "input_res" to "input_size"
         """
+
+        self.c4h = config.data_handler.dataset_features.c4h
+        self.c2h = config.data_handler.dataset_features.c2h
+        self.ed = config.data_handler.dataset_features.ed
+        self.es = config.data_handler.dataset_features.es
+        self.image_quality = config.data_handler.dataset_features.image_quality
 
         super(CAMUSDataset, self).__init__(config)
         self.batch_size = config.data_handler.batch_size
@@ -115,27 +120,52 @@ class CAMUSDataset(DatasetBase):
         """
 
         dataset_dir = self.dataset_dir
+        x_dir = []
+        y_dir = []
 
-        # Directory list of the A4C view of the ED ( End Diastole ) frame images.
-        # x_4ch_ed_dir: list[str]
-        # y_4ch_ed_dir: list[str]
-        x_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED.mhd'))  # images directory
-        y_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED_gt.mhd'))  # segmentation labels directory
+        if self.c4h:
+            if self.ed:
 
-        # Directory list of the A4C view of the ES ( End Systole ) frame images.
-        # x_4ch_es_dir: list[str]
-        # y_4ch_es_dir: list[str]
-        x_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES.mhd'))  # images directory
-        y_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES_gt.mhd'))  # segmentation labels directory
+                # Directory list of the A4C view of the ED ( End Diastole ) frame images.
+                # x_4ch_ed_dir: list[str]
+                # y_4ch_ed_dir: list[str]
+                x_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED.mhd'))  # images directory
+                y_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED_gt.mhd'))  # segmentation labels directory
+                x_dir = np.concatenate((x_dir, x_4ch_ed_dir), axis=0)
+                y_dir = np.concatenate((y_dir, y_4ch_ed_dir), axis=0)
 
-        # Concatenating ES and ED images and labels
-        x_4ch_dir = np.concatenate((x_4ch_ed_dir, x_4ch_es_dir), axis=0)
-        y_4ch_dir = np.concatenate((y_4ch_ed_dir, y_4ch_es_dir), axis=0)
+            if self.es:
+                # Directory list of the A4C view of the ES ( End Systole ) frame images.
+                # x_4ch_es_dir: list[str]
+                # y_4ch_es_dir: list[str]
+                x_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES.mhd'))  # images directory
+                y_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES_gt.mhd'))  # segmentation labels directory
+                x_dir = np.concatenate((x_dir, x_4ch_es_dir), axis=0)
+                y_dir = np.concatenate((y_dir, y_4ch_es_dir), axis=0)
 
-        list_images_dir = x_4ch_dir
+        if self.c2h:
+            if self.ed:
+                # Directory list of the A2C view of the ED ( End Diastole ) frame images.
+                # x_2ch_ed_dir: list[str]
+                # y_2ch_ed_dir: list[str]
+                x_2ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_2CH_ED.mhd'))  # images directory
+                y_2ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_2CH_ED_gt.mhd'))  # segmentation labels directory
+                x_dir = np.concatenate((x_dir, x_2ch_ed_dir), axis=0)
+                y_dir = np.concatenate((y_dir, y_2ch_ed_dir), axis=0)
+
+            if self.es:
+                # Directory list of the A2C view of the ES ( End Systole ) frame images.
+                # x_2ch_es_dir: list[str]
+                # y_2ch_es_dir: list[str]
+                x_2ch_es_dir = glob(os.path.join(dataset_dir, '*/*_2CH_ES.mhd'))  # images directory
+                y_2ch_es_dir = glob(os.path.join(dataset_dir, '*/*_2CH_ES_gt.mhd'))  # segmentation labels directory
+                x_dir = np.concatenate((x_dir, x_2ch_es_dir), axis=0)
+                y_dir = np.concatenate((y_dir, y_2ch_es_dir), axis=0)
+
+        list_images_dir = x_dir
         list_labels_dir = {}
-        for i in range(len(y_4ch_dir)):
-            list_labels_dir[x_4ch_dir[i]] = y_4ch_dir[i]
+        for i in range(len(y_dir)):
+            list_labels_dir[x_dir[i]] = y_dir[i]
 
         return list_images_dir, list_labels_dir
 
@@ -183,6 +213,7 @@ class CAMUSDataset(DatasetBase):
 
         # set train size by split_ratio var
         train_size = round(len(x) * split_ratio)
+
         # splitting
         x_train = x[:train_size]
         y_train = dict(list(y.items())[:train_size])

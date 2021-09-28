@@ -5,7 +5,7 @@ from skimage.color import rgb2gray
 
 class PreProcessor:
     """
-     PreProcess module used for images, batches, generators
+    PreProcess module used for images, batches, generators
 
     HOW TO:
     preprocessor = PreProcess()
@@ -26,37 +26,50 @@ class PreProcessor:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.target_size = (self.input_h, self.input_w)
-        # self.max = config.pre_process.max
-        # self.min = config.pre_process.min
+        self.max = config.pre_process.max
+        self.min = config.pre_process.min
+        self.resizing = config.pre_process.resizing
         self.normalization = config.pre_process.normalization
         self.augmentation = config.pre_process.augmentation
-        self.aug_rotation_range = self.augmentation.rotation_range
+        self.rotation_range = self.augmentation.rotation_range
 
-    def img_preprocess(self, image, inference=False):
-
+    def img_preprocess(self, image):
         """
         pre-processing on input image
 
         :param image: input image, np.array
-        :param inference: resize if the user is in inference phase
 
-        :return: pre_processed_img
+        :return: pre-processed-img
         """
-
         pre_processed_img = image.copy()
+
+        # resizing
+        if self.resizing:
+            pre_processed_img = self.resize(pre_processed_img)
+
         # converting the images to grayscale
-
-        if inference:
-            pre_processed_img = self._resizing(pre_processed_img)
-
-        if image.shape[-1] != 1:
-            pre_processed_img = self._convert_to_gray(image)
+        if image.shape[-1] != 1 and len(image.shape) != 2:
+            pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # normalization on the given image
         if self.normalization:
-            pre_processed_img = self._rescaling(image, 0, 255)
+            pre_processed_img = self._rescaling(pre_processed_img, self.min, self.max)
 
         return pre_processed_img
+
+    def label_preprocess(self, label):
+        """
+        pre-processing on input label
+
+        :param label: input label, np.array
+
+        :return: pre-processed label
+        """
+        # resizing
+        if self.resizing:
+            label = self.resize(label[:, :, tf.newaxis])
+
+        return label
 
     def batch_preprocess(self, batch):
 
@@ -77,8 +90,9 @@ class PreProcessor:
 
         # pre-processing every image of the batch given
         x_preprocessed_batch = np.array(list(map(self.img_preprocess, x)))
-        # the labels of the batches do not need pre-processing (yet!)
-        y_preprocessed_batch = y
+
+        # the labels of the batches do not need pre-processing (except for resizing if it is true)
+        y_preprocessed_batch = np.array(list(map(self.label_preprocess, y)))
 
         return x_preprocessed_batch, y_preprocessed_batch
 
@@ -98,8 +112,7 @@ class PreProcessor:
         # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
         # return pre_processed_gen
 
-    def _resizing(self, image):
-
+    def _resize(self, image):
         """
         resizing image into the target_size dimensions
 

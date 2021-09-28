@@ -14,6 +14,21 @@ data_handler:
   to_fit: True
   shuffle: True
   seed: 101
+  dataset_features:
+    c4h: True
+    c2h: True
+    es: True
+    ed: True
+    image_quality: ["poor", "medium", "good"]
+
+pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
+  resizing: True
+  normalization: True
+  augmentation:
+    rotation_range: 0
 
 model:
   name: "unet"
@@ -22,14 +37,6 @@ model:
     initial_lr: 0.001
   loss_type: "binary_crossentropy"
   metrics: ["dice_coef", "iou", "acc"]
-
-pre_process:
-  format: "gray_scale"
-  max: 255
-  min: 0
-  normalization: True
-  augmentation:
-    rotation_range: 0
 
 trainer:
   epochs: 100
