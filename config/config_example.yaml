@@ -22,6 +22,7 @@ model:
     initial_lr: 0.001
   loss_type: "binary_crossentropy"
   metrics: ["dice_coef", "iou", "acc"]
+  infernce_threshold: 0.5
 
 pre_process:
   format: "gray_scale"
