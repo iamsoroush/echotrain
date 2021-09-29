@@ -17,18 +17,11 @@ class ModelBase:
 
         """
 
-        # self.name = config.name
-        # self.input_h = config.input_h
-        # self.input_w = config.input_w
-        # self.optimizer_type = config.model.optimizer.type
-        # self.learning_rate = config.model.optimizer.initial_lr
-        # self.loss_type = config.model.loss_type
-        # self.metrics = config.model.metrics
         self.config = config
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.n_channels = config.n_channels
-        self.inference_threshold = 0.5
+        self.inference_threshold = config.model.inference_threshold
 
     def generate_training_model(self):
 
