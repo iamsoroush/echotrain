@@ -73,10 +73,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         batch_image_dir = [k for k in self.list_images_dir[indexes]]
         x = self.generate_x(batch_image_dir)
 
-        # # returning the data using the selected indexes
+        # returning the data using the selected indexes
         if self.to_fit:
             y = self.generate_y(batch_image_dir)
-            # y = self.y[indexes]
             return x, y
         else:
             return x

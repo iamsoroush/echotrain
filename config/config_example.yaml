@@ -8,18 +8,18 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "/content/training"
-  batch_size: 8
+  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
+  batch_size: 20
   split_ratio: 0.9
   to_fit: True
   shuffle: True
   seed: 101
   dataset_features:
-    c4h: True
-    c2h: True
-    es: True
-    ed: True
-    image_quality: ["poor", "medium", "good"]
+    age: [50, 60]
+    sex: ["M", "F"]
+    stage: ["ES", "ED"]
+    image_quality: ["Poor", "Medium", "Good"]
+    view: ["4CH", "2CH"]
 
 pre_process:
   format: "gray_scale"

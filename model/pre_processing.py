@@ -45,7 +45,7 @@ class PreProcessor:
 
         # resizing
         if self.resizing:
-            pre_processed_img = self.resize(pre_processed_img)
+            pre_processed_img = self._resize(pre_processed_img)
 
         # converting the images to grayscale
         if image.shape[-1] != 1 and len(image.shape) != 2:
@@ -67,7 +67,7 @@ class PreProcessor:
         """
         # resizing
         if self.resizing:
-            label = self.resize(label[:, :, tf.newaxis])
+            label = self._resize(label[:, :, tf.newaxis])
 
         return label
 
