@@ -38,6 +38,11 @@ class CAMUSDataset(DatasetBase):
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
+        age: patients between two ages in list, list
+        sex: sex of patient, can be female(F) or male(M), list
+        stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
+        view: view of the hear image, can be two chamber view(2CH) or four chamber view(4CH), list
+        image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
         """
 
         self.age = config.data_handler.dataset_features.age
@@ -146,6 +151,10 @@ class CAMUSDataset(DatasetBase):
         return list_images_dir, list_labels_dir
 
     def get_data_frame(self):
+        """
+
+        :return pandas.DataFrame of all features of each data in dataset
+        """
         return self.df_dataset
 
     def _build_data_frame(self):
