@@ -1,5 +1,6 @@
 from tensorflow.keras import backend as K
 import tensorflow as tf
+import numpy as np
 
 
 def iou_coef(y_true, y_pred, smooth=1):
@@ -8,10 +9,23 @@ def iou_coef(y_true, y_pred, smooth=1):
     :param y_pred: model segmented image prediction
     :param smooth:
     :return:calculate Intersection over Union for y_true and y_pred
+    the input shape should be (w , h)
     """
 
-    threshlod = 0.5
+    #  keras uses float32 instead of float64,
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
 
+    # this method is needs  y_true and y_pred shape to be (b , w , h , n)
+    # b for number of images (batches)-
+    # w = width,
+    # h = height,
+    # n = number of classes
+    y_true, y_pred = np.expand_dims(y_true, 0), np.expand_dims(y_pred, 0)
+    y_true, y_pred = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
+
+    # our input y_pred is softmax prediction so we change it to 0 ,1 classes
+    threshlod = 0.5
     y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
 
     intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=[1, 2])
