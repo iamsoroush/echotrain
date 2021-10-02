@@ -28,8 +28,9 @@ pre_process:
   max: 255
   min: 0
   normalization: True
-  augmentation:
+  augmentation: True
     rotation_range: 0
+    contrast: True
 
 trainer:
   epochs: 100

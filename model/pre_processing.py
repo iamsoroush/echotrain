@@ -151,7 +151,23 @@ class PreProcessor:
 
 
 class Augmentation:
+    """
+    This class is implementing augmentation on the batches of data
+
+    How to:
+    aug = Augmentation()
+    data = aug.batch_augmentation(x,y)
+    x = images(batch)
+    y = masks(batch)
+    data = augmented batch
+    """
     def __init__(self, config):
+        """
+        augmenation: if augmentation is needed, this must be True in config file
+        rotation range: the range limitation for rotation in augmentation
+        contrast: if the contrast is needed, this must be True in config file
+        batch_size: the size of batches in the data_handler part of config file
+        """
         self.config= config
         self.augmentation= self.config.pre_process.augmentation
         self.rotation_range = self.augmentation.rotation_range
@@ -159,16 +175,28 @@ class Augmentation:
         self.batch_size = self.config.data_handler.batch_size
 
     def batch_augmentation(self, x, y):
+        """
+        this function implement augmentation on batches
+        :param x: batch images of the whole batch
+        :param y: batch masks of the whole batch
+        :return: x, y: the image and mask batches.
+        """
+        #changing the type of the images for albumentation
+        x = x.astype('float32')
 
+        #whether contrast is needed ro not
         if self.contrast :
             self.probability_contrast = 1
         else:
             self.probability_contrast = 0
 
+        #implementing augmentation
         transform = A.Compose([
             A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.7, p=self.probability_contrast),
             A.ShiftScaleRotate(0, 0, rotate_limit=self.rotation_range, p=1)
         ])
+
+        #implementing augmentation on every image and mask of the batch
         for i in range(self.batch_size):
             transformed = transform(image=x[i], mask=y[i])
             x[i] = transformed['image']
@@ -176,9 +204,12 @@ class Augmentation:
 
         return x, y
 
-    def aug(self):
-
     def add_augmentation(self, generator):
+        """
+        calling the batch_augmentation
+        :param generator: the input of this class must be generator
+        :yield: the batches of the augmented generator
+        """
 
         while True:
             batch = next(generator)
