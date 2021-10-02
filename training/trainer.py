@@ -98,7 +98,7 @@ class Trainer:
         #     mlflow.set_experiment(self.mlflow_experiment_name)
         # with mlflow.start_run():
         with active_run:
-            mlflow.tensorflow.autolog(every_n_iter=5,
+            mlflow.tensorflow.autolog(every_n_iter=1,
                                       log_models=False,
                                       disable=False,
                                       exclusive=False,
