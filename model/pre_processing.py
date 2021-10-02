@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
+import albumentations as A
 
 
 class PreProcessor:
@@ -149,6 +150,42 @@ class PreProcessor:
         raise Exception('not implemented')
 
 
+class Augmentation:
+    def __init__(self, config):
+        self.config= config
+        self.augmentation= self.config.pre_process.augmentation
+        self.rotation_range = self.augmentation.rotation_range
+        self.contrast= self.augmentation.contrast
+        self.batch_size = self.config.data_handler.batch_size
+
+    def batch_augmentation(self, x, y):
+
+        if self.contrast :
+            self.probability_contrast = 1
+        else:
+            self.probability_contrast = 0
+
+        transform = A.Compose([
+            A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.7, p=self.probability_contrast),
+            A.ShiftScaleRotate(0, 0, rotate_limit=self.rotation_range, p=1)
+        ])
+        for i in range(self.batch_size):
+            transformed = transform(image=x[i], mask=y[i])
+            x[i] = transformed['image']
+            y[i] = transformed['mask']
+
+        return x, y
+
+    def aug(self):
+
+    def add_augmentation(self, generator):
+
+        while True:
+            batch = next(generator)
+            augmented_batch = self.batch_augmentation(batch[0], batch[1])
+            yield augmented_batch
+
+
 class PreProcessedGen(tf.keras.utils.Sequence):
     """
     this class makes the class PreProcessor output, a generator and makes it suitable to fit to the model
@@ -222,3 +259,4 @@ class PreProcessedGen(tf.keras.utils.Sequence):
 
         # setting a two-frame-image to plotting both the image and its segmentation labels
         self.generator.visualization(random_image, image_label)
+
