@@ -1,9 +1,10 @@
-from tensorflow import keras
-from shutil import copy
-import mlflow
-from mlflow.tracking import MlflowClient
 import os
 import re
+from shutil import copy
+
+from tensorflow import keras
+import mlflow
+from mlflow.tracking import MlflowClient
 
 
 class Trainer:
@@ -148,8 +149,8 @@ class Trainer:
         self.callbacks_config = config.trainer.callbacks
         self.evaluation_metrics = self.callbacks_config.checkpoints.evaluation_metrics
         self.export_config = config.trainer.export
-        self.checkpoints_addr = self.base_dir + '/checkpoints'
-        self.tensorboard_log = self.base_dir + '/logs'
+        self.checkpoints_addr = os.path.join(self.base_dir, 'checkpoints')
+        self.tensorboard_log = os.path.join(self.base_dir, 'logs')
 
         # MLFlow
         self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
