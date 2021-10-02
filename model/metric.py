@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 
 
-def iou_coef(y_true, y_pred , threshlod=0.5):
+def iou_coef(y_true, y_pred, threshlod=0.5):
     """
     :param y_true: label image from the dataset
     :param y_pred: model segmented image prediction
@@ -48,7 +48,7 @@ def soft_iou(y_true, y_pred ):
 
     smooth = .001
 
-    intersection = K.sum(K.abs(y_true * y_pred, axis=axis))
+    intersection = K.sum(K.abs(y_true * y_pred), axis=axis)
     union = K.sum(y_true, axis=axis) + K.sum(y_pred, axis=axis) - intersection
     iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
     return iou
