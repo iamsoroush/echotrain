@@ -134,7 +134,7 @@ class Trainer:
             selected_model = max(model_info, key=model_info.get)
         selected_checkpoint = checkpoints[int(selected_model)-1]
         chp_addr = os.path.join(self.checkpoints_addr, selected_checkpoint)
-        dst = os.path.join(self.base_dir + 'exported')
+        dst = os.path.join(self.base_dir, 'exported')
         if not os.path.isdir(dst):
             os.makedirs(dst)
         copy(chp_addr, os.path.join(dst, selected_checkpoint))
