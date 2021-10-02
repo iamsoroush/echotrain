@@ -76,7 +76,7 @@ class UNetBaseline(ModelBase):
             output_shape:(input_h, input_w, 1)
         """
 
-        input_tensor = tfk.Input((self.input_h, self.input_w, self.n_channels))
+        input_tensor = tfk.Input((self.input_h, self.input_w, self.n_channels), name='input_tensor')
 
         # Encoder
         connection1, x = self._encoder_block(48, 1)(input_tensor)
