@@ -1,10 +1,10 @@
-from .model_base import ModelBase
+from model_base import ModelBase
 # from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
 from scipy.spatial.distance import directed_hausdorff
-
+import tensorflow.keras.backend as K
 
 class UNet(ModelBase):
 
@@ -127,11 +127,11 @@ class UNet(ModelBase):
         """
         metrics = []
         if 'iou' in self.metrics:
-            metrics.append(iou_coef)
+            metrics.append(self._iou_coef)
         if 'acc' in self.metrics:
             metrics.append('acc')
         if 'dice_coef' in self.metrics:
-            metrics.append(dice_coef)
+            metrics.append(self._dice_coef)
         if '2d_hausdorff' in self.metrics:
             metrics.append(directed_hausdorff)
         return metrics
@@ -152,42 +152,39 @@ class UNet(ModelBase):
         if self.loss_type == 'binary_crossentropy':
             return 'binary_crossentropy'
         if self.loss_type == 'dice_coef_loss':
-            return dice_coef_loss
+            return self._dice_coef_loss
 
-    # def _iou_coef(self, y_true, y_pred, smooth=1):
-    #     """
-    #
-    #     :param y_true: label image from the dataset
-    #     :param y_pred: model segmented image prediction
-    #     :param smooth:
-    #     :return:calculate Intersection over Union for y_true and y_pred
-    #     """
-    #     intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-    #     union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
-    #     iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
-    #     return iou
-    #
-    # def _dice_coef(self, y_true, y_pred, smooth=1):
-    #     """
-    #
-    #     :param y_true: label image from the dataset
-    #     :param y_pred: model segmented image prediction
-    #     :param smooth:
-    #     :return: calculate dice coefficient between y_true and y_pred
-    #     """
-    #     y_true_f = K.flatten(y_true)
-    #     y_pred_f = K.flatten(y_pred)
-    #     intersection = K.sum(y_true_f * y_pred_f)
-    #     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-    #
-    # def _dice_coef_loss(self, y_true, y_pred):
-    #     """
-    #
-    #     :param y_true: label image from the dataset
-    #     :param y_pred: model segmented image prediction
-    #     :return: dice coefficient loss function
-    #     """
-    #     return -1 * (self._dice_coef(y_true, y_pred))
+    def _iou_coef(self, y_true, y_pred, smooth=1):
+        """
 
+         :param y_true: label image from the dataset
+         :param y_pred: model segmented image prediction
+         :param smooth:
+         :return:calculate Intersection over Union for y_true and y_pred
+         """
+        intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+        union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
+        iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
+        return iou
 
+    def _dice_coef(self, y_true, y_pred, smooth=1):
+        """
 
+         :param y_true: label image from the dataset
+         :param y_pred: model segmented image prediction
+         :param smooth:
+         :return: calculate dice coefficient between y_true and y_pred
+         """
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        intersection = K.sum(y_true_f * y_pred_f)
+        return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+    def _dice_coef_loss(self, y_true, y_pred):
+        """
+
+         :param y_true: label image from the dataset
+         :param y_pred: model segmented image prediction
+         :return: dice coefficient loss function
+         """
+        return -1 * (self._dice_coef(y_true, y_pred))
