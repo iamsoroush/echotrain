@@ -1,5 +1,5 @@
-input_h: 128
-input_w: 128
+input_h: 256
+input_w: 256
 n_channels: 1
 
 model_class: model.unet.UNet
@@ -33,7 +33,7 @@ pre_process:
     rotation_range: 0
 
 trainer:
-  epochs: 100
+  epochs: 30
 #  checkpoints_dir: "./checkpoints"
 #  logs_dir: "./logs"
   callbacks:

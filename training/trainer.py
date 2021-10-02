@@ -98,8 +98,12 @@ class Trainer:
         #     mlflow.set_experiment(self.mlflow_experiment_name)
         # with mlflow.start_run():
         with active_run:
-            mlflow.tensorflow.autolog(every_n_iter=5, log_models=False, disable=False, exclusive=False,
-                                      disable_for_unsupported_versions=False, silent=True)
+            mlflow.tensorflow.autolog(every_n_iter=5,
+                                      log_models=False,
+                                      disable=False,
+                                      exclusive=False,
+                                      disable_for_unsupported_versions=False,
+                                      silent=False)
             with open(self.run_id_path, 'w') as f:
                 f.write(active_run.info.run_id)
             history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
