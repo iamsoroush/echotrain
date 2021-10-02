@@ -50,11 +50,11 @@ class PreProcessor:
             pre_processed_img = self._resizing(pre_processed_img)
 
         if image.shape[-1] != 1:
-            pre_processed_img = self._convert_to_gray(image)
+            pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # normalization on the given image
         if self.normalization:
-            pre_processed_img = self._rescaling(image, 0, 255)
+            pre_processed_img = self._rescaling(pre_processed_img, 0, 255)
 
         return pre_processed_img
 

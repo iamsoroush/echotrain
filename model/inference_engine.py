@@ -3,6 +3,7 @@ from pydoc import locate
 
 import yaml
 import numpy as np
+import tensorflow as tf
 
 
 class EchoInference:
@@ -28,11 +29,29 @@ class EchoInference:
         self.model_obj, self.model = self._load_model(exported_dir)
         self.preprocessor = self._load_preprocessor()
 
+    def do(self, image):
+
+        """Pre-process, process, post-process and resize input image.
+
+        :param image: gray(0, 255) of shape(org_h, org_w, 1)
+        :returns result: gray(0, 255) of shape(org_h, org_w, 1)
+        """
+
+        res = self.pre_process(image)
+        res = self.process(res)
+        res = self.post_process(res)
+
+        res = np.array(tf.image.resize(res,
+                                       image.shape[:2],
+                                       antialias=False,
+                                       method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
+        return res
+
     def pre_process(self, image):
 
         """Preprocesses input image in order to make predictions, same as training-time pre-processing.
 
-        :param image: rgb(0, 255) image
+        :param image: grayscale(0, 255) image of shape (h_org, w_org, 1)
 
         :returns preprocessed_image: this image is ready for processing
         """
