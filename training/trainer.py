@@ -133,15 +133,14 @@ class Trainer:
         else:
             selected_model = max(model_info, key=model_info.get)
         selected_checkpoint = checkpoints[int(selected_model)-1]
-        chp_addr = self.checkpoints_addr+'/'+selected_checkpoint
-        dst = self.base_dir + '/exported'
+        chp_addr = os.path.join(self.checkpoints_addr, selected_checkpoint)
+        dst = os.path.join(self.base_dir + 'exported')
         if not os.path.isdir(dst):
             os.makedirs(dst)
-        print(chp_addr)
-        copy(chp_addr, dst+'/'+selected_checkpoint)
+        copy(chp_addr, os.path.join(dst, selected_checkpoint))
 
         config_file_name = [i for i in os.listdir(self.base_dir) if i.endswith('.yaml')][0]
-        copy(os.path.join(self.base_dir, config_file_name), dst+'/config.yaml')
+        copy(os.path.join(self.base_dir, config_file_name), os.path.join(dst, 'config.yaml'))
 
         return dst
 
