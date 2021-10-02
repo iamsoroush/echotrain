@@ -46,5 +46,6 @@ trainer:
     metric: "val_loss"
     mode: "min"
   mlflow:
-    tracking_uri: 'echotrain/config'
-    experiment_name: 'echo'
+    tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
+    experiment_name: 'echo_seg'
+    run_name: 'baseline-0'
