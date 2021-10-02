@@ -154,7 +154,7 @@ class Trainer:
 
         # MLFlow
         self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
-        self.mlflow_experiment_name = config.trainer.mlflow.mlflow_experiment_name
+        self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
         self.run_name = config.trainer.mlflow.run_name
         self.run_id_path = os.path.join(self.base_dir, 'run_id.txt')
 
