@@ -8,12 +8,28 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "/content/training"
-  batch_size: 8
+  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
+  batch_size: 20
   split_ratio: 0.9
   to_fit: True
   shuffle: True
   seed: 101
+  dataset_features:
+    age: [50, 60]
+    sex: ["M", "F"]
+    stage: ["ES", "ED"]
+    image_quality: ["Poor", "Medium", "Good"]
+    view: ["4CH", "2CH"]
+
+pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
+  resizing: True
+  normalization: True
+  augmentation:
+    rotation_range: 0
+    contrast: True
 
 model:
   name: "unet"
@@ -22,15 +38,6 @@ model:
     initial_lr: 0.001
   loss_type: "binary_crossentropy"
   metrics: ["dice_coef", "iou", "acc"]
-
-pre_process:
-  format: "gray_scale"
-  max: 255
-  min: 0
-  normalization: True
-  augmentation:
-    rotation_range: 0
-    contrast: True
 
 trainer:
   epochs: 100
