@@ -73,10 +73,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         batch_image_dir = [k for k in self.list_images_dir[indexes]]
         x = self.generate_x(batch_image_dir)
 
-        # # returning the data using the selected indexes
+        # returning the data using the selected indexes
         if self.to_fit:
             y = self.generate_y(batch_image_dir)
-            # y = self.y[indexes]
             return x, y
         else:
             return x
@@ -131,8 +130,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_index += 1
         yield batch_index
 
-    def generate_x(self, dir_list):
-
+    @staticmethod
+    def generate_x(dir_list):
         """
         reads A4C view images of CAMUS dataset
 
@@ -144,14 +143,12 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading images of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # X_4CH_ED: list[numpy.ndarray]
-        x_4_ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                          dir_list))
+        x_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+                         dir_list))
 
-        # Pre-processing labels
-        # X_4CH_ED_resized: list[numpy.ndarray]
-        x_4_ch_preprocessed = np.array(list(map(self.resizing, x_4_ch)))
+        x_4ch_data = np.array(x_4ch, dtype=object)
 
-        return x_4_ch_preprocessed.astype('float64')
+        return x_4ch_data
 
     def generate_y(self, dir_list):
 
@@ -165,17 +162,19 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
-        # y_4_ch: list[numpy.ndarray]
-        y_4_ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
-                          [self.list_labels_dir[image_path] for image_path in dir_list]))
+        # y_4ch: list[numpy.ndarray]
+        y_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+                         [self.list_labels_dir[image_path] for image_path in dir_list]))
 
-        # Pre-processing labels
-        # X_4CH_ED_resized: list[numpy.ndarray]
-        y_4_ch_preprocessed = np.array(list(map(self.resizing, y_4_ch)))
         # to categorical
-        y_4_ch_preprocessed = to_categorical(y_4_ch_preprocessed)
+        y_4ch_cat = [to_categorical(y) for y in y_4ch]
 
-        return y_4_ch_preprocessed[:, :, :, 1]
+        # extract just left ventricle label from y_4ch_cat
+        y_4ch_lv = [y[:, :, 1] for y in y_4ch_cat]
+
+        y_4ch_data = np.array(y_4ch_lv, dtype=object)
+
+        return y_4ch_data
 
     def resizing(self, image):
 
@@ -206,6 +205,8 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         random_image = random_batch[0][random_image_index]
         image_label = random_batch[1][random_image_index]
 
+        print("image_shape: ", random_image.shape)
+        print("label_shape: ", image_label.shape)
         self.visualization(random_image, image_label)
 
     @staticmethod
