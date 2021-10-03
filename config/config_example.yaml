@@ -14,6 +14,13 @@ data_handler:
   to_fit: True
   shuffle: True
   seed: 101
+  dataset_features:
+    age: [ 50, 60 ]
+    sex: [ "M", "F" ]
+    stage: [ "ES", "ED" ]
+    image_quality: [ "Poor", "Medium", "Good" ]
+    view: [ "4CH", "2CH" ]
+
 
 model:
   name: "baseline-unet"
