@@ -181,22 +181,22 @@ class Augmentation:
         :param y: batch masks of the whole batch
         :return: x, y: the image and mask batches.
         """
-        #changing the type of the images for albumentation
+        # changing the type of the images for albumentation
         x = x.astype('float32')
 
-        #whether contrast is needed ro not
-        if self.contrast :
-            self.probability_contrast = 1
+        # whether contrast is needed ro not
+        if self.contrast:
+            probability_contrast = 1
         else:
-            self.probability_contrast = 0
+            probability_contrast = 0
 
-        #implementing augmentation
+        # implementing augmentation
         transform = A.Compose([
-            A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.7, p=self.probability_contrast),
+            A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.7, p=probability_contrast),
             A.ShiftScaleRotate(0, 0, rotate_limit=self.rotation_range, p=1)
         ])
 
-        #implementing augmentation on every image and mask of the batch
+        # implementing augmentation on every image and mask of the batch
         for i in range(self.batch_size):
             transformed = transform(image=x[i], mask=y[i])
             x[i] = transformed['image']

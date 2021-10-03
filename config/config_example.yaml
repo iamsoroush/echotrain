@@ -28,7 +28,7 @@ pre_process:
   max: 255
   min: 0
   normalization: True
-  augmentation: True
+  augmentation:
     rotation_range: 0
     contrast: True
 
