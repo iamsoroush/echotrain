@@ -74,9 +74,6 @@ def dice_coef(y_true, y_pred):
     dice = K.mean((2. * intersection + smooth)/(union + smooth), axis=0)
     return dice
 
-
-
-
 def soft_dice(y_true , y_pred ):
     y_true = K.cast(y_true, 'float32')
     y_pred = K.cast(y_pred, 'float32')
