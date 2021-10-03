@@ -38,9 +38,27 @@ class Evaluator:
                 #data_featurs.append(float(metric.soft_iou(y_true, y_pred)))
                 data_featurs.append(float(metric.dice_coef(y_true, y_pred)))
                 data_featurs.append(float(metric.soft_dice(y_true, y_pred)))
+                data_featurs.append(self._model_certainty(y_true, y_pred)[0])
+                data_featurs.append(self._model_certainty(y_true, y_pred)[1])
+                data_featurs.append(self._model_certainty(y_true, y_pred)[2])
+                data_featurs.append(self._model_certainty(y_true,y_pred)[3])
                 data_frame_numpy.append(data_featurs)
         return pd.DataFrame(data_frame_numpy, columns=['batch_index','data_index','iou_coef_loss', 'dice_coef_loss'
-                                                        ,'soft_dice_loss', 'iou_coef', 'dice_coef','soft_dice'])
+                                                        ,'soft_dice_loss', 'iou_coef', 'dice_coef','soft_dice',
+                                                       'truecertainty', 'falsecertainty','ambigous','certainty_state'])
+
+    def _model_certainty(self,y_true,y_pred):
+        dif = np.abs(y_true- y_pred)
+        truecertainty = np.count_nonzero(dif<0.3)/y_true.size
+        falsecertainty = np.count_nonzero(dif>0.7)/y_true.size
+        ambiguous=np.count_nonzero(np.logical_and(0.3<=dif,dif<=0.7))/y_true.size
+        certainty_list=[truecertainty,falsecertainty,ambiguous]
+        if np.argmax(certainty_list)==0:
+            return [truecertainty,falsecertainty,ambiguous, 'true_certain']
+        elif np.argmax(certainty_list)==1:
+            return [truecertainty, falsecertainty, ambiguous, 'false_certain']
+        elif np.argmax(certainty_list)==2:
+            return [truecertainty, falsecertainty, ambiguous, 'ambigous']
 
 
 def data_gen():
