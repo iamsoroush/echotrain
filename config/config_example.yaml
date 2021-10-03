@@ -29,7 +29,7 @@ pre_process:
   normalization: True
   augmentation:
     rotation_range: 0
-    contrast: True
+    Flip: True
 
 model:
   name: "unet"

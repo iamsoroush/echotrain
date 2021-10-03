@@ -199,14 +199,14 @@ class Augmentation:
 
         # whether contrast is needed ro not
         if self.contrast:
-            probability_contrast = 1
+            probability_contrast = 0.5
         else:
             probability_contrast = 0
 
         # implementing augmentation
         transform = A.Compose([
-            A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.7, p=probability_contrast),
-            A.ShiftScaleRotate(0, 0, rotate_limit=self.rotation_range, p=1)
+            A.Flip(p=probability_contrast),
+            A.ShiftScaleRotate(0, 0,border_mode=0, rotate_limit=self.rotation_range, p=0.5)
         ])
 
         # implementing augmentation on every image and mask of the batch
