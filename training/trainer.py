@@ -1,8 +1,10 @@
-from tensorflow import keras
-from shutil import copy
-import mlflow
 import os
 import re
+from shutil import copy
+
+from tensorflow import keras
+import mlflow
+from mlflow.tracking import MlflowClient
 
 
 class Trainer:
@@ -37,15 +39,9 @@ class Trainer:
         """
 
         self.base_dir = base_dir
-        self.epochs = config.trainer.epochs
-        self.callbacks_config = config.trainer.callbacks
-        self.evaluation_metrics = self.callbacks_config.checkpoints.evaluation_metrics
-        self.export_config = config.trainer.export
-        self.checkpoints_addr = self.base_dir + '/checkpoints'
-        self.tensorboard_log = self.base_dir + '/logs'
-        self.experiment_uri = config.trainer.mlflow.tracking_uri
-        mlflow.set_tracking_uri(f'file:{self.experiment_uri}')
-        self.experiment_name = config.trainer.mlflow.experiment_name
+        self._load_params(config)
+
+        mlflow.set_tracking_uri(f'file:{self.mlflow_tracking_uri}')
 
         if not os.path.isdir(self.checkpoints_addr):
             os.makedirs(self.checkpoints_addr)
@@ -92,14 +88,24 @@ class Trainer:
             initial_epoch = int(re.findall('model\\.([0-9]+)', latest_checkpoint.split('/')[-1])[0])
             model.load_weights(latest_checkpoint)
 
-        if mlflow.get_experiment_by_name(self.experiment_name) is None:
+        run_id = self._load_existing_run()
+        active_run = self._setup_mlflow(run_id)
 
-            mlflow.create_experiment(self.experiment_name, self.experiment_uri)
-        else:
-            mlflow.set_experiment(self.experiment_name)
-        with mlflow.start_run():
-            mlflow.tensorflow.autolog(every_n_iter=5, log_models=True, disable=False, exclusive=False,
-                                      disable_for_unsupported_versions=False, silent=True)
+        # if mlflow.get_experiment_by_name(self.mlflow_experiment_name) is None:
+        #
+        #     mlflow.create_experiment(self.mlflow_experiment_name, self.mlflow_tracking_uri)
+        # else:
+        #     mlflow.set_experiment(self.mlflow_experiment_name)
+        # with mlflow.start_run():
+        with active_run:
+            mlflow.tensorflow.autolog(every_n_iter=1,
+                                      log_models=False,
+                                      disable=False,
+                                      exclusive=False,
+                                      disable_for_unsupported_versions=False,
+                                      silent=False)
+            with open(self.run_id_path, 'w') as f:
+                f.write(active_run.info.run_id)
             history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
                                 epochs=self.epochs, validation_data=val_data_gen, validation_steps=n_iter_val,
                                 callbacks=self.my_callbacks)
@@ -107,7 +113,10 @@ class Trainer:
 
     def export(self):
 
-        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory"""
+        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory
+
+        :returns exported_dir
+        """
 
         metric, mode = self.export_config.metric, self.export_config.mode
         metric_number = self.evaluation_metrics.index(metric)
@@ -124,10 +133,70 @@ class Trainer:
         else:
             selected_model = max(model_info, key=model_info.get)
         selected_checkpoint = checkpoints[int(selected_model)-1]
-        chp_addr = self.checkpoints_addr+'/'+selected_checkpoint
-        dst = self.base_dir + '/exported'
+        chp_addr = os.path.join(self.checkpoints_addr, selected_checkpoint)
+        dst = os.path.join(self.base_dir, 'exported')
         if not os.path.isdir(dst):
             os.makedirs(dst)
-        print(chp_addr)
-        copy(chp_addr, dst+'/'+selected_checkpoint)
-        copy('../config/config_example.yaml', dst+'/config.yaml')
+        copy(chp_addr, os.path.join(dst, selected_checkpoint))
+
+        config_file_name = [i for i in os.listdir(self.base_dir) if i.endswith('.yaml')][0]
+        copy(os.path.join(self.base_dir, config_file_name), os.path.join(dst, 'config.yaml'))
+
+        return dst
+
+    def _load_params(self, config):
+
+        """Reads params from config"""
+
+        self.epochs = config.trainer.epochs
+        self.callbacks_config = config.trainer.callbacks
+        self.evaluation_metrics = self.callbacks_config.checkpoints.evaluation_metrics
+        self.export_config = config.trainer.export
+        self.checkpoints_addr = os.path.join(self.base_dir, 'checkpoints')
+        self.tensorboard_log = os.path.join(self.base_dir, 'logs')
+
+        # MLFlow
+        self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
+        self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
+        self.run_name = config.trainer.mlflow.run_name
+        self.run_id_path = os.path.join(self.base_dir, 'run_id.txt')
+
+    def _load_existing_run(self):
+
+        """Loads run_id if exists, if not, returns None"""
+
+        run_id = None
+
+        if os.path.exists(self.run_id_path):
+            with open(self.run_id_path, 'r') as f:
+                run_id = f.readline()
+
+        return run_id
+
+    def _setup_mlflow(self, run_id):
+
+        """Sets up mlflow.
+
+        tracking_uri/
+            experiment_id/
+                run1
+                run2
+                ...
+        """
+
+        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
+        client = MlflowClient(self.mlflow_tracking_uri)
+
+        if run_id is not None:
+            mlflow.set_experiment(self.mlflow_experiment_name)
+            active_run = mlflow.start_run(run_id=run_id)
+        else:
+            experiment = client.get_experiment_by_name(self.mlflow_experiment_name)
+            if experiment is not None:
+                experiment_id = experiment.experiment_id
+            else:
+                experiment_id = mlflow.create_experiment(self.mlflow_experiment_name)
+
+            active_run = mlflow.start_run(experiment_id=experiment_id, run_name=self.run_name)
+
+        return active_run

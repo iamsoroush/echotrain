@@ -1,8 +1,8 @@
-input_h: 128
-input_w: 128
+input_h: 256
+input_w: 256
 n_channels: 1
 
-model_class: model.unet.UNet
+model_class: model.baseline_unet.UNetBaseline
 preprocessor_class: model.pre_processing.PreProcessor
 dataset_class: dataset.dataset_camus.CAMUSDataset
 
@@ -16,20 +16,24 @@ data_handler:
   seed: 101
 
 model:
-  name: "unet"
+  name: "baseline-unet"
   optimizer:
     type: "adam"
-    initial_lr: 0.001
+    initial_lr: 0.0001
   loss_type: "binary_crossentropy"
   metrics: ["dice_coef", "iou", "acc"]
+  inference_threshold: 0.5
 
 pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
   normalization: True
   augmentation:
     rotation_range: 0
 
 trainer:
-  epochs: 100
+  epochs: 30
 #  checkpoints_dir: "./checkpoints"
 #  logs_dir: "./logs"
   callbacks:
@@ -42,5 +46,6 @@ trainer:
     metric: "val_loss"
     mode: "min"
   mlflow:
-    tracking_uri: 'echotrain/config'
-    experiment_name: 'unet'
+    tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
+    experiment_name: 'echo_seg'
+    run_name: 'baseline-0'

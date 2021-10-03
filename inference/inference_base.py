@@ -1,38 +1,52 @@
-import sys
 import os
-import numpy as np
-import tensorflow as tf
-
-# dataset_file_dir = 'D:\AIMedic\FinalProject_echocardiogram\echoC_Codes\source\echotrain\dataset'
-# sys.path.insert(0, dataset_dir)
-currentdir = os.path.abspath('/echotrain/model')
-sys.path.append(currentdir)
-from pre_processing import PreProcessor
+from model.base_model import UNet
+from model.pre_processing import PreProcessor
 
 
 class InferenceBase:
+    """
+    inference base class for getting the model output ready for ui
+
+    HOW TO:
+
+    inference = InferenceBase(model_dir, config)
+    pre_processed_image = inference.pre_process(image)
+    processed_image = inference.process(pre_processed_image)
+    output_image_label = inference.post_process(processed_image)
+    """
 
     def __init__(self, model_dir, config):
         """
 
-        :param model_dir:
+        :param model_dir: ?
         :param config: dictionary of {config_name: config_value}
         """
 
         self.model_dir = model_dir
         self.config = config
-        self.model = None
-        self._load_model()
 
-    @staticmethod
-    def pre_process(image):
+        # we consider the self.model_dir as the model directory which contains the "exported" file
+        exported_path = os.path.join(self.model_dir, "exported")
+
+        # check if the directory existed
+        if not os.path.isdir(exported_path):
+            raise Exception('Not a directory')
+
+        # finding the .hdf5 file
+        exported_list_dir = os.listdir(exported_path)
+        for exp_file_dir in exported_list_dir:
+            if exp_file_dir.split('.')[-1] == "hdf5":
+                self.checkpoints_dir = exp_file_dir
+                break
+
+    def pre_process(self, image):
         """Preprocesses input image in order to make predictions, same as training-time pre-processing.
 
         :param image: rgb(0, 255) image
 
         :returns preprocessed_image: this image is ready for processing
         """
-        preprocessor = PreProcessor()
+        preprocessor = PreProcessor(self.config)
         pre_processed_image = preprocessor.img_preprocess(image)
 
         return pre_processed_image
@@ -44,24 +58,37 @@ class InferenceBase:
 
         :returns processed_output: raw processed output.
         """
-        y_prob = self.model.predict(pre_processed_image)
-        processed_output = np.argmax(y_prob, axis=2)
+        model = self._load_model(self.checkpoints_dir)
+        y_prob = model.predict(pre_processed_image)
+        processed_output = y_prob
 
         return processed_output
 
-    def post_process(self, processed_image):
+    @staticmethod
+    def post_process(processed_image):
         """Postprocesses the raw output of processing step. This method returns the final result.
 
         :param processed_image: use self.process method's output
 
         :returns final_result: ready-to-go result
         """
-        processed_output = self.process(processed_image)
-        # if processed_output.dtype != 'uint':
+        # post process the output image if needed
+        processed_output = processed_image
+        if str(processed_output.dtype).find('uint') == -1:
+            processed_output = processed_output.astype('uint8')
 
-        # return final_image
+        return processed_output
 
-    def _load_model(self):
-        """Loads the best model and stores as self.model"""
+    def _load_model(self, checkpoint_path):
+        """Loads the best model and stores as self.model from the checkpoint_path
 
-        self.model = tf.keras.models.load_model('../model.h5')
+        :param checkpoint_path: checkpoints directory
+
+        :return loaded model
+        """
+
+        # retrieve the model architecture
+        model = UNet(self.config).get_model_graph()
+
+        # return the pre-trained model
+        return model.load_weights(checkpoint_path)
