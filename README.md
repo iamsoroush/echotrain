@@ -13,6 +13,14 @@ Four classes mainly used for training process:
 
 ![alt text](http://gitlab.aimedic.co/soroush.moazed/echotrain/-/raw/aboutme/attachments/training.drawio.png)
 
+# Training
+
+The model could be trained by using the following command:
+
+`python train.py --experiment_dir /path/to/experiment`
+ 
+by using the following command the program will determine to load the corresponding dataset, model, and preprocess's by using the config file in the experiment directory and then train the model based on the loaded files.
+
 # Installation
 
 ## Conda
@@ -25,3 +33,21 @@ This command could be used to create a conda environment of the project:
 This command could be used to install the requirements of this project on google colab:
 
 `!pip install -r requirements_colab.txt`
+
+# Automation 
+
+After cloning this project from git, the following commands could be used to create the conda environment based on the environment.yml file:
+
+`echotrain.py -c` or `echotrain.py --createEnv`
+
+Any time that you need to build the package for model directory the following commands could be used:
+
+`echotrain.py -b` or `echotrain.py --buildModel`
+
+Also, you could install the requirements needed in the colab by using the following commands:
+
+`echotrain.py -cr` or `echotrain.py --colabRequirements`
+
+Finally, the conda environment could be created in the colab by using the following commands:
+
+`echotrain.py -ce` or `echotrain.py --colabCondaEnv`
