@@ -95,10 +95,11 @@ class Evaluator:
         :return: the percentage of the true positives
         """
         TP = 0
-        for i in range(len(y_true)):
-            if y_pred[i] == y_true[i] == 1:
-                TP += 1
-        return (TP / np.count_nonzero(y_true == 1)) * 100
+        for i in range(len(y_true[0])):
+            for j in range(len(y_true[0][0])):
+                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 1:
+                    TP += 1
+        return (TP / np.count_nonzero(y_true > 0.5)) * 100
 
     @staticmethod
     def true_negative_rate(y_true, y_pred):
@@ -108,10 +109,11 @@ class Evaluator:
         :return: the percentage of the true negative
         """
         TN = 0
-        for i in range(len(y_true)):
-            if y_pred[i] == y_true[i] == 0:
-                TN += 1
-        return (TN / np.count_nonzero(y_true == 1)) * 100
+        for i in range(len(y_true[0])):
+            for j in range(len(y_true[0][0])):
+                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 0:
+                    TN += 1
+        return (TN / np.count_nonzero(y_true > 0.5)) * 100
 
 def data_gen():
     for i in range(3):

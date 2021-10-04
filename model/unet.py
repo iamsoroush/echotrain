@@ -1,4 +1,4 @@
-from model_base import ModelBase
+from model.model_base import ModelBase
 # from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
