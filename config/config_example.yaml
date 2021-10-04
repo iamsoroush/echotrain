@@ -8,7 +8,7 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
+  dataset_dir: "D:/training"
   batch_size: 20
   split_ratio: 0.9
   to_fit: True
@@ -27,9 +27,9 @@ pre_process:
   min: 0
   resizing: True
   normalization: True
-  augmentation:
-    rotation_range: 0
-    Flip: True
+  augmentation: True
+  rotation_range: 45
+
 
 model:
   name: "unet"

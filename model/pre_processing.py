@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
 import albumentations as A
+import matplotlib.pyplot as plt
 
 
 class PreProcessor:
@@ -23,7 +24,7 @@ class PreProcessor:
         max: maximum value of the image range, int
         normalization: for rescaling the image, bool
         """
-
+        self.config = config
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.target_size = (self.input_h, self.input_w)
@@ -32,7 +33,7 @@ class PreProcessor:
         self.resizing = config.pre_process.resizing
         self.normalization = config.pre_process.normalization
         self.augmentation = config.pre_process.augmentation
-        self.rotation_range = self.augmentation.rotation_range
+        self.rotation_range = config.pre_process.rotation_range
 
     def img_preprocess(self, image):
         """
@@ -105,10 +106,15 @@ class PreProcessor:
 
         :return: preprocessed_gen: preprocessed generator, data generator < class DataGenerator >
         """
+        aug = Augmentation(self.config)
 
         while True:
             batch = next(generator)
             pre_processed_batch = self.batch_preprocess(batch)
+
+            if self.augmentation:
+                pre_processed_batch = aug.batch_augmentation(pre_processed_batch)
+
             yield pre_processed_batch
         # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
         # return pre_processed_gen
@@ -178,13 +184,12 @@ class Augmentation:
         contrast: if the contrast is needed, this must be True in config file
         batch_size: the size of batches in the data_handler part of config file
         """
-        self.config= config
-        self.augmentation= self.config.pre_process.augmentation
+        self.config = config
+        self.augmentation = self.config.pre_process.augmentation
         self.rotation_range = self.augmentation.rotation_range
-        self.Flip= self.augmentation.Flip
         self.batch_size = self.config.data_handler.batch_size
 
-    def batch_augmentation(self, x, y):
+    def batch_augmentation(self, batch):
         """
         this function implement augmentation on batches
         :param x: batch images of the whole batch
@@ -192,17 +197,15 @@ class Augmentation:
         :return: x, y: the image and mask batches.
         """
         # changing the type of the images for albumentation
-        x = x.astype('float32')
+        x = batch[0]
+        print(x)
+        y = batch[1]
 
-        # whether contrast is needed ro not
-        if self.Flip:
-            probability_Flip = 0.5
-        else:
-            probability_Flip = 0
+        x = x.astype('float32')
 
         # implementing augmentation
         transform = A.Compose([
-            A.Flip(p=probability_Flip),
+            A.Flip(p=0.5),
             A.ShiftScaleRotate(0, 0,border_mode=0, rotate_limit=self.rotation_range, p=0.5)
         ])
 
@@ -300,4 +303,3 @@ class PreProcessedGen(tf.keras.utils.Sequence):
 
         # setting a two-frame-image to plotting both the image and its segmentation labels
         self.generator.visualization(random_image, image_label)
-
