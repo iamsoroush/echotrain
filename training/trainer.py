@@ -55,12 +55,11 @@ class Trainer:
             met_str += '-{'
             met_str += '{metric}'.format(metric=i + ':.2f')
             met_str += '}'
-        checkpoints_name = '/model.{epoch:03d}' + met_str + '.hdf5'
-        print(checkpoints_name)
+        checkpoints_name = 'model.{epoch:03d}' + met_str + '.hdf5'
+        checkpoints_template = self.checkpoints_addr.joinpath(checkpoints_name)
 
         self.my_callbacks = [
-            # keras.callbacks.EarlyStopping(patience=2),
-            keras.callbacks.ModelCheckpoint(filepath=self.checkpoints_addr.joinpath(checkpoints_name),
+            keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
                                             save_weights_only=True,
                                             save_freq=self.callbacks_config.checkpoints.save_freq),
             keras.callbacks.TensorBoard(log_dir=self.tensorboard_log,
@@ -87,8 +86,10 @@ class Trainer:
         if len(os.listdir(self.checkpoints_addr)):
             # checkpoints = [self.checkpoints_addr.joinpath(p) for p in self.checkpoints_addr.iterdir()]
             latest_checkpoint = max(self.checkpoints_addr.iterdir(), key=os.path.getctime)
+            print(f'found latest checkpoint: {latest_checkpoint}')
             # initial_epoch = re.findall('model\\.([0-9]+)(-[+-]?[0-9]+\\.[0-9]+)*', latest_checkpoint.split('/')[-1])
             initial_epoch = int(re.findall('model\\.([0-9]+)', latest_checkpoint.name)[0])
+            print(f'initial epoch: {initial_epoch}')
             model.load_weights(latest_checkpoint)
 
         run_id = self._load_existing_run()
@@ -114,6 +115,8 @@ class Trainer:
             # Write run_id
             with open(self.run_id_path, 'w') as f:
                 f.write(run.info.run_id)
+
+            # Fit
             history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
                                 epochs=self.epochs, validation_data=val_data_gen, validation_steps=n_iter_val,
                                 callbacks=self.my_callbacks)
