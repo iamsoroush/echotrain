@@ -13,7 +13,7 @@ class PreProcessor:
     preprocessor = PreProcess()
     image = preprocessor.img_preprocess(image)
     X, y = preprocessor.batch_preprocess(gen_batch)
-    data_gen = preprocessor.add_preprocess(data_gen)
+    data_gen = preprocessor.add_preprocess(data_gen, add_augmentation=True)
     """
 
     def __init__(self, config):
@@ -30,12 +30,17 @@ class PreProcessor:
         self.target_size = (self.input_h, self.input_w)
         self.max = config.pre_process.max
         self.min = config.pre_process.min
-        self.resizing = config.pre_process.resizing
-        self.normalization = config.pre_process.normalization
-        self.augmentation = config.pre_process.augmentation
-        self.rotation_range = config.pre_process.rotation_range
+        self.do_resizing = config.pre_process.do_resizing
+        self.do_normalization = config.pre_process.do_normalization
+
+        # Augmentation
+        self.augmentation_config = config.pre_process.augmentation
+        # self.rotation_range = self.augmentation_config.rotation_range
+        # self.flip_p = self.augmentation_config.flip_proba
+        self.aug = Augmentation(self.augmentation_config)
 
     def img_preprocess(self, image):
+
         """
         pre-processing on input image
 
@@ -43,10 +48,11 @@ class PreProcessor:
 
         :return: pre-processed-img
         """
+
         pre_processed_img = image.copy()
 
         # resizing
-        if self.resizing:
+        if self.do_resizing:
             pre_processed_img = self._resize(pre_processed_img)
 
         # converting the images to grayscale
@@ -54,7 +60,7 @@ class PreProcessor:
             pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # normalization on the given image
-        if self.normalization:
+        if self.do_normalization:
             pre_processed_img = self._rescaling(pre_processed_img, self.min, self.max)
 
         return pre_processed_img
@@ -68,7 +74,7 @@ class PreProcessor:
         :return: pre-processed label
         """
         # resizing
-        if self.resizing:
+        if self.do_resizing:
             label = self._resize(label[:, :, tf.newaxis])
 
         return label
@@ -98,28 +104,29 @@ class PreProcessor:
 
         return x_preprocessed_batch, y_preprocessed_batch
 
-    def add_preprocess(self, generator):
+    def add_preprocess(self, generator, add_augmentation):
 
         """providing the suggested pre-processing for the given generator
 
         :param generator: input generator ready for pre-processing, data generator < class DataGenerator >
+        :param add_augmentation: pass True if your generator is train_gen
 
         :return: preprocessed_gen: preprocessed generator, data generator < class DataGenerator >
         """
-        aug = Augmentation(self.config)
 
         while True:
             batch = next(generator)
             pre_processed_batch = self.batch_preprocess(batch)
 
-            if self.augmentation:
-                pre_processed_batch = aug.batch_augmentation(pre_processed_batch)
+            if add_augmentation:
+                pre_processed_batch = self.aug.batch_augmentation(pre_processed_batch)
 
             yield pre_processed_batch
         # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
         # return pre_processed_gen
 
     def _resize(self, image):
+
         """
         resizing image into the target_size dimensions
 
@@ -167,6 +174,7 @@ class PreProcessor:
 
 
 class Augmentation:
+
     """
     This class is implementing augmentation on the batches of data
 
@@ -177,41 +185,40 @@ class Augmentation:
     y = masks(batch)
     data = augmented batch
     """
+
     def __init__(self, config):
+
         """
-        augmenation: if augmentation is needed, this must be True in config file
-        rotation range: the range limitation for rotation in augmentation
-        contrast: if the contrast is needed, this must be True in config file
-        batch_size: the size of batches in the data_handler part of config file
+        :param config: augmentation part of config file: config.pre_process.augmentation, containing:
+            rotation_range: the range limitation for rotation in augmentation
+            flip_proba: probability for flipping
         """
-        self.config = config
-        self.augmentation = self.config.pre_process.augmentation
-        self.rotation_range = self.augmentation.rotation_range
-        self.batch_size = self.config.data_handler.batch_size
+
+        self.rotation_range = config.rotation_range
+        self.flip_proba = config.flip_proba
+        self.transform = A.Compose([
+            A.Flip(p=self.flip_proba),
+            A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=0.5)
+        ])
 
     def batch_augmentation(self, batch):
+
         """
         this function implement augmentation on batches
         :param x: batch images of the whole batch
         :param y: batch masks of the whole batch
         :return: x, y: the image and mask batches.
         """
+
         # changing the type of the images for albumentation
         x = batch[0]
-        print(x)
         y = batch[1]
 
         x = x.astype('float32')
 
-        # implementing augmentation
-        transform = A.Compose([
-            A.Flip(p=0.5),
-            A.ShiftScaleRotate(0, 0,border_mode=0, rotate_limit=self.rotation_range, p=0.5)
-        ])
-
         # implementing augmentation on every image and mask of the batch
-        for i in range(self.batch_size):
-            transformed = transform(image=x[i], mask=y[i])
+        for i in range(len(x)):
+            transformed = self.transform(image=x[i], mask=y[i])
             x[i] = transformed['image']
             y[i] = transformed['mask']
 
@@ -226,7 +233,7 @@ class Augmentation:
 
         while True:
             batch = next(generator)
-            augmented_batch = self.batch_augmentation(batch[0], batch[1])
+            augmented_batch = self.batch_augmentation(batch)
             yield augmented_batch
 
 
