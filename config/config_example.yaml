@@ -1,15 +1,15 @@
-input_h: 128
-input_w: 128
+input_h: 256
+input_w: 256
 n_channels: 1
 
-model_class: model.unet.UNet
+model_class: model.baseline_unet.UNetBaseline
 preprocessor_class: model.pre_processing.PreProcessor
 dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/CAMUS/training"
-  batch_size: 20
+  dataset_dir: "/content/training"
+  batch_size: 8
   split_ratio: 0.9
   to_fit: True
   shuffle: True
@@ -21,6 +21,15 @@ data_handler:
     image_quality: ["Poor", "Medium", "Good"]
     view: ["4CH", "2CH"]
 
+model:
+  name: "baseline-unet"
+  optimizer:
+    type: "adam"
+    initial_lr: 0.0001
+  loss_type: "binary_crossentropy"
+  metrics: ["dice_coef", "iou", "acc"]
+  inference_threshold: 0.5
+
 pre_process:
   format: "gray_scale"
   max: 255
@@ -30,18 +39,8 @@ pre_process:
   augmentation:
     rotation_range: 0
 
-model:
-  name: "unet"
-  optimizer:
-    type: "adam"
-    initial_lr: 0.001
-  loss_type: "binary_crossentropy"
-  metrics: ["dice_coef", "iou", "acc"]
-
 trainer:
-  epochs: 100
-#  checkpoints_dir: "./checkpoints"
-#  logs_dir: "./logs"
+  epochs: 30
   callbacks:
     checkpoints:
       save_freq: "epoch"
@@ -52,5 +51,6 @@ trainer:
     metric: "val_loss"
     mode: "min"
   mlflow:
-    tracking_uri: 'echotrain/config'
-    experiment_name: 'echo'
+    tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
+    experiment_name: 'echo_seg'
+#    run_name: 'baseline-0'
