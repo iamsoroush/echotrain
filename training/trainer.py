@@ -182,7 +182,8 @@ class Trainer:
         # MLFlow
         self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
         self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
-        self.run_name = config.trainer.mlflow.run_name
+        # self.run_name = config.trainer.mlflow.run_name
+        self.run_name = self.base_dir.name
 
     def _load_existing_run(self):
 
