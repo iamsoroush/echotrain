@@ -11,6 +11,7 @@ import os
 
 
 class CAMUSDataset(DatasetBase):
+
     """
     This class makes our dataset ready to use by given desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
@@ -115,6 +116,13 @@ class CAMUSDataset(DatasetBase):
 
         return dataset_gen, n_iter_dataset
 
+    def get_data_frame(self):
+        """
+
+        :return pandas.DataFrame of all features of each data in dataset
+        """
+        return self.df_dataset
+
     def _fetch_data(self):
 
         """
@@ -150,14 +158,8 @@ class CAMUSDataset(DatasetBase):
 
         return list_images_dir, list_labels_dir
 
-    def get_data_frame(self):
-        """
-
-        :return pandas.DataFrame of all features of each data in dataset
-        """
-        return self.df_dataset
-
     def _build_data_frame(self):
+
         """
         This method gives you a table showing all features of each data in Pandas DataFrame format.
         Columns of this DataFrame are:
@@ -180,6 +182,7 @@ class CAMUSDataset(DatasetBase):
 
           :return Pandas DataFrame consisting features of each data in dataset
         """
+
         patient_dir_list = glob(os.path.join(self.dataset_dir, "*"))
         patient_dir_list.sort()
 
