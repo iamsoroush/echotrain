@@ -159,9 +159,6 @@ class PreProcessor:
         gray_image = rgb2gray(image)
         return gray_image
 
-    def _augmentation(self):
-        raise Exception('not implemented')
-
 
 class Augmentation:
     """
@@ -184,7 +181,7 @@ class Augmentation:
         self.config= config
         self.augmentation= self.config.pre_process.augmentation
         self.rotation_range = self.augmentation.rotation_range
-        self.contrast= self.augmentation.contrast
+        self.Flip= self.augmentation.Flip
         self.batch_size = self.config.data_handler.batch_size
 
     def batch_augmentation(self, x, y):
@@ -198,14 +195,14 @@ class Augmentation:
         x = x.astype('float32')
 
         # whether contrast is needed ro not
-        if self.contrast:
-            probability_contrast = 0.5
+        if self.Flip:
+            probability_Flip = 0.5
         else:
-            probability_contrast = 0
+            probability_Flip = 0
 
         # implementing augmentation
         transform = A.Compose([
-            A.Flip(p=probability_contrast),
+            A.Flip(p=probability_Flip),
             A.ShiftScaleRotate(0, 0,border_mode=0, rotate_limit=self.rotation_range, p=0.5)
         ])
 
