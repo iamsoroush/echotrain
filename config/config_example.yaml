@@ -34,8 +34,6 @@ pre_process:
 
 trainer:
   epochs: 30
-#  checkpoints_dir: "./checkpoints"
-#  logs_dir: "./logs"
   callbacks:
     checkpoints:
       save_freq: "epoch"
