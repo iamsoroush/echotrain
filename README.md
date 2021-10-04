@@ -36,18 +36,12 @@ This command could be used to install the requirements of this project on google
 
 # Automation 
 
-After cloning this project from git, the following commands could be used to create the conda environment based on the environment.yml file:
+- After cloning this project from git, the following commands could be used to create the conda environment based on the environment.yml file:
+`echotrain.py -c` or `echotrain.py --create_env`
+- Any time that you need to build the package for model directory the following commands could be used:
+`echotrain.py -b` or `echotrain.py --build_model`. This will generate a `.whl` file inside `dist` sub-directory which will be used to install the `model` package using `pip install file_name.whl` on any target python environment.
+- Also, you could install the requirements needed in the colab by using the following commands:
+`echotrain.py -cr` or `echotrain.py --colab_requirements`
 
-`echotrain.py -c` or `echotrain.py --createEnv`
-
-Any time that you need to build the package for model directory the following commands could be used:
-
-`echotrain.py -b` or `echotrain.py --buildModel`
-
-Also, you could install the requirements needed in the colab by using the following commands:
-
-`echotrain.py -cr` or `echotrain.py --colabRequirements`
-
-Finally, the conda environment could be created in the colab by using the following commands:
-
-`echotrain.py -ce` or `echotrain.py --colabCondaEnv`
+- Finally, the conda environment could be created in the colab by using the following commands:
+`echotrain.py -ce` or `echotrain.py --colab_conda_env`
