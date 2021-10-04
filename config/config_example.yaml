@@ -25,10 +25,11 @@ pre_process:
   format: "gray_scale"
   max: 255
   min: 0
-  resizing: True
-  normalization: True
-  augmentation: True
-  rotation_range: 45
+  do_resizing: True
+  do_normalization: True
+  augmentation:
+    rotation_range: 45
+    flip_proba: 0.5
 
 
 model:
