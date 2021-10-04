@@ -2,6 +2,6 @@ from setuptools import setup
 
 setup(
     name='Model',
-    version='1.0',
-    packages=['.model'],
+    version='0.0.1',
+    packages=['model'],
 )
