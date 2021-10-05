@@ -61,7 +61,7 @@ class PreProcessor:
 
         # normalization on the given image
         if self.do_normalization:
-            pre_processed_img = self._rescaling(pre_processed_img, self.min, self.max)
+            pre_processed_img = self._rescale(pre_processed_img, self.min, self.max)
 
         return pre_processed_img
 
@@ -141,7 +141,7 @@ class PreProcessor:
         return image_resized
 
     @staticmethod
-    def _rescaling(image, min_val, max_val):
+    def _rescale(image, min_val, max_val):
 
         """
         rescaling the input image
