@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
 import albumentations as A
-import matplotlib.pyplot as plt
 
 
 class PreProcessor:
@@ -122,8 +121,6 @@ class PreProcessor:
                 pre_processed_batch = self.aug.batch_augmentation(pre_processed_batch)
 
             yield pre_processed_batch
-        # pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
-        # return pre_processed_gen
 
     def _resize(self, image):
 
@@ -195,18 +192,20 @@ class Augmentation:
         """
 
         self.rotation_range = config.rotation_range
+        self.rotation_proba = config.rotation_proba
         self.flip_proba = config.flip_proba
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
-            A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=0.5)
+            A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)
         ])
 
     def batch_augmentation(self, batch):
 
         """
         this function implement augmentation on batches
-        :param x: batch images of the whole batch
-        :param y: batch masks of the whole batch
+        :param batch: (x, y):
+            x: batch images of the whole batch
+            y: batch masks of the whole batch
         :return: x, y: the image and mask batches.
         """
 
@@ -235,78 +234,3 @@ class Augmentation:
             batch = next(generator)
             augmented_batch = self.batch_augmentation(batch)
             yield augmented_batch
-
-
-class PreProcessedGen(tf.keras.utils.Sequence):
-    """
-    this class makes the class PreProcessor output, a generator and makes it suitable to fit to the model
-
-    HOW TO:
-    pre_processed_gen = PreProcessedGen(generator, self.batch_preprocess)
-
-    """
-
-    def __init__(self, generator, pre_processing):
-        """
-        :param generator: the output of the dataset_generator,generator <Class dataset_generator>
-        :param pre_processing: preprocessing functions from the class PreProcessor
-        """
-
-        self.generator = generator
-        self.pre_processing = pre_processing
-
-    def __len__(self):
-        """
-        :return: number of the batches per epoch
-        """
-
-        return self.generator.get_n_iter()
-
-    def __getitem__(self, idx):
-        """
-        :param idx: the index of the batch
-        :return: preprocessed_batch
-        """
-
-        batch = self.generator[idx]
-        preprocessed_batch = self.pre_processing(batch)
-        return preprocessed_batch
-
-    def on_epoch_end(self):
-        """
-        :return: shuffle at the end of each epoch
-        """
-
-        self.generator.on_epoch_end()
-
-    def __next__(self):
-        """create a generator that iterate over the Sequence."""
-
-        return self.next()
-
-    def next(self):
-        """
-        Create iteration through batches of the generator
-        :return: next batch, np.ndarray
-        """
-
-        index = next(self.generator.flow_index())
-        return self.__getitem__(index)
-
-    def reset(self):
-        """reset indexes for iteration"""
-
-        self.generator.reset()
-
-    def random_visualization(self):
-        """random visualization of an image"""
-
-        # choosing random image from dataset random indexes
-        random_batch_index = np.random.randint(self.__len__())
-        random_batch = self.__getitem__(random_batch_index)
-        random_image_index = np.random.randint(len(random_batch[0]))
-        random_image = random_batch[0][random_image_index]
-        image_label = random_batch[1][random_image_index]
-
-        # setting a two-frame-image to plotting both the image and its segmentation labels
-        self.generator.visualization(random_image, image_label)

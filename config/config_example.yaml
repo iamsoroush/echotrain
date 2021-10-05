@@ -28,6 +28,7 @@ pre_process:
   do_resizing: True
   do_normalization: True
   augmentation:
+    rotation_proba: 0.5
     rotation_range: 45
     flip_proba: 0.5
 
