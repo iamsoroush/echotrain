@@ -1,15 +1,16 @@
 # requirements
 
-from .dataset_generator import DatasetGenerator
-from .dataset_base import DatasetBase
+from dataset.dataset_generator import DatasetGenerator
+from dataset.dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset
-import numpy as np
-import os
 import random
+import configparser
+import numpy as np
+import pandas as pd
+import os
 
 
 class CAMUSDataset(DatasetBase):
-
     """
     This class makes our dataset ready to use by given desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
@@ -37,8 +38,18 @@ class CAMUSDataset(DatasetBase):
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
-        // changing from "input_res" to "input_size"
+        age: patients between two ages in list, list
+        sex: sex of patient, can be female(F) or male(M), list
+        stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
+        view: view of the hear image, can be two chamber view(2CH) or four chamber view(4CH), list
+        image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
         """
+
+        self.age = config.data_handler.dataset_features.age
+        self.sex = config.data_handler.dataset_features.sex
+        self.stage = config.data_handler.dataset_features.stage
+        self.view = config.data_handler.dataset_features.view
+        self.image_quality = config.data_handler.dataset_features.image_quality
 
         super(CAMUSDataset, self).__init__(config)
         self.batch_size = config.data_handler.batch_size
@@ -51,6 +62,7 @@ class CAMUSDataset(DatasetBase):
         self.shuffle = config.data_handler.shuffle
         self.to_fit = config.data_handler.to_fit
         self.dataset_dir = config.data_handler.dataset_dir
+        self._build_data_frame()
 
     def create_data_generators(self):
 
@@ -114,30 +126,120 @@ class CAMUSDataset(DatasetBase):
         :return list_labels_dir: list of the type_map labels directory
         """
 
-        dataset_dir = self.dataset_dir
+        data_dir = self.df_dataset[self.df_dataset['view'].isin(self.view) &
+                                   self.df_dataset['stage'].isin(self.stage) &
+                                   self.df_dataset['image_quality'].isin(self.image_quality) &
+                                   self.df_dataset['sex'].isin(self.sex) &
+                                   (self.df_dataset['age'] >= self.age[0]) &
+                                   (self.df_dataset['age'] <= self.age[1])][['patient_id',
+                                                                             'mhd_image_filename',
+                                                                             'mhd_label_filename']]
 
-        # Directory list of the A4C view of the ED ( End Diastole ) frame images.
-        # x_4ch_ed_dir: list[str]
-        # y_4ch_ed_dir: list[str]
-        x_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED.mhd'))  # images directory
-        y_4ch_ed_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ED_gt.mhd'))  # segmentation labels directory
+        x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
+                          for patient_id, patient_image_dir in zip(data_dir['patient_id'],
+                                                                   data_dir['mhd_image_filename'])])
 
-        # Directory list of the A4C view of the ES ( End Systole ) frame images.
-        # x_4ch_es_dir: list[str]
-        # y_4ch_es_dir: list[str]
-        x_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES.mhd'))  # images directory
-        y_4ch_es_dir = glob(os.path.join(dataset_dir, '*/*_4CH_ES_gt.mhd'))  # segmentation labels directory
+        y_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_label_dir)
+                          for patient_id, patient_label_dir in zip(data_dir['patient_id'],
+                                                                   data_dir['mhd_label_filename'])])
 
-        # Concatenating ES and ED images and labels
-        x_4ch_dir = np.concatenate((x_4ch_ed_dir, x_4ch_es_dir), axis=0)
-        y_4ch_dir = np.concatenate((y_4ch_ed_dir, y_4ch_es_dir), axis=0)
-
-        list_images_dir = x_4ch_dir
+        list_images_dir = x_dir
         list_labels_dir = {}
-        for i in range(len(y_4ch_dir)):
-            list_labels_dir[x_4ch_dir[i]] = y_4ch_dir[i]
+        for i in range(len(y_dir)):
+            list_labels_dir[x_dir[i]] = y_dir[i]
 
         return list_images_dir, list_labels_dir
+
+    def get_data_frame(self):
+        """
+
+        :return pandas.DataFrame of all features of each data in dataset
+        """
+        return self.df_dataset
+
+    def _build_data_frame(self):
+        """
+        This method gives you a table showing all features of each data in Pandas DataFrame format.
+        Columns of this DataFrame are:
+          patients: The specific number of a patient in dataset
+          position: CAMUS dataset consist of 2 chamber (2CH) and 4 chamber (4CH) images
+          stage: CAMUS dataset consist of end_systolic (ES), end_dyastolic (ED) and sequence(between ED and ES ) data
+          mhd_filename: File name of the .mhd format image
+          raw_filename: File name of the .raw format image
+          mhd_label_name: File name of the .mhd format labeld image
+          raw_label_name: File name of the .mhd format labeld image
+          ED_frame: The number of frame in sequence data that is showing ED
+          ES_frame: The number of frame in sequence data that is showing ES
+          NbFrame: The number of frames in sequence data
+          sex: sex of the patient that can be female(F) or male(M)
+          age: age of the patient
+          ImageQuality: there are 3 types of image quality (Good, Medium, Poor)
+          LVedv: Left ventricle end_dyastolic volume
+          LVesv: Left ventricle end_systolic volume
+          LVef: Left ventricle ejection fraction
+
+          :return Pandas DataFrame consisting features of each data in dataset
+        """
+        patient_dir_list = glob(os.path.join(self.dataset_dir, "*"))
+        patient_dir_list.sort()
+
+        df = {'patient_id': [],
+              'mhd_image_filename': [],
+              'raw_image_filename': [],
+              'mhd_label_filename': [],
+              'raw_label_filename': [],
+              'view': [],
+              'stage': [],
+              'sex': [],
+              'age': [],
+              'ed_frame': [],
+              'es_frame': [],
+              'image_quality': [],
+              'lv_edv': [],
+              'lv_esv': [],
+              'lv_ef': [],
+              'num_of_frame': []}
+
+        config_parser = configparser.ConfigParser()
+
+        for patient_dir in patient_dir_list[:450]:
+            info_2ch = open(os.path.join(patient_dir, "Info_2CH.cfg"))
+            info_4ch = open(os.path.join(patient_dir, "Info_4CH.cfg"))
+            echo_data_list = [str(p_dir.split('.')[0]) for p_dir in os.listdir(patient_dir)
+                              if p_dir.split('.')[-1] == 'mhd' and "gt" not in p_dir.split('_')[-1]]
+
+            for echo_data in echo_data_list:
+                elements = echo_data.split('_')
+                df['patient_id'].append(elements[0])
+                df['view'].append(elements[1])
+                df['stage'].append(elements[2])
+
+                df['mhd_image_filename'].append(f'{elements[0]}_{elements[1]}_{elements[2]}.mhd')
+                df['raw_image_filename'].append(f'{elements[0]}_{elements[1]}_{elements[2]}.raw')
+                if elements[2] != 'sequence':
+                    df['mhd_label_filename'].append(f'{elements[0]}_{elements[1]}_{elements[2]}_gt.mhd')
+                    df['raw_label_filename'].append(f'{elements[0]}_{elements[1]}_{elements[2]}_gt.raw')
+                else:
+                    df['mhd_label_filename'].append('None')
+                    df['raw_label_filename'].append('None')
+
+                if elements[1] == '2CH':
+                    config_file = info_2ch
+                else:
+                    config_file = info_4ch
+
+                config_parser.read_string(f'[{elements[1]}]\n' + config_file.read())
+                df['ed_frame'].append(int(config_parser.get(elements[1], 'ED')))
+                df['es_frame'].append(int(config_parser.get(elements[1], 'ES')))
+                df['num_of_frame'].append(int(config_parser.get(elements[1], 'NbFrame')))
+                df['sex'].append(config_parser.get(elements[1], 'Sex'))
+                df['age'].append(float(config_parser.get(elements[1], 'Age')))
+                df['image_quality'].append(config_parser.get(elements[1], 'ImageQuality'))
+                df['lv_edv'].append(float(config_parser.get(elements[1], 'LVedv')))
+                df['lv_esv'].append(float(config_parser.get(elements[1], 'LVesv')))
+                df['lv_ef'].append(float(config_parser.get(elements[1], 'LVef')))
+
+        self.df_dataset = pd.DataFrame(df)
 
     def _shuffle_func(self, x, y):
 
@@ -183,6 +285,7 @@ class CAMUSDataset(DatasetBase):
 
         # set train size by split_ratio var
         train_size = round(len(x) * split_ratio)
+
         # splitting
         x_train = x[:train_size]
         y_train = dict(list(y.items())[:train_size])

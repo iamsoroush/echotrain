@@ -2,7 +2,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm,macos,windows,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm,macos,windows,python
 
-
 ### macOS ###
 # General
 .DS_Store
@@ -218,7 +217,6 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-#notebooks/.ipynb_checkpoints
 
 # IPython
 profile_default/

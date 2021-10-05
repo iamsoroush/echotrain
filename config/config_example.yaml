@@ -8,12 +8,30 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "/content/training"
-  batch_size: 8
+  dataset_dir: "D:/training"
+  batch_size: 20
   split_ratio: 0.9
   to_fit: True
   shuffle: True
   seed: 101
+  dataset_features:
+    age: [50, 60]
+    sex: ["M", "F"]
+    stage: ["ES", "ED"]
+    image_quality: ["Poor", "Medium", "Good"]
+    view: ["4CH", "2CH"]
+
+pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
+  do_resizing: True
+  do_normalization: True
+  augmentation:
+    rotation_proba: 0.5
+    rotation_range: 45
+    flip_proba: 0.5
+
 
 model:
   name: "baseline-unet"
@@ -23,14 +41,6 @@ model:
   loss_type: "binary_crossentropy"
   metrics: ["dice_coef", "iou", "acc"]
   inference_threshold: 0.5
-
-pre_process:
-  format: "gray_scale"
-  max: 255
-  min: 0
-  normalization: True
-  augmentation:
-    rotation_range: 0
 
 trainer:
   epochs: 30
