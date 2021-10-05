@@ -48,6 +48,7 @@ trainer:
     checkpoints:
       save_freq: "epoch"
       evaluation_metrics: ["val_loss", "val_dice_coef"]
+      monitor: "val_loss"  # set null if you want to checkpoint in every epoch
     tensorboard:
       update_freq: "epoch"
   export:

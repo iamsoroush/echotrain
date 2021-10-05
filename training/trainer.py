@@ -44,11 +44,17 @@ class Trainer:
         self._load_params(config)
         self._check_for_exported()
 
-        mlflow.set_tracking_uri(f'file:{self.mlflow_tracking_uri}')
+        # mlflow.set_tracking_uri(f'file:{self.mlflow_tracking_uri}')
 
         if not os.path.isdir(self.checkpoints_addr):
             os.makedirs(self.checkpoints_addr)
             os.makedirs(self.tensorboard_log)
+
+        self.my_callbacks = self._get_callbacks()
+
+    def _get_callbacks(self):
+
+        """Creates and returns callbacks based on config file"""
 
         met_str = ''
         for i in self.evaluation_metrics:
@@ -58,13 +64,21 @@ class Trainer:
         checkpoints_name = 'model.{epoch:03d}' + met_str + '.hdf5'
         checkpoints_template = self.checkpoints_addr.joinpath(checkpoints_name)
 
-        self.my_callbacks = [
+        if self.callbacks_config.checkpoints.monitor is None:
+            save_best_only = False
+        else:
+            save_best_only = True
+
+        callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
                                             save_weights_only=True,
-                                            save_freq=self.callbacks_config.checkpoints.save_freq),
+                                            save_freq=self.callbacks_config.checkpoints.save_freq,
+                                            save_best_only=save_best_only,
+                                            monitor=self.callbacks_config.checkpoints.monitor),
             keras.callbacks.TensorBoard(log_dir=self.tensorboard_log,
                                         update_freq=self.callbacks_config.tensorboard.update_freq),
         ]
+        return callbacks
 
     def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
 
