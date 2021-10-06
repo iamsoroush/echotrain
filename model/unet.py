@@ -1,10 +1,11 @@
-from model.model_base import ModelBase
-# from utils.handling_yaml import load_config_file
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
-from scipy.spatial.distance import directed_hausdorff
-import tensorflow.keras.backend as K
+
+from .model_base import ModelBase
+from .metric import get_iou_coef, get_dice_coeff
+from .loss import dice_coef_loss
+
 
 class UNet(ModelBase):
 
@@ -36,25 +37,21 @@ class UNet(ModelBase):
 
         try:
             self.optimizer_type = config.model.optimizer.type
-
         except AttributeError:
             self.optimizer_type = 'adam'
 
         try:
             self.learning_rate = config.model.optimizer.initial_lr
-
         except AttributeError:
             self.learning_rate = 0.001
 
         try:
             self.loss_type = config.model.loss_type
-
         except AttributeError:
             self.loss_type = 'binary_crossentropy'
 
         try:
             self.metrics = config.model.metrics
-
         except AttributeError:
             self.metrics = ['iou']
 
@@ -127,13 +124,13 @@ class UNet(ModelBase):
         """
         metrics = []
         if 'iou' in self.metrics:
-            metrics.append(self._iou_coef)
+            metrics.append(get_iou_coef(threshold=self.inference_threshold))
         if 'acc' in self.metrics:
             metrics.append('acc')
         if 'dice_coef' in self.metrics:
-            metrics.append(self._dice_coef)
-        if '2d_hausdorff' in self.metrics:
-            metrics.append(directed_hausdorff)
+            metrics.append(get_dice_coeff(threshold=self.inference_threshold))
+        # if '2d_hausdorff' in self.metrics:
+        #     metrics.append(directed_hausdorff)
         return metrics
 
     def _get_optimizer(self):

@@ -15,12 +15,11 @@ data_handler:
   shuffle: True
   seed: 101
   dataset_features:
-    age: [ 50, 60 ]
-    sex: [ "M", "F" ]
-    stage: [ "ES", "ED" ]
-    image_quality: [ "Poor", "Medium", "Good" ]
-    view: [ "4CH", "2CH" ]
-
+    age: [50, 60]
+    sex: ["M", "F"]
+    stage: ["ES", "ED"]
+    image_quality: ["Poor", "Medium", "Good"]
+    view: ["4CH", "2CH"]
 
 model:
   name: "baseline-unet"
@@ -35,18 +34,20 @@ pre_process:
   format: "gray_scale"
   max: 255
   min: 0
-  normalization: True
+  do_resizing: True
+  do_normalization: True
   augmentation:
-    rotation_range: 0
+    rotation_proba: 0.5
+    rotation_range: 45
+    flip_proba: 0.5
 
 trainer:
   epochs: 30
-#  checkpoints_dir: "./checkpoints"
-#  logs_dir: "./logs"
   callbacks:
     checkpoints:
       save_freq: "epoch"
       evaluation_metrics: ["val_loss", "val_dice_coef"]
+      monitor: "val_loss"  # set null if you want to checkpoint in every epoch
     tensorboard:
       update_freq: "epoch"
   export:
@@ -55,4 +56,4 @@ trainer:
   mlflow:
     tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
     experiment_name: 'echo_seg'
-    run_name: 'baseline-0'
+#    run_name: 'baseline-0'

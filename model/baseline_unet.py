@@ -1,9 +1,9 @@
-from .model_base import ModelBase
-
-import tensorflow as tf
 import tensorflow.keras as tfk
 import tensorflow.keras.layers as tfkl
-import tensorflow.keras.backend as K
+
+from .model_base import ModelBase
+from .metric import get_dice_coeff, get_iou_coef
+from .loss import dice_coef_loss
 
 
 class UNetBaseline(ModelBase):
@@ -113,48 +113,48 @@ class UNetBaseline(ModelBase):
 
         try:
             self.optimizer_type = self.config.model.optimizer.type
-
         except AttributeError:
             self.optimizer_type = 'adam'
 
         try:
             self.learning_rate = self.config.model.optimizer.initial_lr
-
         except AttributeError:
             self.learning_rate = 0.001
 
         try:
             self.loss_type = self.config.model.loss_type
-
         except AttributeError:
             self.loss_type = 'binary_crossentropy'
 
         try:
             self.metrics = self.config.model.metrics
-
         except AttributeError:
             self.metrics = ['iou']
 
     def _get_metrics(self):
+
         """
         :return:all metrics chosen in config file in a python list suitable for compile method of keras
         """
+
         metrics = []
         if 'iou' in self.metrics:
-            metrics.append(iou_coef)
+            metrics.append(get_iou_coef(threshold=self.inference_threshold))
         if 'dice_coef' in self.metrics:
-            metrics.append(dice_coef)
-        if '2d_hausdorff' in self.metrics:
-            metrics.append(hausdorff)
-        if 'mean_absolute_distance' in self.metrics:
-            metrics.append(mean_absolute_distance)
+            metrics.append(get_dice_coeff(threshold=self.inference_threshold))
+        # if '2d_hausdorff' in self.metrics:
+        #     metrics.append(hausdorff)
+        # if 'mean_absolute_distance' in self.metrics:
+        #     metrics.append(mean_absolute_distance)
         return metrics
 
     def _get_optimizer(self):
+
         """
 
         :return:the optimizer with learning rate that were designated in config file
         """
+
         if self.optimizer_type == 'adam':
             return tfk.optimizers.Adam(learning_rate=self.learning_rate)
 
@@ -267,58 +267,58 @@ class UNetBaseline(ModelBase):
         return wrapper
 
 
-def iou_coef(y_true, y_pred, smooth=1):
-    """
-
-    :param y_true: label image from the dataset
-    :param y_pred: model segmented image prediction
-    :param smooth:
-    :return:calculate Intersection over Union for y_true and y_pred
-    """
-
-    threshlod = 0.5
-
-    y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
-
-    intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=[1, 2])
-    union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2]) - intersection
-    iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
-    return iou
-
-
-def dice_coef(y_true, y_pred):
-    """
-
-    :param y_true: label image from the dataset
-    :param y_pred: model segmented image prediction
-    :param smooth:
-    :return: calculate dice coefficient between y_true and y_pred
-    """
-
-    smooth = 1
-    threshold = 0.5
-
-    y_pred_thresholded = K.cast(y_pred > threshold, tf.float32)
-
-    intersection = K.sum(y_true * y_pred_thresholded, axis=[1, 2])
-    union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2])
-    dice = K.mean((2. * intersection + smooth)/(union + smooth), axis=0)
-    return dice
-
-
-def dice_coef_loss(y_true, y_pred):
-    """
-
-    :param y_true: label image from the dataset
-    :param y_pred: model segmented image prediction
-    :return: dice coefficient loss function
-    """
-    return 1 - dice_coef(y_true, y_pred)
-
-
-def hausdorff(y_true, y_pred):
-    pass
-
-
-def mean_absolute_distance(y_true, y_pred):
-    pass
+# def iou_coef(y_true, y_pred, smooth=1):
+#     """
+#
+#     :param y_true: label image from the dataset
+#     :param y_pred: model segmented image prediction
+#     :param smooth:
+#     :return:calculate Intersection over Union for y_true and y_pred
+#     """
+#
+#     threshlod = 0.5
+#
+#     y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
+#
+#     intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=[1, 2])
+#     union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2]) - intersection
+#     iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
+#     return iou
+#
+#
+# def dice_coef(y_true, y_pred):
+#     """
+#
+#     :param y_true: label image from the dataset
+#     :param y_pred: model segmented image prediction
+#     :param smooth:
+#     :return: calculate dice coefficient between y_true and y_pred
+#     """
+#
+#     smooth = 1
+#     threshold = 0.5
+#
+#     y_pred_thresholded = K.cast(y_pred > threshold, tf.float32)
+#
+#     intersection = K.sum(y_true * y_pred_thresholded, axis=[1, 2])
+#     union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2])
+#     dice = K.mean((2. * intersection + smooth)/(union + smooth), axis=0)
+#     return dice
+#
+#
+# def dice_coef_loss(y_true, y_pred):
+#     """
+#
+#     :param y_true: label image from the dataset
+#     :param y_pred: model segmented image prediction
+#     :return: dice coefficient loss function
+#     """
+#     return 1 - dice_coef(y_true, y_pred)
+#
+#
+# def hausdorff(y_true, y_pred):
+#     pass
+#
+#
+# def mean_absolute_distance(y_true, y_pred):
+#     pass

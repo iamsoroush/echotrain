@@ -24,3 +24,11 @@ class DatasetBase:
         """
 
         raise Exception('not implemented!')
+
+    def get_data_frame(self):
+        """This method gives you a table showing all features of each data in Pandas DataFrame format.
+
+        :return pandas.DataFrame of all features of each data in dataset
+        """
+
+        raise Exception('not implemented')
