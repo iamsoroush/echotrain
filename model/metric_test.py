@@ -1,3 +1,4 @@
+
 import metric
 import numpy as np
 from tensorflow.keras import backend as K
@@ -29,11 +30,14 @@ def manual_iou_coef(y_true , y_pre ):
 def test_iou_coef():
     y_true = np.array([[[1., 1., 1.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_pred = np.array([[[0., 0., 0.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
+    y_pred = np.array([[[0.1, 0.1, 0.1], [0.8, 0.1, 0.8]], [[0.8, 0.8, 0.8], [0.8, 0.1, 0.8]]])
 
-    y_true_1, y_pred_1 = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
+    y_true, y_pred = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
+    y_true_1 = tf.convert_to_tensor(y_true, dtype=tf.float32)
+    y_pred_1 = tf.convert_to_tensor(y_pred, dtype=tf.float32)
+
     iou_coef = metric.iou_coef(y_true_1,y_pred_1)
-    assert K.abs(float(iou_coef) - manual_iou_coef(y_true , y_pred)) < 0.00001
+    assert K.abs(float(iou_coef) - manual_iou_coef(y_true_1 , y_pred_1)) < 0.001
 
 
 def test_hausdorff_distance():
@@ -41,9 +45,11 @@ def test_hausdorff_distance():
 
     y_pred = np.array([[[0., 0., 0.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_true_1, y_pred_1 = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
-    y_true_1 = tf.convert_to_tensor(y_true_1, dtype=tf.float32)
-    y_pred_1 = tf.convert_to_tensor(y_pred_1, dtype=tf.float32)
-    hd_result = metric.hausdorff(y_true_1 , y_pred_1 )
-    assert K.abs(float(hd_result) - manual_hd(y_true, y_pred)) < 0.00001
+    y_true, y_pred = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
+
+    y_true_1 = tf.convert_to_tensor(y_true, dtype=tf.float32)
+    y_pred_1 = tf.convert_to_tensor(y_pred, dtype=tf.float32)
+
+    hd_result = metric.hausdorff(y_true_1.shape[1] , y_true_1.shape[2] )(y_true_1 , y_pred_1)
+    assert K.abs(float(hd_result) - manual_hd(y_true, y_pred)) < 0.001
 

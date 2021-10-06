@@ -128,6 +128,7 @@ def cdist(A, B):
     return D
 
 def hausdorff(w, h):
+
     all_img_locations = tf.convert_to_tensor(cartesian([np.arange(w),
                                                         np.arange(h)]), dtype=tf.float32)
 
