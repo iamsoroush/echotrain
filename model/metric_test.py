@@ -5,11 +5,16 @@ import tensorflow as tf
 from scipy.spatial.distance import directed_hausdorff
 
 
-def manual_hd(y_true,y_pred):
+def manual_hd(y_true, y_pred):
     threshlod = 0.5
+    result_list = []
     y_pred = K.cast(y_pred > threshlod, 'float32')
-    result = max(directed_hausdorff(y_true, y_pred)[0], directed_hausdorff(y_pred, y_true)[0])
-    return result
+    for y, x in y_true, y_pred:
+        y, x = np.squeeze(y, 2), np.squeeze(x, 2)
+        result = max(directed_hausdorff(y, x)[0], directed_hausdorff(x, y)[0])
+        result_list.append(result)
+
+    return sum(result_list) / len(result_list)
 
 def manual_iou_coef(y_true , y_pre ):
     threshlod = 0.5
@@ -22,33 +27,23 @@ def manual_iou_coef(y_true , y_pre ):
 
 
 def test_iou_coef():
-    y_true = np.array([[1., 1., 1.],
-                     [1., 0., 1.],
-                     [1., 1., 0.]])
+    y_true = np.array([[[1., 1., 1.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_pred = np.array([[0.1, 0.1, 0.1],
-                     [0.8, 0.1, 0.8],
-                     [0.8, 0.8, 0.1]])
+    y_pred = np.array([[[0., 0., 0.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_true_1, y_pred_1 = np.expand_dims(y_true, 0), np.expand_dims(y_pred, 0)
-    y_true_1, y_pred_1 = np.expand_dims(y_true_1, -1), np.expand_dims(y_pred_1, -1)
+    y_true_1, y_pred_1 = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
     iou_coef = metric.iou_coef(y_true_1,y_pred_1)
     assert K.abs(float(iou_coef) - manual_iou_coef(y_true , y_pred)) < 0.00001
 
 
 def test_hausdorff_distance():
-    y_true = np.array([[1., 1., 1.],
-                       [1., 0., 1.],
-                       [1., 1., 0.]])
+    y_true = np.array([[[1., 1., 1.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_pred = np.array([[0.1, 0.1, 0.1],
-                       [0.8, 0.1, 0.8],
-                       [0.8, 0.8, 0.1]])
+    y_pred = np.array([[[0., 0., 0.], [1., 0., 1.]], [[1., 1., 1.], [1., 0., 1.]]])
 
-    y_true_1, y_pred_1 = np.expand_dims(y_true, 0), np.expand_dims(y_pred, 0)
-    y_true_1, y_pred_1 = np.expand_dims(y_true_1, -1), np.expand_dims(y_pred_1, -1)
+    y_true_1, y_pred_1 = np.expand_dims(y_true, -1), np.expand_dims(y_pred, -1)
     y_true_1 = tf.convert_to_tensor(y_true_1, dtype=tf.float32)
     y_pred_1 = tf.convert_to_tensor(y_pred_1, dtype=tf.float32)
-    hd_result = metric.hausdorff_distance(y_true_1 , y_pred_1 )
+    hd_result = metric.hausdorff(y_true_1 , y_pred_1 )
     assert K.abs(float(hd_result) - manual_hd(y_true, y_pred)) < 0.00001
 

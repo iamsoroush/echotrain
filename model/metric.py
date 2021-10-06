@@ -127,7 +127,6 @@ def cdist(A, B):
     D = tf.sqrt(tf.maximum(na - 2 * tf.matmul(A, B, False, True) + nb, 0.0))
     return D
 
-
 def hausdorff(w, h):
     all_img_locations = tf.convert_to_tensor(cartesian([np.arange(w),
                                                         np.arange(h)]), dtype=tf.float32)
@@ -135,7 +134,9 @@ def hausdorff(w, h):
     def hausdorff_loss(y_true, y_pred):
         y_true = K.cast(y_true, 'float32')
         y_pred = K.cast(y_pred, 'float32')
+        threshlod=0.5
 
+        y_pred = K.cast(y_pred > threshlod, tf.float32)
         def loss(y_true, y_pred):
             y_true = K.reshape(y_true, [w, h])
             gt_points = K.cast(tf.where(y_true > 0.5), dtype=tf.float32)
@@ -145,27 +146,33 @@ def hausdorff(w, h):
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
             k_max = K.max(p_k_min)
-
             return float(k_max)
 
-        batched_losses = tf.map_fn(lambda x:
+        batched_losses_1 = tf.map_fn(lambda x:
                                    loss(x[0], x[1]),
                                    (y_true, y_pred),
                                    dtype=tf.float32)
 
-        return K.mean(tf.stack(batched_losses))
+        batched_losses_2 = tf.map_fn(lambda x:
+                                   loss(x[0], x[1]),
+                                   (y_pred, y_true),
+                                   dtype=tf.float32)
 
+        stacked  = tf.stack([batched_losses_1, batched_losses_2])
+
+        return K.mean(K.max(stacked, axis = 0))
     return hausdorff_loss
 
-
-def mad_distance(w, h):
+def Mad(w, h):
     all_img_locations = tf.convert_to_tensor(cartesian([np.arange(w),
                                                         np.arange(h)]), dtype=tf.float32)
 
     def mad_loss(y_true, y_pred):
         y_true = K.cast(y_true, 'float32')
         y_pred = K.cast(y_pred, 'float32')
+        threshlod=0.5
 
+        y_pred = K.cast(y_pred > threshlod, tf.float32)
         def m_loss(y_true, y_pred):
             y_true = K.reshape(y_true, [w, h])
             gt_points = K.cast(tf.where(y_true > 0.5), dtype=tf.float32)
@@ -174,43 +181,20 @@ def mad_distance(w, h):
             d_matrix = cdist(all_img_locations, gt_points)
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
-            return float(K.mean(p_k_min))
+            k_mean = K.mean(p_k_min)
+            # return float(k_mean)
 
-        batched_losses = tf.map_fn(lambda x:
+        batched_losses_1 = tf.map_fn(lambda x:
                                    m_loss(x[0], x[1]),
                                    (y_true, y_pred),
                                    dtype=tf.float32)
 
-        return K.mean(tf.stack(batched_losses))
+        batched_losses_2 = tf.map_fn(lambda x:
+                                   m_loss(x[0], x[1]),
+                                   (y_pred, y_true),
+                                   dtype=tf.float32)
 
+        stacked  = tf.stack([batched_losses_1, batched_losses_2])
+
+        return K.mean(stacked)
     return mad_loss
-
-
-def hausdorff_distance(y_true, y_pred, threshlod=0.5):
-    """
-        :param y_true: label image from the dataset
-        :param y_pred: model segmented image prediction
-        :param threshlod: the threshlod element for casting predicted data to 0 ,1
-        :return: calculate hausdorff_distance between y_true and y_pred
-        :the input shape should be (b , w , h , n)
-    """
-    y_pred = K.cast(y_pred > threshlod, tf.float32)
-    true_pre_loss = hausdorff(y_true.shape[1], y_pred.shape[2])(y_true, y_pred)
-    pre_true_loss = hausdorff(y_pred.shape[1], y_true.shape[2])(y_pred, y_true)
-    hd_result = max(true_pre_loss, pre_true_loss)
-    return hd_result
-
-
-def mean_absolute_distance(y_true, y_pred, threshlod=0.5):
-    """
-            :param y_true: label image from the dataset
-            :param y_pred: model segmented image prediction
-            :param threshlod: the threshlod element for casting predicted data to 0 ,1
-            :return: calculate hausdorff_distance between y_true and y_pred
-            :the input shape should be (b , w , h , n)
-        """
-    y_pred = K.cast(y_pred > threshlod, tf.float32)
-    true_pre_loss = mad_distance(y_true.shape[1], y_pred.shape[2])(y_true, y_pred)
-    pre_true_loss = mad_distance(y_pred.shape[1], y_true.shape[2])(y_pred, y_true)
-    mad_result = 0.5 * (true_pre_loss + pre_true_loss)
-    return mad_result
