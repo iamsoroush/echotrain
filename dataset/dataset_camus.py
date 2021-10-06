@@ -11,6 +11,7 @@ import os
 
 
 class CAMUSDataset(DatasetBase):
+
     """
     This class makes our dataset ready to use by given desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
@@ -87,6 +88,9 @@ class CAMUSDataset(DatasetBase):
                                                                      list_labels_dir,
                                                                      self.split_ratio)
 
+        # adding 'train' and 'validation' status to the data-frame
+        self.add_train_val_to_data_frame(x_train_dir, x_val_dir)
+
         train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
                                           self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
         val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
@@ -114,6 +118,13 @@ class CAMUSDataset(DatasetBase):
         n_iter_dataset = dataset_gen.get_n_iter()
 
         return dataset_gen, n_iter_dataset
+
+    def get_data_frame(self):
+        """
+
+        :return pandas.DataFrame of all features of each data in dataset
+        """
+        return self.df_dataset
 
     def _fetch_data(self):
 
@@ -150,36 +161,32 @@ class CAMUSDataset(DatasetBase):
 
         return list_images_dir, list_labels_dir
 
-    def get_data_frame(self):
-        """
-
-        :return pandas.DataFrame of all features of each data in dataset
-        """
-        return self.df_dataset
-
     def _build_data_frame(self):
+
         """
         This method gives you a table showing all features of each data in Pandas DataFrame format.
         Columns of this DataFrame are:
           patients: The specific number of a patient in dataset
           position: CAMUS dataset consist of 2 chamber (2CH) and 4 chamber (4CH) images
-          stage: CAMUS dataset consist of end_systolic (ES), end_dyastolic (ED) and sequence(between ED and ES ) data
+          stage: CAMUS dataset consist of end_systolic (ES), end_diastolic (ED) and sequence(between ED and ES ) data
           mhd_filename: File name of the .mhd format image
           raw_filename: File name of the .raw format image
-          mhd_label_name: File name of the .mhd format labeld image
-          raw_label_name: File name of the .mhd format labeld image
+          mhd_label_name: File name of the .mhd format labeled image
+          raw_label_name: File name of the .mhd format labeled image
           ED_frame: The number of frame in sequence data that is showing ED
           ES_frame: The number of frame in sequence data that is showing ES
           NbFrame: The number of frames in sequence data
           sex: sex of the patient that can be female(F) or male(M)
           age: age of the patient
           ImageQuality: there are 3 types of image quality (Good, Medium, Poor)
-          LVedv: Left ventricle end_dyastolic volume
-          LVesv: Left ventricle end_systolic volume
-          LVef: Left ventricle ejection fraction
+          lv_edv: Left ventricle end_diastolic volume
+          lv_esv: Left ventricle end_systolic volume
+          lv_ef: Left ventricle ejection fraction
+          status: showing if the patient is for train set or for validation
 
           :return Pandas DataFrame consisting features of each data in dataset
         """
+
         patient_dir_list = glob(os.path.join(self.dataset_dir, "*"))
         patient_dir_list.sort()
 
@@ -198,7 +205,8 @@ class CAMUSDataset(DatasetBase):
               'lv_edv': [],
               'lv_esv': [],
               'lv_ef': [],
-              'num_of_frame': []}
+              'num_of_frame': [],
+              'status': []}
 
         config_parser = configparser.ConfigParser()
 
@@ -238,8 +246,24 @@ class CAMUSDataset(DatasetBase):
                 df['lv_edv'].append(float(config_parser.get(elements[1], 'LVedv')))
                 df['lv_esv'].append(float(config_parser.get(elements[1], 'LVesv')))
                 df['lv_ef'].append(float(config_parser.get(elements[1], 'LVef')))
+                df['status'].append('train')
 
         self.df_dataset = pd.DataFrame(df)
+
+    def add_train_val_to_data_frame(self, train_dir, val_dir):
+        """
+        adding the updates of the status of the patients
+
+        :param train_dir: train set directory
+        :param val_dir: validation set directory
+        """
+        for each_dir in train_dir:
+            patient_id = each_dir.replace('\\', '/').split('/')[-2]
+            self.df_dataset.loc[self.df_dataset['patient_id'] == patient_id, 'status'] = 'train'
+
+        for each_dir in val_dir:
+            patient_id = each_dir.replace('\\', '/').split('/')[-2]
+            self.df_dataset.loc[self.df_dataset['patient_id'] == patient_id, 'status'] = 'validation'
 
     def _shuffle_func(self, x, y):
 
@@ -294,3 +318,4 @@ class CAMUSDataset(DatasetBase):
         y_val = dict(list(y.items())[train_size:])
 
         return x_train, y_train, x_val, y_val
+

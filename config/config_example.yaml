@@ -8,8 +8,8 @@ dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
   target_dataset_name: "CAMUS"
-  dataset_dir: "D:/training"
-  batch_size: 20
+  dataset_dir: "/content/training"
+  batch_size: 8
   split_ratio: 0.9
   to_fit: True
   shuffle: True
@@ -21,6 +21,15 @@ data_handler:
     image_quality: ["Poor", "Medium", "Good"]
     view: ["4CH", "2CH"]
 
+model:
+  name: "baseline-unet"
+  optimizer:
+    type: "adam"
+    initial_lr: 0.0001
+  loss_type: "binary_crossentropy"
+  metrics: ["dice_coef", "iou", "acc"]
+  inference_threshold: 0.5
+
 pre_process:
   format: "gray_scale"
   max: 255
@@ -31,16 +40,6 @@ pre_process:
     rotation_proba: 0.5
     rotation_range: 45
     flip_proba: 0.5
-
-
-model:
-  name: "baseline-unet"
-  optimizer:
-    type: "adam"
-    initial_lr: 0.0001
-  loss_type: "binary_crossentropy"
-  metrics: ["dice_coef", "iou", "acc"]
-  inference_threshold: 0.5
 
 trainer:
   epochs: 30
@@ -57,4 +56,4 @@ trainer:
   mlflow:
     tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
     experiment_name: 'echo_seg'
-    run_name: 'baseline-0'
+#    run_name: 'baseline-0'
