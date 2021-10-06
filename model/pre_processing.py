@@ -49,16 +49,14 @@ class PreProcessor:
         """
 
         pre_processed_img = image.copy()
+
         # converting the images to grayscale
+        if image.shape[-1] != 1 and len(image.shape) != 2:
+            pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # resizing
         if self.do_resizing or inference:
             pre_processed_img = self._resize(pre_processed_img)
-
-        # converting the images to grayscale
-
-        if image.shape[-1] != 1 and len(image.shape) != 2:
-            pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # normalization on the given image
         if self.do_normalization:
