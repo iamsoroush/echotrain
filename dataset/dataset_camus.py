@@ -63,7 +63,19 @@ class CAMUSDataset(DatasetBase):
         self.shuffle = config.data_handler.shuffle
         self.to_fit = config.data_handler.to_fit
         self.dataset_dir = config.data_handler.dataset_dir
+
+        self.list_images_dir, self.list_labels_dir = self._fetch_data()
+        if self.shuffle:
+            self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
+                                                                            self.list_labels_dir)
+        # splitting
+        self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
+                                                                                         self.list_labels_dir,
+                                                                                         self.split_ratio)
+
         self._build_data_frame()
+        # adding 'train' and 'validation' status to the data-frame
+        self.add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
     def create_data_generators(self):
 
@@ -77,23 +89,23 @@ class CAMUSDataset(DatasetBase):
         """
         # dataset_dir = self.dataset_dir
 
-        list_images_dir, list_labels_dir = self._fetch_data()
+        # list_images_dir, list_labels_dir = self._fetch_data()
+        #
+        # # shuffling
+        # if self.shuffle:
+        #     list_images_dir, list_labels_dir = self._shuffle_func(list_images_dir,
+        #                                                           list_labels_dir)
+        # # splitting
+        # x_train_dir, y_train_dir, x_val_dir, y_val_dir = self._split(list_images_dir,
+        #                                                              list_labels_dir,
+        #                                                              self.split_ratio)
+        #
+        # # adding 'train' and 'validation' status to the data-frame
+        # self.add_train_val_to_data_frame(x_train_dir, x_val_dir)
 
-        # shuffling
-        if self.shuffle:
-            list_images_dir, list_labels_dir = self._shuffle_func(list_images_dir,
-                                                                  list_labels_dir)
-        # splitting
-        x_train_dir, y_train_dir, x_val_dir, y_val_dir = self._split(list_images_dir,
-                                                                     list_labels_dir,
-                                                                     self.split_ratio)
-
-        # adding 'train' and 'validation' status to the data-frame
-        self.add_train_val_to_data_frame(x_train_dir, x_val_dir)
-
-        train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, self.batch_size,
+        train_data_gen = DatasetGenerator(self.x_train_dir, self.y_train_dir, self.batch_size,
                                           self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-        val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, self.batch_size,
+        val_data_gen = DatasetGenerator(self.x_val_dir, self.y_val_dir, self.batch_size,
                                         self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
 
         n_iter_train = train_data_gen.get_n_iter()
@@ -120,10 +132,12 @@ class CAMUSDataset(DatasetBase):
         return dataset_gen, n_iter_dataset
 
     def get_data_frame(self):
+
         """
 
         :return pandas.DataFrame of all features of each data in dataset
         """
+
         return self.df_dataset
 
     def _fetch_data(self):
@@ -251,12 +265,14 @@ class CAMUSDataset(DatasetBase):
         self.df_dataset = pd.DataFrame(df)
 
     def add_train_val_to_data_frame(self, train_dir, val_dir):
+
         """
         adding the updates of the status of the patients
 
         :param train_dir: train set directory
         :param val_dir: validation set directory
         """
+
         for each_dir in train_dir:
             patient_id = each_dir.replace('\\', '/').split('/')[-2]
             self.df_dataset.loc[self.df_dataset['patient_id'] == patient_id, 'status'] = 'train'
