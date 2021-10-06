@@ -183,7 +183,7 @@ def Mad(w, h):
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
             k_mean = K.mean(p_k_min)
-            # return float(k_mean)
+            return float(k_mean)
 
         batched_losses_1 = tf.map_fn(lambda x:
                                    m_loss(x[0], x[1]),
