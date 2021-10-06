@@ -318,4 +318,3 @@ class CAMUSDataset(DatasetBase):
         y_val = dict(list(y.items())[train_size:])
 
         return x_train, y_train, x_val, y_val
-
