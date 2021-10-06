@@ -1,8 +1,8 @@
 import sys
 sys.path.append('..')
 
-from model import metric
-from model import loss
+from .model import metric
+from .model import loss
 import numpy as np
 import pandas as pd
 
@@ -23,6 +23,7 @@ class Evaluator:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.n_channels = config.n_channels
+        self.threshhold=0.5
 
     def build_data_frame(self, model, data_gen, n_iter):
         """
@@ -45,10 +46,14 @@ class Evaluator:
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
-                data_featurs.append(float(metric.iou_coef(y_true, y_pred)))
-                # data_featurs.append(float(metric.soft_iou(y_true, y_pred)))
-                data_featurs.append(float(metric.dice_coef(y_true, y_pred)))
-                data_featurs.append(float(metric.soft_dice(y_true, y_pred)))
+                iou_coef = metric.get_iou_coef()
+                #soft_iou = metric.get_soft_iou()
+                dice_coef =  metric.get_dice_coeff()
+                soft_dice = metric.get_soft_dice()
+                data_featurs.append(float(iou_coef(y_true, y_pred)))
+                #data_featurs.append(float(soft_iou(y_true, y_pred)))
+                data_featurs.append(float(dice_coef(y_true, y_pred)))
+                data_featurs.append(float(soft_dice(y_true, y_pred)))
                 data_featurs.append(self._model_certainty(y_true, y_pred)[0])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[1])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[2])
@@ -80,32 +85,32 @@ class Evaluator:
         elif np.argmax(certainty_list) == 2:
             return [truecertainty, falsecertainty, ambiguous, 'ambigous']
 
-    @staticmethod
-    def true_positive_rate(y_true, y_pred):
+    def true_positive_rate(self, y_true, y_pred):
         """
         :param y_true: ground truth
         :param y_pred: prediction of the model
         :return: the percentage of the true positives
         """
         TP = 0
+        y_pred=y_pred>self.threshhold
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
                 if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 1:
                     TP += 1
         return (TP / np.count_nonzero(y_true > 0.5)) * 100
 
-    @staticmethod
-    def true_negative_rate(y_true, y_pred):
+
+    def true_negative_rate(self, y_true, y_pred):
         """
         :param y_true: ground truth
         :param y_pred: prediction of the model
         :return: the percentage of the true negative
         """
         TN = 0
+        y_pred = y_pred > self.threshhold
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
                 if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 0:
                     TN += 1
-        return (TN / np.count_nonzero(y_true > 0.5)) * 100
-
+        return (TN / np.count_nonzero(y_true < 0.5)) * 100
 
