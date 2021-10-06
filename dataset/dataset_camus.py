@@ -64,6 +64,9 @@ class CAMUSDataset(DatasetBase):
         self.to_fit = config.data_handler.to_fit
         self.dataset_dir = config.data_handler.dataset_dir
 
+        self.df_dataset = None
+        self._build_data_frame()
+
         self.list_images_dir, self.list_labels_dir = self._fetch_data()
         if self.shuffle:
             self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
@@ -73,7 +76,6 @@ class CAMUSDataset(DatasetBase):
                                                                                          self.list_labels_dir,
                                                                                          self.split_ratio)
 
-        self._build_data_frame()
         # adding 'train' and 'validation' status to the data-frame
         self.add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
