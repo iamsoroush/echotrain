@@ -23,7 +23,7 @@ class Evaluator:
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.n_channels = config.n_channels
-        self.threshhold=0.5
+        self.threshold=0.5
 
     def build_data_frame(self, model, data_gen, n_iter):
         """
@@ -44,16 +44,25 @@ class Evaluator:
                 y_true = each_batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
                 y_pred = model.predict(each_batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
+                data_featurs.append(float(loss.soft_iou_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
                 iou_coef = metric.get_iou_coef()
-                #soft_iou = metric.get_soft_iou()
-                dice_coef =  metric.get_dice_coeff()
+                soft_iou = metric.get_soft_iou()
+                dice_coef = metric.get_dice_coeff()
                 soft_dice = metric.get_soft_dice()
+                hausdorff_distance0 = metric.get_hausdorff_distance(self.input_w, self.input_h)
+                hausdorff_distance1 = hausdorff_distance0.hausdorff_distance(y_true, y_pred)
+                hausdorff_distance = hausdorff_distance1.hausdorff(y_true, y_pred)
+                mad0 = metric.get_mad(self.input_w, self.input_h)
+                mad1 = mad0.mad_distance(y_true, y_pred)
+                mad = mad1.mad(y_true, y_pred)
                 data_featurs.append(float(iou_coef(y_true, y_pred)))
-                #data_featurs.append(float(soft_iou(y_true, y_pred)))
+                data_featurs.append(float(soft_iou(y_true, y_pred)))
                 data_featurs.append(float(dice_coef(y_true, y_pred)))
                 data_featurs.append(float(soft_dice(y_true, y_pred)))
+                data_featurs.append(float(hausdorff_distance(y_true, y_pred)))
+                data_featurs.append(float(mad(y_true, y_pred)))
                 data_featurs.append(self._model_certainty(y_true, y_pred)[0])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[1])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[2])
@@ -62,9 +71,10 @@ class Evaluator:
                 data_featurs.append(self.true_negative_rate(y_true, y_pred))
                 data_frame_numpy.append(data_featurs)
         return pd.DataFrame(data_frame_numpy, columns=['iou_coef_loss', 'dice_coef_loss',
-                                                        'soft_dice_loss', 'iou_coef', 'dice_coef', 'soft_dice',
-                                                       'truecertainty', 'falsecertainty', 'ambigous', 'certainty_state'
-                                                        , 'true_positive_rate', 'true_negative_rate'])
+                                                       'soft_dice_loss', 'iou_coef', 'soft_iou_loss','dice_coef',
+                                                       'soft_dice', 'hausdorff_distance','mean_absolute_distance',
+                                                       'truecertainty', 'falsecertainty', 'ambigous', 'certainty_state',
+                                                       'true_positive_rate', 'true_negative_rate'])
 
     @staticmethod
     def _model_certainty(y_true, y_pred):
@@ -92,13 +102,12 @@ class Evaluator:
         :return: the percentage of the true positives
         """
         TP = 0
-        y_pred=y_pred>self.threshhold
+        y_pred = y_pred>self.threshold
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
-                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 1:
+                if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 1:
                     TP += 1
         return (TP / np.count_nonzero(y_true > 0.5)) * 100
-
 
     def true_negative_rate(self, y_true, y_pred):
         """
@@ -107,10 +116,10 @@ class Evaluator:
         :return: the percentage of the true negative
         """
         TN = 0
-        y_pred = y_pred > self.threshhold
+        y_pred = y_pred > self.threshold
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
-                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 0:
+                if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 0:
                     TN += 1
         return (TN / np.count_nonzero(y_true < 0.5)) * 100
 
