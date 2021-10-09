@@ -46,23 +46,9 @@ class CAMUSDataset(DatasetBase):
         image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
         """
 
-        self.age = config.data_handler.dataset_features.age
-        self.sex = config.data_handler.dataset_features.sex
-        self.stage = config.data_handler.dataset_features.stage
-        self.view = config.data_handler.dataset_features.view
-        self.image_quality = config.data_handler.dataset_features.image_quality
-
         super(CAMUSDataset, self).__init__(config)
-        self.batch_size = config.data_handler.batch_size
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.input_size = (self.input_h, self.input_w)
-        self.n_channels = config.n_channels
-        self.split_ratio = config.data_handler.split_ratio
-        self.seed = config.data_handler.seed
-        self.shuffle = config.data_handler.shuffle
-        self.to_fit = config.data_handler.to_fit
-        self.dataset_dir = config.data_handler.dataset_dir
+
+        self._load_config(config)
 
         self.df_dataset = None
         self._build_data_frame()
@@ -77,7 +63,7 @@ class CAMUSDataset(DatasetBase):
                                                                                          self.split_ratio)
 
         # adding 'train' and 'validation' status to the data-frame
-        self.add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
+        self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
     def create_data_generators(self):
 
@@ -141,6 +127,27 @@ class CAMUSDataset(DatasetBase):
         """
 
         return self.df_dataset
+
+    def _load_config(self, config):
+
+        """Load all parameters from config file"""
+
+        self.age = config.data_handler.dataset_features.age
+        self.sex = config.data_handler.dataset_features.sex
+        self.stage = config.data_handler.dataset_features.stage
+        self.view = config.data_handler.dataset_features.view
+        self.image_quality = config.data_handler.dataset_features.image_quality
+
+        self.batch_size = config.data_handler.batch_size
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.input_size = (self.input_h, self.input_w)
+        self.n_channels = config.n_channels
+        self.split_ratio = config.data_handler.split_ratio
+        self.seed = config.data_handler.seed
+        self.shuffle = config.data_handler.shuffle
+        self.to_fit = config.data_handler.to_fit
+        self.dataset_dir = config.data_handler.dataset_dir
 
     def _fetch_data(self):
 
@@ -266,7 +273,7 @@ class CAMUSDataset(DatasetBase):
 
         self.df_dataset = pd.DataFrame(df)
 
-    def add_train_val_to_data_frame(self, train_dir, val_dir):
+    def _add_train_val_to_data_frame(self, train_dir, val_dir):
 
         """
         adding the updates of the status of the patients
