@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 
 
-class ModelBase:
+class ModelBase(ABC):
 
     def __init__(self, config):
 
@@ -23,15 +24,16 @@ class ModelBase:
         self.n_channels = config.n_channels
         self.inference_threshold = config.model.inference_threshold
 
+    @abstractmethod
     def generate_training_model(self):
 
         """Generates the model for training, and returns the compiled model.
 
         :returns model: the final model which is ready to be trained.
         """
+        pass
 
-        raise Exception('not implemented')
-
+    @abstractmethod
     def get_model_graph(self):
 
         """Defines the model's graph.
@@ -41,8 +43,7 @@ class ModelBase:
 
         :return: a model of type tensorflow.keras.Model
         """
-
-        raise Exception('not implemented')
+        pass
 
     def load_model(self, checkpoint_path):
 
@@ -60,8 +61,8 @@ class ModelBase:
 
         """Post processes the output of self.model.predict
 
-        :param predicted: output of the model, (input_h, input_w, 1).float64
-        :returns ret: np.ndarray of size(input_h, input_w, 1).int8
+        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, 1).int8
 
         """
 
