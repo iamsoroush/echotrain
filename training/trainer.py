@@ -71,7 +71,7 @@ class Trainer:
 
         callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
-                                            save_weights_only=True,
+                                            save_weights_only=False,
                                             save_freq=self.callbacks_config.checkpoints.save_freq,
                                             save_best_only=save_best_only,
                                             monitor=self.callbacks_config.checkpoints.monitor),
@@ -131,14 +131,20 @@ class Trainer:
                 f.write(run.info.run_id)
 
             # Fit
-            history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
-                                epochs=self.epochs, validation_data=val_data_gen, validation_steps=n_iter_val,
+            history = model.fit(train_data_gen,
+                                steps_per_epoch=n_iter_train,
+                                initial_epoch=initial_epoch,
+                                epochs=self.epochs,
+                                validation_data=val_data_gen,
+                                validation_steps=n_iter_val,
                                 callbacks=self.my_callbacks)
         return history
 
     def export(self):
 
-        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory
+        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory.
+
+        This method will delete all checkpoints after exporting the best one
 
         :returns exported_dir
         """
@@ -165,6 +171,10 @@ class Trainer:
         copy(chp_addr, self.exported_dir.joinpath(selected_checkpoint))
 
         copy(self.config_file_path, self.exported_dir.joinpath('config.yaml'))
+
+        # Delete checkpoints
+        for ch in checkpoints:
+            os.remove(self.checkpoints_addr.joinpath(ch))
 
         return self.exported_dir
 
