@@ -45,10 +45,12 @@ class Evaluator:
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
-                data_featurs.append(float(metric.iou_coef(y_true, y_pred)))
-                # data_featurs.append(float(metric.soft_iou(y_true, y_pred)))
-                data_featurs.append(float(metric.dice_coef(y_true, y_pred)))
-                data_featurs.append(float(metric.soft_dice(y_true, y_pred)))
+                data_featurs.append(float(metric.get_iou_coef()(y_true, y_pred)))
+                data_featurs.append(float(metric.get_soft_iou()(y_true, y_pred)))
+                data_featurs.append(float(metric.get_dice_coeff()(y_true, y_pred)))
+                data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
+                data_featurs.append(float(metric.get_mad(self.input_w, self.input_h)(y_true, y_pred)))
+                data_featurs.append(float(metric.get_hausdorff_distance(self.input_w, self.input_h)(y_true, y_pred)))
                 data_featurs.append(self._model_certainty(y_true, y_pred)[0])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[1])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[2])
@@ -56,10 +58,21 @@ class Evaluator:
                 data_featurs.append(self.true_positive_rate(y_true, y_pred))
                 data_featurs.append(self.true_negative_rate(y_true, y_pred))
                 data_frame_numpy.append(data_featurs)
-        return pd.DataFrame(data_frame_numpy, columns=['iou_coef_loss', 'dice_coef_loss',
-                                                        'soft_dice_loss', 'iou_coef', 'dice_coef', 'soft_dice',
-                                                       'truecertainty', 'falsecertainty', 'ambigous', 'certainty_state'
-                                                        , 'true_positive_rate', 'true_negative_rate'])
+        return pd.DataFrame(data_frame_numpy, columns=['iou_coef_loss',
+                                                       'dice_coef_loss',
+                                                       'soft_dice_loss',
+                                                       'iou_coef',
+                                                       'sift_iou_coef',
+                                                       'dice_coef',
+                                                       'soft_dice',
+                                                       'mad',
+                                                       'hausdorff',
+                                                       'truecertainty',
+                                                       'falsecertainty',
+                                                       'ambigous',
+                                                       'certainty_state',
+                                                       'true_positive_rate',
+                                                       'true_negative_rate'])
 
     @staticmethod
     def _model_certainty(y_true, y_pred):

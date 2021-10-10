@@ -1,4 +1,4 @@
-from .metric import get_iou_coef, get_dice_coeff, get_soft_dice
+from .metric import get_iou_coef, get_dice_coeff, get_soft_dice, get_soft_iou
 
 
 def iou_coef_loss(y_true, y_pred):
@@ -13,9 +13,8 @@ def iou_coef_loss(y_true, y_pred):
 
 
 def soft_iou_loss(y_true, y_pred ):
+    return 1 - get_soft_iou()(y_true, y_pred)  # average over classes and batch
 
-
-    return 1 - metric.soft_iou(y_true, y_pred )  # average over classes and batch
 
 def dice_coef_loss(y_true, y_pred):
     """
