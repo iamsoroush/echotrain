@@ -68,7 +68,7 @@ class CAMUSDataset(DatasetBase):
         self.y_train_dir = self._train_df['label_path'].to_list()
 
         self.x_val_dir = self._val_df['image_path'].to_list()
-        self.y_val_dir = self._val_df['image_label'].to_list()
+        self.y_val_dir = self._val_df['label_path'].to_list()
 
         # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
         #                                                                                  self.list_labels_dir,
