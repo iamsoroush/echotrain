@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('..')
 
 from model import metric
@@ -16,32 +17,58 @@ class Evaluator:
     eval.build_data_frame(model,data_generator,n_iter)
 
     """
+
     def __init__(self, config):
+
         """
         :param config
         """
+
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.n_channels = config.n_channels
 
-    def build_data_frame(self, model, data_gen, n_iter):
-        """
+    def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indices):
+
+        """Generates a report as a pandas.DataFrame
 
         :param model: the input model which is being evaluated
-        :param data_gen: the data generator which is being evaluated
+        :param data_gen_val_preprocessed: the data generator which is being evaluated,
+         it has to be a pre-processed data generator
         :param n_iter: number of iterations of the data generator
         :return: the dataframe which consists of the metrics and losses and also the certainty of
         the model and true positive rate and true negative rate
         """
+
         # building the dataframe
+        new_columns = ['iou_coef_loss',
+                       'dice_coef_loss',
+                       'soft_dice_loss',
+                       'iou_coef',
+                       'sift_iou_coef',
+                       'dice_coef',
+                       'soft_dice',
+                       'mad',
+                       'hausdorff',
+                       'truecertainty',
+                       'falsecertainty',
+                       'ambigous',
+                       'certainty_state',
+                       'true_positive_rate',
+                       'true_negative_rate']
+
         data_frame_numpy = []
-        for i in range(n_iter):
-            each_batch = next(data_gen)
-            for j in range(len(each_batch[0])):
+        for _ in range(n_iter):
+            batch = next(data_gen_val_preprocessed)
+            # batch = pre_processor.batch_preprocess(batch)
+            for j in range(len(batch[0])):
                 data_featurs = []
-                print(each_batch[1].shape)
-                y_true = each_batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
-                y_pred = model.predict(each_batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
+                print(batch[1].shape)
+                # y_true = batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
+                y_true = np.expand_dims(batch[1][j], axis=-1)
+                # y_pred = model.predict(
+                    # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
+                y_pred = model.predict(np.expand_dims(batch[0][j], axis=-1))
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
@@ -58,33 +85,22 @@ class Evaluator:
                 data_featurs.append(self.true_positive_rate(y_true, y_pred))
                 data_featurs.append(self.true_negative_rate(y_true, y_pred))
                 data_frame_numpy.append(data_featurs)
-        return pd.DataFrame(data_frame_numpy, columns=['iou_coef_loss',
-                                                       'dice_coef_loss',
-                                                       'soft_dice_loss',
-                                                       'iou_coef',
-                                                       'sift_iou_coef',
-                                                       'dice_coef',
-                                                       'soft_dice',
-                                                       'mad',
-                                                       'hausdorff',
-                                                       'truecertainty',
-                                                       'falsecertainty',
-                                                       'ambigous',
-                                                       'certainty_state',
-                                                       'true_positive_rate',
-                                                       'true_negative_rate'])
+
+        return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indices)
 
     @staticmethod
     def _model_certainty(y_true, y_pred):
+
         """
         :param y_true: ground truth
         :param y_pred: prediction of the model
         :return: the certainty of the model of every data
         """
-        dif = np.abs(y_true- y_pred)
-        truecertainty = np.count_nonzero(dif < 0.3)/y_true.size
-        falsecertainty = np.count_nonzero(dif > 0.7)/y_true.size
-        ambiguous = np.count_nonzero(np.logical_and(0.3 <= dif, dif <= 0.7))/y_true.size
+
+        dif = np.abs(y_true - y_pred)
+        truecertainty = np.count_nonzero(dif < 0.3) / y_true.size
+        falsecertainty = np.count_nonzero(dif > 0.7) / y_true.size
+        ambiguous = np.count_nonzero(np.logical_and(0.3 <= dif, dif <= 0.7)) / y_true.size
         certainty_list = [truecertainty, falsecertainty, ambiguous]
         if np.argmax(certainty_list) == 0:
             return [truecertainty, falsecertainty, ambiguous, 'true_certain']
@@ -95,15 +111,17 @@ class Evaluator:
 
     @staticmethod
     def true_positive_rate(y_true, y_pred):
+
         """
         :param y_true: ground truth
         :param y_pred: prediction of the model
         :return: the percentage of the true positives
         """
+
         TP = 0
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
-                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 1:
+                if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 1:
                     TP += 1
         return (TP / np.count_nonzero(y_true > 0.5)) * 100
 
@@ -117,8 +135,16 @@ class Evaluator:
         TN = 0
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
-                if y_pred[0][i,j] == y_true[0][i,j] and y_true[0][i,j] == 0:
+                if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 0:
                     TN += 1
         return (TN / np.count_nonzero(y_true > 0.5)) * 100
 
-
+    # def _model_certainty_v2(self, y_true, y_pred, upper=0.75, lower=0.25):
+    #
+    #     """Returns only true-certainty: closer to 1 -> model is confident in """
+    #
+    #     correct_mask = (y_true > 0.5) == (y_pred > 0.5)
+    #     correct_predictions = tf.math.count_nonzero(correct_mask)
+    #
+    #     y_pred_correct = y_pred * tf.cast(correct_mask, tf.float32)
+    #     y_pred_correct_certain = y_pred_correct >

@@ -64,11 +64,13 @@ class CAMUSDataset(DatasetBase):
         self._train_df = self._clean_data_df.loc[train_indices]
         self._val_df = self._clean_data_df.loc[val_indices]
 
-        self.x_train_dir = self._train_df['image_path'].to_list()
-        self.y_train_dir = self._train_df['label_path'].to_list()
+        self.x_train_dir = np.array(self._train_df['image_path'].to_list())
+        self.y_train_dir = np.array(self._train_df['label_path'].to_list())
+        self.y_train_dir = dict(zip(self.x_train_dir, self.y_train_dir))
 
-        self.x_val_dir = self._val_df['image_path'].to_list()
-        self.y_val_dir = self._val_df['label_path'].to_list()
+        self.x_val_dir = np.array(self._val_df['image_path'].to_list())
+        self.y_val_dir = np.array(self._val_df['label_path'].to_list())
+        self.y_val_dir = dict(zip(self.x_val_dir, self.y_val_dir))
 
         # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
         #                                                                                  self.list_labels_dir,
