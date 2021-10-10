@@ -5,6 +5,8 @@ class DatasetBase:
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
+        if config==None, default values will be invoked using self._set_efault_values
+
         :param config: dictionary of {config_name: config_value}
         """
 

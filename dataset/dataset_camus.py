@@ -27,10 +27,12 @@ class CAMUSDataset(DatasetBase):
     dataset_gen = dataset.create_test_generator(test_set_dir)
     """
 
-    def __init__(self, config):
+    def __init__(self, config=None):
 
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
+
+        if config==None, default values will be invoked using self._set_efault_values
 
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
@@ -75,31 +77,43 @@ class CAMUSDataset(DatasetBase):
         :returns n_iter_val: number of iterations per epoch for val_data_gen
 
         """
-        # dataset_dir = self.dataset_dir
 
-        # list_images_dir, list_labels_dir = self._fetch_data()
-        #
-        # # shuffling
-        # if self.shuffle:
-        #     list_images_dir, list_labels_dir = self._shuffle_func(list_images_dir,
-        #                                                           list_labels_dir)
-        # # splitting
-        # x_train_dir, y_train_dir, x_val_dir, y_val_dir = self._split(list_images_dir,
-        #                                                              list_labels_dir,
-        #                                                              self.split_ratio)
-        #
-        # # adding 'train' and 'validation' status to the data-frame
-        # self.add_train_val_to_data_frame(x_train_dir, x_val_dir)
-
-        train_data_gen = DatasetGenerator(self.x_train_dir, self.y_train_dir, self.batch_size,
-                                          self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-        val_data_gen = DatasetGenerator(self.x_val_dir, self.y_val_dir, self.batch_size,
-                                        self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-
-        n_iter_train = train_data_gen.get_n_iter()
-        n_iter_val = val_data_gen.get_n_iter()
+        train_data_gen, n_iter_train = self.create_train_data_generator()
+        val_data_gen, n_iter_val = self.create_validation_data_generator()
 
         return train_data_gen, val_data_gen, n_iter_train, n_iter_val
+
+    def create_train_data_generator(self):
+
+        """Train data generator"""
+
+        train_data_gen = DatasetGenerator(self.x_train_dir,
+                                          self.y_train_dir,
+                                          self.batch_size,
+                                          self.input_size,
+                                          self.n_channels,
+                                          self.to_fit,
+                                          self.shuffle,
+                                          self.seed)
+        n_iter_train = train_data_gen.get_n_iter()
+        return train_data_gen, n_iter_train
+
+    def create_validation_data_generator(self):
+
+        """Validation data generator
+
+        Here we will set shuffle=False because we don't need shuffling for validation data.
+        """
+
+        val_data_gen = DatasetGenerator(self.x_val_dir,
+                                        self.y_val_dir,
+                                        self.batch_size,
+                                        self.input_size,
+                                        self.n_channels,
+                                        self.to_fit,
+                                        shuffle=False)
+        n_iter_val = val_data_gen.get_n_iter()
+        return val_data_gen, n_iter_val
 
     def create_test_data_generator(self):
 
@@ -132,22 +146,50 @@ class CAMUSDataset(DatasetBase):
 
         """Load all parameters from config file"""
 
-        self.age = config.data_handler.dataset_features.age
-        self.sex = config.data_handler.dataset_features.sex
-        self.stage = config.data_handler.dataset_features.stage
-        self.view = config.data_handler.dataset_features.view
-        self.image_quality = config.data_handler.dataset_features.image_quality
+        self._set_default_values()
 
-        self.batch_size = config.data_handler.batch_size
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.input_size = (self.input_h, self.input_w)
-        self.n_channels = config.n_channels
-        self.split_ratio = config.data_handler.split_ratio
-        self.seed = config.data_handler.seed
-        self.shuffle = config.data_handler.shuffle
-        self.to_fit = config.data_handler.to_fit
-        self.dataset_dir = config.data_handler.dataset_dir
+        if config is not None:
+            self.age = config.data_handler.dataset_features.age
+            self.sex = config.data_handler.dataset_features.sex
+            self.stage = config.data_handler.dataset_features.stage
+            self.view = config.data_handler.dataset_features.view
+            self.image_quality = config.data_handler.dataset_features.image_quality
+
+            self.batch_size = config.data_handler.batch_size
+            self.input_h = config.input_h
+            self.input_w = config.input_w
+            # self.input_size = (self.input_h, self.input_w)
+            self.n_channels = config.n_channels
+            self.split_ratio = config.data_handler.split_ratio
+            self.seed = config.data_handler.seed
+            self.shuffle = config.data_handler.shuffle
+            self.to_fit = config.data_handler.to_fit
+            self.dataset_dir = config.data_handler.dataset_dir
+
+    @property
+    def input_size(self):
+        return self.input_h, self.input_w
+
+    def _set_default_values(self):
+
+        """Default values for parameters"""
+
+        self.age = [10, 100]
+        self.sex = ['M', 'F']
+        self.stage = ['ED', 'ES']
+        self.view = ["4CH"]
+        self.image_quality = ["Poor", "Medium", "Good"]
+
+        self.batch_size = 8
+        self.input_h = 256
+        self.input_w = 256
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = 1
+        self.split_ratio = 0.8
+        self.seed = 101
+        self.shuffle = True
+        self.to_fit = True
+        self.dataset_dir = '/training'
 
     def _fetch_data(self):
 
@@ -156,8 +198,8 @@ class CAMUSDataset(DatasetBase):
 
         dataset_dir: directory address of the dataset
 
-        :return list_images_dir: list of the A4C view images directory
-        :return list_labels_dir: list of the type_map labels directory
+        :return list_images_dir: list of the A4C view image paths
+        :return list_labels_dir: list of the type_map label paths
         """
 
         data_dir = self.df_dataset[self.df_dataset['view'].isin(self.view) &
