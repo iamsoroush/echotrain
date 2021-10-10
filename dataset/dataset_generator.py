@@ -19,8 +19,15 @@ class DatasetGenerator(tf.keras.utils.Sequence):
                                     input_size, n_channels, to_fit, shuffle, seed)
     """
 
-    def __init__(self, list_images_dir, list_labels_dir,
-                 batch_size, input_size, n_channels, to_fit=True, shuffle=True, seed=None):
+    def __init__(self,
+                 list_images_dir,
+                 list_labels_dir,
+                 batch_size,
+                 input_size,
+                 n_channels,
+                 to_fit=True,
+                 shuffle=True,
+                 seed=None):
 
         """
         Handles data generators
@@ -176,21 +183,21 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
         return y_4ch_data
 
-    def resizing(self, image):
-
-        """
-        resizing image into the target_size dimensions
-
-        :param image: input image, np.ndarray
-
-        :return image_resized: resized image, np.ndarray
-        """
-
-        image_resized = np.array(tf.image.resize(image,
-                                                 self.input_size,
-                                                 antialias=False,
-                                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
-        return image_resized
+    # def resizing(self, image):
+    #
+    #     """
+    #     resizing image into the target_size dimensions
+    #
+    #     :param image: input image, np.ndarray
+    #
+    #     :return image_resized: resized image, np.ndarray
+    #     """
+    #
+    #     image_resized = np.array(tf.image.resize(image,
+    #                                              self.input_size,
+    #                                              antialias=False,
+    #                                              method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
+    #     return image_resized
 
     def random_visualization(self):
 

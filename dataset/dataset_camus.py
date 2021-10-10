@@ -11,7 +11,6 @@ import os
 
 
 class CAMUSDataset(DatasetBase):
-
     """
     This class makes our dataset ready to use by given desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
@@ -60,9 +59,20 @@ class CAMUSDataset(DatasetBase):
             self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
                                                                             self.list_labels_dir)
         # splitting
-        self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
-                                                                                         self.list_labels_dir,
-                                                                                         self.split_ratio)
+        train_indices, val_indices = self._split_indices(self._clean_data_df.index, self.split_ratio)
+
+        self._train_df = self._clean_data_df.loc[train_indices]
+        self._val_df = self._clean_data_df.loc[val_indices]
+
+        self.x_train_dir = self._train_df['image_path'].to_list()
+        self.y_train_dir = self._train_df['label_path'].to_list()
+
+        self.x_val_dir = self._val_df['image_path'].to_list()
+        self.y_val_dir = self._val_df['image_label'].to_list()
+
+        # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
+        #                                                                                  self.list_labels_dir,
+        #                                                                                  self.split_ratio)
 
         # adding 'train' and 'validation' status to the data-frame
         self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
@@ -189,7 +199,7 @@ class CAMUSDataset(DatasetBase):
         self.seed = 101
         self.shuffle = True
         self.to_fit = True
-        self.dataset_dir = '/training'
+        self.dataset_dir = 'training'
 
     def _fetch_data(self):
 
@@ -199,17 +209,23 @@ class CAMUSDataset(DatasetBase):
         dataset_dir: directory address of the dataset
 
         :return list_images_dir: list of the A4C view image paths
-        :return list_labels_dir: list of the type_map label paths
+        :return dict_labels_dir: dictionary of the type_map label paths
         """
 
-        data_dir = self.df_dataset[self.df_dataset['view'].isin(self.view) &
-                                   self.df_dataset['stage'].isin(self.stage) &
-                                   self.df_dataset['image_quality'].isin(self.image_quality) &
-                                   self.df_dataset['sex'].isin(self.sex) &
-                                   (self.df_dataset['age'] >= self.age[0]) &
-                                   (self.df_dataset['age'] <= self.age[1])][['patient_id',
-                                                                             'mhd_image_filename',
-                                                                             'mhd_label_filename']]
+        self._clean_data_df = self.df_dataset[self.df_dataset['view'].isin(self.view) &
+                                              self.df_dataset['stage'].isin(self.stage) &
+                                              self.df_dataset['image_quality'].isin(self.image_quality) &
+                                              self.df_dataset['sex'].isin(self.sex) &
+                                              (self.df_dataset['age'] >= self.age[0]) &
+                                              (self.df_dataset['age'] <= self.age[1])]
+        self._clean_data_df['image_path'] = self._clean_data_df.apply(
+            lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_image_filename']), axis=1)
+        self._clean_data_df['label_path'] = self._clean_data_df.apply(
+            lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_label_filename']), axis=1)
+
+        data_dir = self._clean_data_df[['patient_id',
+                                        'mhd_image_filename',
+                                        'mhd_label_filename']]
 
         x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
                           for patient_id, patient_image_dir in zip(data_dir['patient_id'],
@@ -220,11 +236,11 @@ class CAMUSDataset(DatasetBase):
                                                                    data_dir['mhd_label_filename'])])
 
         list_images_dir = x_dir
-        list_labels_dir = {}
+        dict_labels_dir = {}
         for i in range(len(y_dir)):
-            list_labels_dir[x_dir[i]] = y_dir[i]
+            dict_labels_dir[x_dir[i]] = y_dir[i]
 
-        return list_images_dir, list_labels_dir
+        return list_images_dir, dict_labels_dir
 
     def _build_data_frame(self):
 
@@ -283,6 +299,7 @@ class CAMUSDataset(DatasetBase):
 
             for echo_data in echo_data_list:
                 elements = echo_data.split('_')
+
                 df['patient_id'].append(elements[0])
                 df['view'].append(elements[1])
                 df['stage'].append(elements[2])
@@ -385,3 +402,9 @@ class CAMUSDataset(DatasetBase):
         y_val = dict(list(y.items())[train_size:])
 
         return x_train, y_train, x_val, y_val
+
+    def _split_indices(self, indices, split_ratio):
+        train_size = round(len(indices) * split_ratio)
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size:]
+        return train_indices, val_indices
