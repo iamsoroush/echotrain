@@ -51,7 +51,7 @@ def get_soft_iou(smooth=0.001):
         # axis = tuple(range(1, len(y_pred.shape) - 1))
         axis = [1, 2]
 
-        intersection = K.sum(K.abs(y_true * y_pred, axis=axis))
+        intersection = K.sum(K.abs(y_true * y_pred), axis=axis)
         union = K.sum(y_true, axis=axis) + K.sum(y_pred, axis=axis) - intersection
         iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
