@@ -17,15 +17,14 @@ class Evaluator:
 
     """
 
-    def __init__(self, config):
+    def __init__(self):
 
         """
-        :param config
         """
 
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.n_channels = config.n_channels
+        # self.input_h = config.input_h
+        # self.input_w = config.input_w
+        # self.n_channels = config.n_channels
 
     def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
 
@@ -63,12 +62,12 @@ class Evaluator:
             # batch = pre_processor.batch_preprocess(batch)
             for j in range(len(batch[0])):
                 data_featurs = []
-                print(batch[1].shape)
+                _, input_h, input_w, _ = batch[1].shape
                 # y_true = batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
-                y_true = np.expand_dims(batch[1][j], axis=-1)
+                y_true = np.expand_dims(batch[1][j], axis=0)
                 # y_pred = model.predict(
                 # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
-                y_pred = model.predict(np.expand_dims(batch[0][j], axis=-1))
+                y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
@@ -76,8 +75,8 @@ class Evaluator:
                 data_featurs.append(float(metric.get_soft_iou()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_dice_coeff()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
-                data_featurs.append(float(metric.get_mad(self.input_w, self.input_h)(y_true, y_pred)))
-                data_featurs.append(float(metric.get_hausdorff_distance(self.input_w, self.input_h)(y_true, y_pred)))
+                data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
+                data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
                 data_featurs.append(self._model_certainty(y_true, y_pred)[0])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[1])
                 data_featurs.append(self._model_certainty(y_true, y_pred)[2])
