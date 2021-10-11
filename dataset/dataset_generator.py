@@ -153,9 +153,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         x_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
                          dir_list))
 
-        x_4ch_data = np.array(x_4ch, dtype=object)
+        # x_4ch_data = np.array(x_4ch, dtype=object)
 
-        return x_4ch_data
+        return x_4ch
 
     def generate_y(self, dir_list):
 
@@ -179,9 +179,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # extract just left ventricle label from y_4ch_cat
         y_4ch_lv = [y[:, :, 1] for y in y_4ch_cat]
 
-        y_4ch_data = np.array(y_4ch_lv, dtype=object)
+        # y_4ch_data = np.array(y_4ch_lv, dtype=object)
 
-        return y_4ch_data
+        return y_4ch_lv
 
     # def resizing(self, image):
     #
