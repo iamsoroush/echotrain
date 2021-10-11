@@ -1,5 +1,4 @@
 import sys
-
 sys.path.append('..')
 
 from model import metric
@@ -28,10 +27,11 @@ class Evaluator:
         self.input_w = config.input_w
         self.n_channels = config.n_channels
 
-    def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indices):
+    def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
 
         """Generates a report as a pandas.DataFrame
 
+        :param val_data_indexes: index of validation data. this will be the index column of the result dataframe
         :param model: the input model which is being evaluated
         :param data_gen_val_preprocessed: the data generator which is being evaluated,
          it has to be a pre-processed data generator
@@ -67,7 +67,7 @@ class Evaluator:
                 # y_true = batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
                 y_true = np.expand_dims(batch[1][j], axis=-1)
                 # y_pred = model.predict(
-                    # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
+                # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
                 y_pred = model.predict(np.expand_dims(batch[0][j], axis=-1))
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
@@ -86,7 +86,7 @@ class Evaluator:
                 data_featurs.append(self.true_negative_rate(y_true, y_pred))
                 data_frame_numpy.append(data_featurs)
 
-        return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indices)
+        return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indexes)
 
     @staticmethod
     def _model_certainty(y_true, y_pred):
@@ -98,16 +98,16 @@ class Evaluator:
         """
 
         dif = np.abs(y_true - y_pred)
-        truecertainty = np.count_nonzero(dif < 0.3) / y_true.size
-        falsecertainty = np.count_nonzero(dif > 0.7) / y_true.size
+        true_certainty = np.count_nonzero(dif < 0.3) / y_true.size
+        false_certainty = np.count_nonzero(dif > 0.7) / y_true.size
         ambiguous = np.count_nonzero(np.logical_and(0.3 <= dif, dif <= 0.7)) / y_true.size
-        certainty_list = [truecertainty, falsecertainty, ambiguous]
+        certainty_list = [true_certainty, false_certainty, ambiguous]
         if np.argmax(certainty_list) == 0:
-            return [truecertainty, falsecertainty, ambiguous, 'true_certain']
+            return [true_certainty, false_certainty, ambiguous, 'true_certain']
         elif np.argmax(certainty_list) == 1:
-            return [truecertainty, falsecertainty, ambiguous, 'false_certain']
+            return [true_certainty, false_certainty, ambiguous, 'false_certain']
         elif np.argmax(certainty_list) == 2:
-            return [truecertainty, falsecertainty, ambiguous, 'ambigous']
+            return [true_certainty, false_certainty, ambiguous, 'ambigous']
 
     @staticmethod
     def true_positive_rate(y_true, y_pred):
@@ -118,12 +118,12 @@ class Evaluator:
         :return: the percentage of the true positives
         """
 
-        TP = 0
+        tp = 0
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
                 if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 1:
-                    TP += 1
-        return (TP / np.count_nonzero(y_true > 0.5)) * 100
+                    tp += 1
+        return (tp / np.count_nonzero(y_true > 0.5)) * 100
 
     @staticmethod
     def true_negative_rate(y_true, y_pred):
@@ -132,12 +132,12 @@ class Evaluator:
         :param y_pred: prediction of the model
         :return: the percentage of the true negative
         """
-        TN = 0
+        tn = 0
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):
                 if y_pred[0][i, j] == y_true[0][i, j] and y_true[0][i, j] == 0:
-                    TN += 1
-        return (TN / np.count_nonzero(y_true > 0.5)) * 100
+                    tn += 1
+        return (tn / np.count_nonzero(y_true > 0.5)) * 100
 
     # def _model_certainty_v2(self, y_true, y_pred, upper=0.75, lower=0.25):
     #

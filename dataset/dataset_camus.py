@@ -59,17 +59,17 @@ class CAMUSDataset(DatasetBase):
             self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
                                                                             self.list_labels_dir)
         # splitting
-        train_indices, val_indices = self._split_indices(self._clean_data_df.index, self.split_ratio)
+        train_indices, val_indices = self._split_indexes(self._clean_data_df.index)
 
-        self._train_df = self._clean_data_df.loc[train_indices]
-        self._val_df = self._clean_data_df.loc[val_indices]
+        self.train_df = self._clean_data_df.loc[train_indices]
+        self.val_df = self._clean_data_df.loc[val_indices]
 
-        self.x_train_dir = np.array(self._train_df['image_path'].to_list())
-        self.y_train_dir = np.array(self._train_df['label_path'].to_list())
+        self.x_train_dir = np.array(self.train_df['image_path'].to_list())
+        self.y_train_dir = np.array(self.train_df['label_path'].to_list())
         self.y_train_dir = dict(zip(self.x_train_dir, self.y_train_dir))
 
-        self.x_val_dir = np.array(self._val_df['image_path'].to_list())
-        self.y_val_dir = np.array(self._val_df['label_path'].to_list())
+        self.x_val_dir = np.array(self.val_df['image_path'].to_list())
+        self.y_val_dir = np.array(self.val_df['label_path'].to_list())
         self.y_val_dir = dict(zip(self.x_val_dir, self.y_val_dir))
 
         # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
@@ -405,8 +405,8 @@ class CAMUSDataset(DatasetBase):
 
         return x_train, y_train, x_val, y_val
 
-    def _split_indices(self, indices, split_ratio):
-        train_size = round(len(indices) * split_ratio)
-        train_indices = indices[:train_size]
-        val_indices = indices[train_size:]
+    def _split_indexes(self, indexes):
+        train_size = round(len(indexes) * self.split_ratio)
+        train_indices = indexes[:train_size]
+        val_indices = indexes[train_size:]
         return train_indices, val_indices
