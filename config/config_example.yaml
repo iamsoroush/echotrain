@@ -7,19 +7,26 @@ preprocessor_class: model.pre_processing.PreProcessor
 dataset_class: dataset.dataset_camus.CAMUSDataset
 
 data_handler:
-  target_dataset_name: "CAMUS"
-  dataset_dir: "/content/training"
   batch_size: 8
   split_ratio: 0.9
   to_fit: True
   shuffle: True
   seed: 101
-  dataset_features:
-    age: [18, 100]
-    sex: ["M", "F"]
-    stage: ["ES", "ED"]
-    image_quality: ["Poor", "Medium", "Good"]
-    view: ["4CH"]
+  camus_dataset:
+    target_dataset_name: "CAMUS"
+    dataset_dir: "/content/training"
+    dataset_features:
+      age: [18, 100]
+      sex: ["M", "F"]
+      stage: ["ES", "ED"]
+      image_quality: ["Poor", "Medium", "Good"]
+      view: ["4CH"]
+  echonet_dynamic_dataset:
+    target_dataset_name: "echo_net_dynamic"
+    dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamic"
+    dataset_features:
+      stage: ["ES", "ED"]
+      view: ["4CH"]
 
 model:
   name: "baseline-unet"

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
-from .augmentation import Augmentation
+from augmentation import Augmentation
 
 
 class PreProcessor:

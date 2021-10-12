@@ -25,6 +25,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
                  batch_size,
                  input_size,
                  n_channels,
+                 channel_last=True,
                  to_fit=True,
                  shuffle=True,
                  seed=None):
@@ -53,6 +54,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_size = batch_size
         self.input_size = input_size
         self.n_channels = n_channels
+        self.channel_last = channel_last
         self.seed = seed
         self.shuffle = shuffle
         self.to_fit = to_fit
@@ -137,8 +139,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_index += 1
         yield batch_index
 
-    @staticmethod
-    def generate_x(dir_list):
+    def generate_x(self, dir_list):
         """
         reads A4C view images of CAMUS dataset
 
@@ -150,8 +151,14 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading images of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # X_4CH_ED: list[numpy.ndarray]
-        x_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+
+        x_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          dir_list))
+
+        if len(x_4ch[0].shape) == 3:
+            if self.channel_last:
+                x_4ch = [np.moveaxis(x, 0, -1) for x in x_4ch]
+
 
         # x_4ch_data = np.array(x_4ch, dtype=object)
 
@@ -170,8 +177,12 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # y_4ch: list[numpy.ndarray]
-        y_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+        y_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          [self.list_labels_dir[image_path] for image_path in dir_list]))
+
+        if len(y_4ch[0].shape) == 3:
+            if self.channel_last:
+                y_4ch = [np.moveaxis(y, 0, -1) for y in y_4ch]
 
         # to categorical
         y_4ch_cat = [to_categorical(y) for y in y_4ch]
@@ -182,22 +193,6 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # y_4ch_data = np.array(y_4ch_lv, dtype=object)
 
         return y_4ch_lv
-
-    # def resizing(self, image):
-    #
-    #     """
-    #     resizing image into the target_size dimensions
-    #
-    #     :param image: input image, np.ndarray
-    #
-    #     :return image_resized: resized image, np.ndarray
-    #     """
-    #
-    #     image_resized = np.array(tf.image.resize(image,
-    #                                              self.input_size,
-    #                                              antialias=False,
-    #                                              method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
-    #     return image_resized
 
     def random_visualization(self):
 
