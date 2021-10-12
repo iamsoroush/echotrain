@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
-import albumentations as A
+from .augmentation import Augmentation
 
 
 class PreProcessor:
@@ -15,7 +15,7 @@ class PreProcessor:
     data_gen = preprocessor.add_preprocess(data_gen, add_augmentation=True)
     """
 
-    def __init__(self, config):
+    def __init__(self, config=None):
 
         """
         target_size: image target size for resizing, tuple (image_height, image_width)
@@ -24,18 +24,10 @@ class PreProcessor:
         normalization: for rescaling the image, bool
         """
 
-        self.config = config
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.target_size = (self.input_h, self.input_w)
-        self.max = config.pre_process.max
-        self.min = config.pre_process.min
-        self.do_resizing = config.pre_process.do_resizing
-        self.do_normalization = config.pre_process.do_normalization
+        self._load_params(config)
 
         # Augmentation
-        self.augmentation_config = config.pre_process.augmentation
-        self.aug = Augmentation(self.augmentation_config)
+        self.aug = Augmentation(config)
 
     def img_preprocess(self, image, inference=False):
 
@@ -122,6 +114,29 @@ class PreProcessor:
 
             yield pre_processed_batch
 
+    def _load_params(self, config):
+        self._set_defaults()
+
+        if config is not None:
+            self.input_h = config.input_h
+            self.input_w = config.input_w
+            self.max = config.pre_process.max
+            self.min = config.pre_process.min
+            self.do_resizing = config.pre_process.do_resizing
+            self.do_normalization = config.pre_process.do_normalization
+
+    def _set_defaults(self):
+        self.input_h = 256
+        self.input_w = 256
+        self.max = 255
+        self.min = 0
+        self.do_resizing = True
+        self.do_normalization = True
+
+    @property
+    def target_size(self):
+        return self.input_h, self.input_w
+
     def _resize(self, image):
 
         """
@@ -168,70 +183,3 @@ class PreProcessor:
 
         gray_image = rgb2gray(image)
         return gray_image
-
-
-class Augmentation:
-
-    """
-    This class is implementing augmentation on the batches of data
-
-    How to:
-    aug = Augmentation()
-    data = aug.batch_augmentation(x,y)
-    x = images(batch)
-    y = masks(batch)
-    data = augmented batch
-    """
-
-    def __init__(self, config):
-
-        """
-        :param config: augmentation part of config file: config.pre_process.augmentation, containing:
-            rotation_range: the range limitation for rotation in augmentation
-            flip_proba: probability for flipping
-        """
-
-        self.rotation_range = config.rotation_range
-        self.rotation_proba = config.rotation_proba
-        self.flip_proba = config.flip_proba
-        self.transform = A.Compose([
-            A.Flip(p=self.flip_proba),
-            A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)
-        ])
-
-    def batch_augmentation(self, batch):
-
-        """
-        this function implement augmentation on batches
-        :param batch: (x, y):
-            x: batch images of the whole batch
-            y: batch masks of the whole batch
-        :return: x, y: the image and mask batches.
-        """
-
-        # changing the type of the images for albumentation
-        x = batch[0]
-        y = batch[1]
-
-        x = x.astype('float32')
-
-        # implementing augmentation on every image and mask of the batch
-        for i in range(len(x)):
-            transformed = self.transform(image=x[i], mask=y[i])
-            x[i] = transformed['image']
-            y[i] = transformed['mask']
-
-        return x, y
-
-    def add_augmentation(self, generator):
-
-        """
-        calling the batch_augmentation
-        :param generator: the input of this class must be generator
-        :yield: the batches of the augmented generator
-        """
-
-        while True:
-            batch = next(generator)
-            augmented_batch = self.batch_augmentation(batch)
-            yield augmented_batch
