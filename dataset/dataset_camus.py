@@ -61,15 +61,15 @@ class CAMUSDataset(DatasetBase):
         # splitting
         train_indices, val_indices = self._split_indexes(self._clean_data_df.index)
 
-        self.train_df = self._clean_data_df.loc[train_indices]
-        self.val_df = self._clean_data_df.loc[val_indices]
+        self.train_df_ = self._clean_data_df.loc[train_indices]
+        self.val_df_ = self._clean_data_df.loc[val_indices]
 
-        self.x_train_dir = np.array(self.train_df['image_path'].to_list())
-        self.y_train_dir = np.array(self.train_df['label_path'].to_list())
+        self.x_train_dir = np.array(self.train_df_['image_path'].to_list())
+        self.y_train_dir = np.array(self.train_df_['label_path'].to_list())
         self.y_train_dir = dict(zip(self.x_train_dir, self.y_train_dir))
 
-        self.x_val_dir = np.array(self.val_df['image_path'].to_list())
-        self.y_val_dir = np.array(self.val_df['label_path'].to_list())
+        self.x_val_dir = np.array(self.val_df_['image_path'].to_list())
+        self.y_val_dir = np.array(self.val_df_['label_path'].to_list())
         self.y_val_dir = dict(zip(self.x_val_dir, self.y_val_dir))
 
         # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
@@ -78,22 +78,6 @@ class CAMUSDataset(DatasetBase):
 
         # adding 'train' and 'validation' status to the data-frame
         self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
-
-    def create_data_generators(self):
-
-        """Creates data generators based on batch_size, input_size
-
-        :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
-        :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
-        :returns n_iter_train: number of iterations per epoch for train_data_gen
-        :returns n_iter_val: number of iterations per epoch for val_data_gen
-
-        """
-
-        train_data_gen, n_iter_train = self.create_train_data_generator()
-        val_data_gen, n_iter_val = self.create_validation_data_generator()
-
-        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
     def create_train_data_generator(self):
 
@@ -145,7 +129,8 @@ class CAMUSDataset(DatasetBase):
 
         return dataset_gen, n_iter_dataset
 
-    def get_data_frame(self):
+    @property
+    def raw_df(self):
 
         """
 
@@ -154,11 +139,19 @@ class CAMUSDataset(DatasetBase):
 
         return self.df_dataset
 
+    @property
+    def train_df(self):
+        return self.train_df_
+
+    @property
+    def validation_df(self):
+        return self.val_df_
+
     def _load_config(self, config):
 
         """Load all parameters from config file"""
 
-        self._set_default_values()
+        self._set_default_params()
 
         if config is not None:
             self.age = config.data_handler.dataset_features.age
@@ -182,7 +175,7 @@ class CAMUSDataset(DatasetBase):
     def input_size(self):
         return self.input_h, self.input_w
 
-    def _set_default_values(self):
+    def _set_default_params(self):
 
         """Default values for parameters"""
 
