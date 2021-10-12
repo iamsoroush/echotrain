@@ -8,20 +8,25 @@ class PreProcessor:
     """
      PreProcess module used for images, batches, generators
 
-    HOW TO:
-    preprocessor = PreProcess()
-    image = preprocessor.img_preprocess(image)
-    X, y = preprocessor.batch_preprocess(gen_batch)
-    data_gen = preprocessor.add_preprocess(data_gen, add_augmentation=True)
+    Example::
+
+        preprocessor = PreProcess()
+        image = preprocessor.img_preprocess(image)
+        X, y = preprocessor.batch_preprocess(gen_batch)
+        data_gen = preprocessor.add_preprocess(data_gen, add_augmentation=True)
+
+    Attributes:
+
+        target_size: image target size for resizing, tuple (image_height, image_width)
+        min: minimum value of the image range, int
+        max: maximum value of the image range, int
+        normalization: for rescaling the image, bool
+
     """
 
     def __init__(self, config=None):
 
         """
-        target_size: image target size for resizing, tuple (image_height, image_width)
-        min: minimum value of the image range, int
-        max: maximum value of the image range, int
-        normalization: for rescaling the image, bool
         """
 
         self._load_params(config)

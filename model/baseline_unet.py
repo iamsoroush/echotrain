@@ -11,6 +11,7 @@ class UNetBaseline(ModelBase):
     """Unet V2 implementation from CAMUS paper.
 
     from the paper:
+
         - model input: (256, 256, 1)
         - density normalization after resizing
         - no augmentation
@@ -20,8 +21,8 @@ class UNetBaseline(ModelBase):
         - activation: relu
         - final activation: softmax (we used sigmoid because of binary output)
         - optimizer: Adam(lr=1e-4)
-        - loss: crossentropy + weight decay(L2 regularization of the weights) (we will not apply weight decay, we will
-            try regularization if the model over-fits)
+        - loss: crossentropy and weight decay(L2 regularization of the weights). we will not apply weight decay, we will
+          try regularization if the model over-fits
         - epochs: 30
         - params: ~18M
         - batch size: 10
@@ -54,7 +55,7 @@ class UNetBaseline(ModelBase):
         compile model from get_model_graph method with the optimizer,
         metrics and loss function written in config_example.yaml file
 
-        :return: compiled model
+        :return model: compiled model
         """
 
         model = self.get_model_graph()
@@ -71,7 +72,7 @@ class UNetBaseline(ModelBase):
         Output of this method will be used for inference (by loading saved checkpoints) and training (by compiling the
         graph)
 
-        :return: a model of type tensorflow.keras.Model
+        :return model: a model of type tensorflow.keras.Model
             input_shape:(input_h, input_w, 1)
             output_shape:(input_h, input_w, 1)
         """

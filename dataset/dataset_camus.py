@@ -13,25 +13,20 @@ import os
 class CAMUSDataset(DatasetBase):
     """
     This class makes our dataset ready to use by given desired values to its parameters
-    and by calling the "create_data_generators" or "create_test_data_generator" function,
+    and by calling the ``create_data_generators`` or ``create_test_data_generator`` function,
     reads the data from the given directory as follow:
 
-    HOW TO:
-    dataset = CAMUSDataset(config.data_handler)
+    Example::
 
-    # for training set:
-    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators(dataset_dir)
+        dataset = CAMUSDataset(config.data_handler)
 
-    # for test set:
-    dataset_gen = dataset.create_test_generator(test_set_dir)
-    """
+        # for training set:
+        train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators(dataset_dir)
 
-    def __init__(self, config=None):
+        # for test set:
+        dataset_gen = dataset.create_test_generator(test_set_dir)
 
-        """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
-
-        if config==None, default values will be invoked using self._set_efault_values
+    Attributes:
 
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
@@ -45,6 +40,14 @@ class CAMUSDataset(DatasetBase):
         stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
         view: view of the hear image, can be two chamber view(2CH) or four chamber view(4CH), list
         image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
+
+    """
+
+    def __init__(self, config=None):
+
+        """
+        if config==None, default values will be invoked using self._set_efault_values
+
         """
 
         super(CAMUSDataset, self).__init__(config)
@@ -98,7 +101,7 @@ class CAMUSDataset(DatasetBase):
 
         """Validation data generator
 
-        Here we will set shuffle=False because we don't need shuffling for validation data.
+        Here we will set ``shuffle=False`` because we don't need shuffling for validation data.
         """
 
         val_data_gen = DatasetGenerator(self.x_val_dir,
@@ -114,9 +117,9 @@ class CAMUSDataset(DatasetBase):
     def create_test_data_generator(self):
 
         """
-        Creates data generators based on batch_size, input_size
+        Creates data generators based on ``batch_size``, ``input_size``
 
-        :returns dataset_gen: training data generator which yields (batch_size, h, w, c) tensors
+        :returns dataset_gen: training data generator which yields ``(batch_size, h, w, c)`` tensors
         :returns n_iter_dataset: number of iterations per epoch for train_data_gen
         """
 

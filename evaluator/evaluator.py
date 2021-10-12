@@ -11,15 +11,17 @@ class Evaluator:
     """
     This class is for evaluating the model and data according to the metrics and losses
 
-    HOW TO:
-    eval = Evaluator(config)
-    eval.build_data_frame(model,data_generator,n_iter)
+    Example::
+
+        eval = Evaluator(config)
+        eval.build_data_frame(model,data_generator,n_iter)
 
     """
 
     def __init__(self):
 
         """
+
         """
 
     def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
@@ -31,8 +33,9 @@ class Evaluator:
         :param data_gen_val_preprocessed: the data generator which is being evaluated,
          it has to be a pre-processed data generator
         :param n_iter: number of iterations of the data generator
-        :return: the dataframe which consists of the metrics and losses and also the certainty of
-        the model and true positive rate and true negative rate
+
+        :return df: the dataframe which consists of the metrics and losses and also the certainty of
+         the model and true positive rate and true negative rate
         """
 
         # building the dataframe
@@ -73,10 +76,10 @@ class Evaluator:
                 data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
                 data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
-                data_featurs.append(self._model_certainty(y_true, y_pred)[0])
-                data_featurs.append(self._model_certainty(y_true, y_pred)[1])
-                data_featurs.append(self._model_certainty(y_true, y_pred)[2])
-                data_featurs.append(self._model_certainty(y_true, y_pred)[3])
+                data_featurs.append(self.model_certainty(y_true, y_pred)[0])
+                data_featurs.append(self.model_certainty(y_true, y_pred)[1])
+                data_featurs.append(self.model_certainty(y_true, y_pred)[2])
+                data_featurs.append(self.model_certainty(y_true, y_pred)[3])
                 data_featurs.append(self.true_positive_rate(y_true, y_pred))
                 data_featurs.append(self.true_negative_rate(y_true, y_pred))
                 data_frame_numpy.append(data_featurs)
@@ -84,11 +87,12 @@ class Evaluator:
         return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indexes)
 
     @staticmethod
-    def _model_certainty(y_true, y_pred):
+    def model_certainty(y_true, y_pred):
+        """Calculates certainty about the given input
 
-        """
         :param y_true: ground truth
         :param y_pred: prediction of the model
+
         :return: the certainty of the model of every data
         """
 
@@ -106,10 +110,11 @@ class Evaluator:
 
     @staticmethod
     def true_positive_rate(y_true, y_pred):
+        """Calculates true positive rate
 
-        """
         :param y_true: ground truth
         :param y_pred: prediction of the model
+
         :return: the percentage of the true positives
         """
 
@@ -122,11 +127,14 @@ class Evaluator:
 
     @staticmethod
     def true_negative_rate(y_true, y_pred):
-        """
+        """Calculates true negative rate
+
         :param y_true: ground truth
         :param y_pred: prediction of the model
+
         :return: the percentage of the true negative
         """
+
         tn = 0
         for i in range(len(y_true[0])):
             for j in range(len(y_true[0][0])):

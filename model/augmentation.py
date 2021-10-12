@@ -6,20 +6,22 @@ class Augmentation:
     """
     This class is implementing augmentation on the batches of data
 
-    How to:
-    aug = Augmentation()
-    data = aug.batch_augmentation(x,y)
-    x = images(batch)
-    y = masks(batch)
-    data = augmented batch
+    Example::
+
+        aug = Augmentation()
+        data = aug.batch_augmentation(x,y)
+        x = images(batch)
+        y = masks(batch)
+        data = augmented batch
+
     """
 
     def __init__(self, config=None):
 
         """
         :param config: augmentation part of config file: config.pre_process.augmentation, containing:
-            rotation_range: the range limitation for rotation in augmentation
-            flip_proba: probability for flipping
+          rotation_range - the range limitation for rotation in augmentation
+          flip_proba - probability for flipping
         """
 
         self._load_params(config)
@@ -31,12 +33,14 @@ class Augmentation:
 
     def batch_augmentation(self, batch):
 
-        """
-        this function implement augmentation on batches
+        """This method implement augmentation on batches
+
         :param batch: (x, y):
             x: batch images of the whole batch
             y: batch masks of the whole batch
-        :return: x, y: the image and mask batches.
+
+        :return x: image batch
+        :return y: mask batch.
         """
 
         # changing the type of the images for albumentation
@@ -55,9 +59,10 @@ class Augmentation:
 
     def add_augmentation(self, generator):
 
-        """
-        calling the batch_augmentation
+        """Calling the batch_augmentation
+
         :param generator: the input of this class must be generator
+
         :yield: the batches of the augmented generator
         """
 

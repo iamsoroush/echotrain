@@ -3,18 +3,23 @@ from abc import ABC, abstractmethod
 
 class ModelBase(ABC):
 
+    """Model's abstract class
+
+    Attributes:
+
+        name: model name
+        optimizer_type: which optimizer to use?
+        learning_rate: initial learning rate of the optimizer
+        loss_type: name of the loss function's
+        metrics: a list of metrics to use
+
+    """
+
     def __init__(self, config):
 
         """
 
         :param config: a Python object with attributes as config values
-
-        Attributes
-            name str: model name
-            optimizer_type str: which optimizer to use?
-            learning_rate float: initial learning rate of the optimizer
-            loss_type str: loss function's type
-            metrics [str]: a list of metrics to use
 
         """
 
