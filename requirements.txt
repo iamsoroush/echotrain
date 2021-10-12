@@ -16,5 +16,5 @@ scikit-image==0.18.3
 scipy==1.7.1
 six==1.16.0
 tifffile==2021.8.30
-sphinx_rtd_theme
 sphinx
+sphinx_rtd_theme
