@@ -22,10 +22,6 @@ class Evaluator:
         """
         """
 
-        # self.input_h = config.input_h
-        # self.input_w = config.input_w
-        # self.n_channels = config.n_channels
-
     def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
 
         """Generates a report as a pandas.DataFrame
