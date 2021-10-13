@@ -141,7 +141,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
 
     def generate_x(self, dir_list):
         """
-        reads A4C view images of CAMUS dataset
+        reads A4C view images from dataset
 
         :param dir_list:
 
@@ -172,7 +172,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     def generate_y(self, dir_list):
 
         """
-        reads A4C view segmentation labels of CAMUS dataset
+        reads A4C view segmentation labels from dataset
 
         :param dir_list
 
