@@ -58,10 +58,11 @@ class EchoNetDataset(DatasetBase):
             self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
                                                                             self.list_labels_dir)
         # splitting
-        train_indices, val_indices = self._split_indexes(self._clean_data_df.index)
+        self._split_indexes()
 
-        self.train_df_ = self._clean_data_df.loc[train_indices]
-        self.val_df_ = self._clean_data_df.loc[val_indices]
+        self.train_df_ = self._clean_data_df.loc[self.train_indices]
+        self.val_df_ = self._clean_data_df.loc[self.val_indices]
+        self.test_df_ = self._clean_data_df.loc[self.test_indices]
 
         self.x_train_dir = np.array(self.train_df_['image_path'].to_list())
         self.y_train_dir = np.array(self.train_df_['label_path'].to_list())
@@ -71,13 +72,16 @@ class EchoNetDataset(DatasetBase):
         self.y_val_dir = np.array(self.val_df_['label_path'].to_list())
         self.y_val_dir = dict(zip(self.x_val_dir, self.y_val_dir))
 
+        self.x_test_dir = np.array(self.test_df_['image_path'].to_list())
+        self.y_test_dir = np.array(self.test_df_['label_path'].to_list())
+        self.y_test_dir = dict(zip(self.x_test_dir, self.y_test_dir))
+
         # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
         #                                                                                  self.list_labels_dir,
         #                                                                                  self.split_ratio)
 
-        # adding 'train' and 'validation' status to the data-frame
-
-        self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
+        # # adding 'train' and 'validation' status to the data-frame
+        # self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
     def create_data_generators(self):
 
@@ -136,14 +140,15 @@ class EchoNetDataset(DatasetBase):
         :returns n_iter_dataset: number of iterations per epoch for train_data_gen
         """
 
-        list_images_dir, list_labels_dir = self._fetch_data()
-
-        dataset_gen = DatasetGenerator(list_images_dir, list_labels_dir, self.batch_size,
-                                       self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-
-        n_iter_dataset = dataset_gen.get_n_iter()
-
-        return dataset_gen, n_iter_dataset
+        test_data_gen = DatasetGenerator(self.x_test_dir,
+                                         self.y_test_dir,
+                                         self.batch_size,
+                                         self.input_size,
+                                         self.n_channels,
+                                         self.to_fit,
+                                         shuffle=False)
+        n_iter_test = test_data_gen.get_n_iter()
+        return test_data_gen, n_iter_test
 
     @property
     def raw_df(self):
@@ -163,6 +168,10 @@ class EchoNetDataset(DatasetBase):
     def validation_df(self):
         return self.val_df_
 
+    @property
+    def test_df(self):
+        return self.test_df_
+
     def _load_config(self, config):
 
         """Load all parameters from config file"""
@@ -178,11 +187,12 @@ class EchoNetDataset(DatasetBase):
             self.input_w = config.input_w
             # self.input_size = (self.input_h, self.input_w)
             self.n_channels = config.n_channels
-            self.split_ratio = cfg_dh.split_ratio
+            # self.split_ratio = cfg_dh.split_ratio
             self.seed = cfg_dh.seed
             self.shuffle = cfg_dh.shuffle
             self.to_fit = cfg_dh.to_fit
             self.dataset_dir = cfg_dh.echonet_dynamic_dataset.dataset_dir
+            self.info_df_dir = cfg_dh.echonet_dynamic_dataset.info_df_dir
 
     @property
     def input_size(self):
@@ -200,11 +210,12 @@ class EchoNetDataset(DatasetBase):
         self.input_w = 256
         # self.input_size = (self.input_h, self.input_w)
         self.n_channels = 1
-        self.split_ratio = 0.8
+        # self.split_ratio = 0.8
         self.seed = 101
         self.shuffle = True
         self.to_fit = True
         self.dataset_dir = 'EchoNet-Dynamic'
+        self.info_df_dir = 'info_df.csv'
 
     def _fetch_data(self):
 
@@ -220,17 +231,11 @@ class EchoNetDataset(DatasetBase):
         self._clean_data_df = self.df_dataset[self.df_dataset['view'].isin(self.view) &
                                               self.df_dataset['stage'].isin(self.stage)]
 
-        print(self._clean_data_df)
-        print(self._clean_data_df.index)
-
         self._clean_data_df['image_path'] = self._clean_data_df.apply(
             lambda x: os.path.join(self.dataset_dir, 'Cases/', x['case_id'], x['mhd_image_filename']), axis=1)
 
         self._clean_data_df['label_path'] = self._clean_data_df.apply(
             lambda x: os.path.join(self.dataset_dir, 'Cases/', x['case_id'], x['mhd_label_filename']), axis=1)
-
-        print(self._clean_data_df)
-        print(self._clean_data_df.index)
 
         # data_dir = self._clean_data_df[['case_id',
         #                                 'mhd_image_filename',
@@ -279,78 +284,78 @@ class EchoNetDataset(DatasetBase):
 
           :return Pandas DataFrame consisting features of each data in dataset
         """
+        if os.path.exists(self.info_df_dir):
+            self.df_dataset = pd.read_csv(self.info_df_dir)
+        else:
+            file_list_df = pd.read_csv(os.path.join(self.dataset_dir, "FileList.csv"))
+            volume_tracing_df = pd.read_csv(os.path.join(self.dataset_dir, 'VolumeTracings.csv'))
 
-        file_list_df = pd.read_csv(os.path.join(self.dataset_dir, "FileList.csv"))
-        volume_tracing_df = pd.read_csv(os.path.join(self.dataset_dir, 'VolumeTracings.csv'))
+            stages = ['ES', 'ED']
 
-        stages = ['ES', 'ED']
+            df = {'case_id': [],
+                  'mhd_image_filename': [],
+                  'raw_image_filename': [],
+                  'mhd_label_filename': [],
+                  'raw_label_filename': [],
+                  'video_file_dir': [],
+                  'view': [],
+                  'stage': [],
+                  'ed_frame': [],
+                  'es_frame': [],
+                  'lv_edv': [],
+                  'lv_esv': [],
+                  'lv_ef': [],
+                  'num_of_frame': [],
+                  'fps': [],
+                  'status': []}
 
-        df = {'case_id': [],
-              'mhd_image_filename': [],
-              'raw_image_filename': [],
-              'mhd_label_filename': [],
-              'raw_label_filename': [],
-              'video_file_dir': [],
-              'view': [],
-              'stage': [],
-              'ed_frame': [],
-              'es_frame': [],
-              'lv_edv': [],
-              'lv_esv': [],
-              'lv_ef': [],
-              'num_of_frame': [],
-              'fps': [],
-              'status': []}
+            vt_filename_unique = np.array(list(map(lambda x: x.split('.')[0], volume_tracing_df['FileName'].unique())))
+            fl_filename_unique = file_list_df['FileName'].unique()
+            data_diff = np.setdiff1d(fl_filename_unique, vt_filename_unique)
 
-        vt_filename_unique = np.array(list(map(lambda x: x.split('.')[0], volume_tracing_df['FileName'].unique())))
-        fl_filename_unique = file_list_df['FileName'].unique()
-        data_diff = np.setdiff1d(fl_filename_unique, vt_filename_unique)
+            for case in tqdm(file_list_df['FileName'][:]):
+                if case in data_diff:
+                    continue
+                case_file_list = file_list_df[file_list_df['FileName'] == case]
+                case_volume_tracing = volume_tracing_df[volume_tracing_df['FileName'] == f'{case}.avi']
+                ED_ES_num_frames = case_volume_tracing['Frame'].unique()
 
-        for case in tqdm(file_list_df['FileName']):
-            if case in data_diff:
-                continue
-            case_file_list = file_list_df[file_list_df['FileName'] == case]
-            case_volume_tracing = volume_tracing_df[volume_tracing_df['FileName'] == f'{case}.avi']
-            ED_ES_num_frames = case_volume_tracing['Frame'].unique()
+                for stage in stages:
+                    df['case_id'].append(case)
+                    df['mhd_image_filename'].append(f'{case}_{stage}.mhd')
+                    df['raw_image_filename'].append(f'{case}_{stage}.raw')
+                    df['mhd_label_filename'].append(f'{case}_{stage}_gt.mhd')
+                    df['raw_label_filename'].append(f'{case}_{stage}_gt.raw')
+                    df['video_file_dir'].append(f'Videos/{case}.avi')
+                    df['view'].append('4CH')
+                    df['stage'].append(stage)
+                    df['ed_frame'].append(ED_ES_num_frames[0])
+                    df['es_frame'].append(ED_ES_num_frames[1])
+                    df['lv_edv'].append(float(case_file_list['EDV']))
+                    df['lv_esv'].append(float(case_file_list['ESV']))
+                    df['lv_ef'].append(float(case_file_list['EF']))
+                    df['num_of_frame'].append(int(case_file_list['NumberOfFrames']))
+                    df['fps'].append(int(case_file_list['FPS']))
+                    df['status'].append(str(case_file_list['Split'].values[0]))
 
-            for stage in stages:
-                df['case_id'].append(case)
-                df['mhd_image_filename'].append(f'{case}_{stage}.mhd')
-                df['raw_image_filename'].append(f'{case}_{stage}.raw')
-                df['mhd_label_filename'].append(f'{case}_{stage}_gt.mhd')
-                df['raw_label_filename'].append(f'{case}_{stage}_gt.raw')
-                df['video_file_dir'].append(f'Videos/{case}.avi')
-                df['view'].append('4CH')
-                df['stage'].append(stage)
-                df['ed_frame'].append(ED_ES_num_frames[0])
-                df['es_frame'].append(ED_ES_num_frames[1])
-                df['lv_edv'].append(float(case_file_list['EDV']))
-                df['lv_esv'].append(float(case_file_list['ESV']))
-                df['lv_ef'].append(float(case_file_list['EF']))
-                df['num_of_frame'].append(int(case_file_list['NumberOfFrames']))
-                df['fps'].append(int(case_file_list['FPS']))
-                df['status'].append('train')
+            self.df_dataset = pd.DataFrame(df)
 
-        # print(df)
-        self.df_dataset = pd.DataFrame(df)
-        # self.df_dataset.to_csv('D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamicinfo.csv')
-
-    def _add_train_val_to_data_frame(self, train_dir, val_dir):
-
-        """
-        adding the updates of the status of the patients
-
-        :param train_dir: train set directory
-        :param val_dir: validation set directory
-        """
-
-        for each_dir in train_dir:
-            case_id = each_dir.replace('\\', '/').split('/')[-2]
-            self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'train'
-
-        for each_dir in val_dir:
-            case_id = each_dir.replace('\\', '/').split('/')[-2]
-            self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'validation'
+    # def _add_train_val_to_data_frame(self, train_dir, val_dir):
+    #
+    #     """
+    #     adding the updates of the status of the patients
+    #
+    #     :param train_dir: train set directory
+    #     :param val_dir: validation set directory
+    #     """
+    #
+    #     for each_dir in train_dir:
+    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
+    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'train'
+    #
+    #     for each_dir in val_dir:
+    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
+    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'validation'
 
     def _shuffle_func(self, x, y):
         """
@@ -376,39 +381,36 @@ class EchoNetDataset(DatasetBase):
         y = dict(y_list)
         return x, y
 
-    @staticmethod
-    def _split(x, y, split_ratio):
-        """
-        splits the dataset into train and validation set by the corresponding ratio
-        the ratio is "train portion/whole data"
+    # @staticmethod
+    # def _split(x, y, split_ratio):
+    #     """
+    #     splits the dataset into train and validation set by the corresponding ratio
+    #     the ratio is "train portion/whole data"
+    #
+    #     :param x: list of images, np.ndarray
+    #     :param y: list of segmentation labels, np.ndarray
+    #     :param split_ratio: split ratio for trainset, float
+    #
+    #     :return x_train: images train_set, np.ndarray
+    #     :return y_train: segmentation labels train_set, np.ndarray
+    #     :return x_val: images validation_set, np.ndarray
+    #     :return y_val: segmentation labels validation_set, np.ndarray
+    #     """
+    #
+    #     # set train size by split_ratio var
+    #     train_size = round(len(x) * split_ratio)
+    #
+    #     # splitting
+    #     x_train = x[:train_size]
+    #     y_train = dict(list(y.items())[:train_size])
+    #
+    #     x_val = x[train_size:]
+    #     y_val = dict(list(y.items())[train_size:])
+    #
+    #     return x_train, y_train, x_val, y_val
 
-        :param x: list of images, np.ndarray
-        :param y: list of segmentation labels, np.ndarray
-        :param split_ratio: split ratio for trainset, float
-
-        :return x_train: images train_set, np.ndarray
-        :return y_train: segmentation labels train_set, np.ndarray
-        :return x_val: images validation_set, np.ndarray
-        :return y_val: segmentation labels validation_set, np.ndarray
-        """
-
-        # set train size by split_ratio var
-        train_size = round(len(x) * split_ratio)
-
-        # splitting
-        x_train = x[:train_size]
-        y_train = dict(list(y.items())[:train_size])
-
-        x_val = x[train_size:]
-        y_val = dict(list(y.items())[train_size:])
-
-        return x_train, y_train, x_val, y_val
-
-    def _split_indexes(self, indexes):
-        train_size = round(len(indexes) * self.split_ratio)
-        train_indices = indexes[:train_size]
-        val_indices = indexes[train_size:]
-        return train_indices, val_indices
-
-
-
+    def _split_indexes(self):
+        self.indexes = self._clean_data_df.index
+        self.train_indices = self.indexes[self._clean_data_df['status'] == 'TRAIN']
+        self.val_indices = self.indexes[self._clean_data_df['status'] == 'VAL']
+        self.test_indices = self.indexes[self._clean_data_df['status'] == 'TEST']

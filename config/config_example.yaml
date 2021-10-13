@@ -24,6 +24,7 @@ data_handler:
   echonet_dynamic_dataset:
     target_dataset_name: "echo_net_dynamic"
     dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamic"
+    info_df_dir: "info_df.csv"
     dataset_features:
       stage: ["ES", "ED"]
       view: ["4CH"]

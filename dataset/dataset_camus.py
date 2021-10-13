@@ -157,22 +157,22 @@ class CAMUSDataset(DatasetBase):
         self._set_default_params()
 
         if config is not None:
-            self.age = config.data_handler.dataset_features.age
-            self.sex = config.data_handler.dataset_features.sex
-            self.stage = config.data_handler.dataset_features.stage
-            self.view = config.data_handler.dataset_features.view
-            self.image_quality = config.data_handler.dataset_features.image_quality
-
-            self.batch_size = config.data_handler.batch_size
+            cfg_dh = config.data_handler
+            self.age = cfg_dh.dataset_features.age
+            self.sex = cfg_dh.dataset_features.sex
+            self.stage = cfg_dh.camus_dataset.dataset_features.stage
+            self.view = cfg_dh.camus_dataset.dataset_features.view
+            self.image_quality = cfg_dh.dataset_features.image_quality
+            self.batch_size = cfg_dh.batch_size
             self.input_h = config.input_h
             self.input_w = config.input_w
             # self.input_size = (self.input_h, self.input_w)
             self.n_channels = config.n_channels
-            self.split_ratio = config.data_handler.split_ratio
-            self.seed = config.data_handler.seed
-            self.shuffle = config.data_handler.shuffle
-            self.to_fit = config.data_handler.to_fit
-            self.dataset_dir = config.data_handler.dataset_dir
+            self.split_ratio = cfg_dh.split_ratio
+            self.seed = cfg_dh.seed
+            self.shuffle = cfg_dh.shuffle
+            self.to_fit = cfg_dh.to_fit
+            self.dataset_dir = cfg_dh.camus_dataset.dataset_dir
 
     @property
     def input_size(self):

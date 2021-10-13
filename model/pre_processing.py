@@ -48,7 +48,7 @@ class PreProcessor:
         pre_processed_img = image.copy()
 
         # converting the images to grayscale
-        if image.shape[-1] != 1 and len(image.shape) != 2:
+        if len(image.shape) != 2 and image.shape[-1] != 1:
             pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # resizing
@@ -152,6 +152,8 @@ class PreProcessor:
         :return: resized image
         """
 
+        if len(image.shape) == 2:
+            image = image[:, :, tf.newaxis]
         image_resized = np.array(tf.image.resize(image,
                                                  self.target_size,
                                                  antialias=False,
