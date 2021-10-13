@@ -1,7 +1,7 @@
 # requirements
 
-from .dataset_generator import DatasetGenerator
-from .dataset_base import DatasetBase
+from dataset_generator import DatasetGenerator
+from dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset
 import random
 import configparser
@@ -160,8 +160,8 @@ class CAMUSDataset(DatasetBase):
             cfg_dh = config.data_handler
             self.age = cfg_dh.dataset_features.age
             self.sex = cfg_dh.dataset_features.sex
-            self.stage = cfg_dh.camus_dataset.dataset_features.stage
-            self.view = cfg_dh.camus_dataset.dataset_features.view
+            self.stage = cfg_dh.dataset_features.stage
+            self.view = cfg_dh.dataset_features.view
             self.image_quality = cfg_dh.dataset_features.image_quality
             self.batch_size = cfg_dh.batch_size
             self.input_h = config.input_h
@@ -172,7 +172,7 @@ class CAMUSDataset(DatasetBase):
             self.seed = cfg_dh.seed
             self.shuffle = cfg_dh.shuffle
             self.to_fit = cfg_dh.to_fit
-            self.dataset_dir = cfg_dh.camus_dataset.dataset_dir
+            self.dataset_dir = cfg_dh.dataset_dir
 
     @property
     def input_size(self):
@@ -216,22 +216,26 @@ class CAMUSDataset(DatasetBase):
                                               self.df_dataset['sex'].isin(self.sex) &
                                               (self.df_dataset['age'] >= self.age[0]) &
                                               (self.df_dataset['age'] <= self.age[1])]
+
         self._clean_data_df['image_path'] = self._clean_data_df.apply(
             lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_image_filename']), axis=1)
         self._clean_data_df['label_path'] = self._clean_data_df.apply(
             lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_label_filename']), axis=1)
 
-        data_dir = self._clean_data_df[['patient_id',
-                                        'mhd_image_filename',
-                                        'mhd_label_filename']]
+        # data_dir = self._clean_data_df[['patient_id',
+        #                                 'mhd_image_filename',
+        #                                 'mhd_label_filename']]
+        #
+        # x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
+        #                   for patient_id, patient_image_dir in zip(data_dir['patient_id'],
+        #                                                            data_dir['mhd_image_filename'])])
+        #
+        # y_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_label_dir)
+        #                   for patient_id, patient_label_dir in zip(data_dir['patient_id'],
+        #                                                            data_dir['mhd_label_filename'])])
 
-        x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
-                          for patient_id, patient_image_dir in zip(data_dir['patient_id'],
-                                                                   data_dir['mhd_image_filename'])])
-
-        y_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_label_dir)
-                          for patient_id, patient_label_dir in zip(data_dir['patient_id'],
-                                                                   data_dir['mhd_label_filename'])])
+        x_dir = list(self._clean_data_df['image_path'].unique())
+        y_dir = list(self._clean_data_df['label_path'].unique())
 
         list_images_dir = x_dir
         dict_labels_dir = {}
@@ -372,34 +376,34 @@ class CAMUSDataset(DatasetBase):
         y = dict(y_list)
         return x, y
 
-    @staticmethod
-    def _split(x, y, split_ratio):
-
-        """
-        splits the dataset into train and validation set by the corresponding ratio
-        the ratio is "train portion/whole data"
-
-        :param x: list of images, np.ndarray
-        :param y: list of segmentation labels, np.ndarray
-        :param split_ratio: split ratio for trainset, float
-
-        :return x_train: images train_set, np.ndarray
-        :return y_train: segmentation labels train_set, np.ndarray
-        :return x_val: images validation_set, np.ndarray
-        :return y_val: segmentation labels validation_set, np.ndarray
-        """
-
-        # set train size by split_ratio var
-        train_size = round(len(x) * split_ratio)
-
-        # splitting
-        x_train = x[:train_size]
-        y_train = dict(list(y.items())[:train_size])
-
-        x_val = x[train_size:]
-        y_val = dict(list(y.items())[train_size:])
-
-        return x_train, y_train, x_val, y_val
+    # @staticmethod
+    # def _split(x, y, split_ratio):
+    #
+    #     """
+    #     splits the dataset into train and validation set by the corresponding ratio
+    #     the ratio is "train portion/whole data"
+    #
+    #     :param x: list of images, np.ndarray
+    #     :param y: list of segmentation labels, np.ndarray
+    #     :param split_ratio: split ratio for trainset, float
+    #
+    #     :return x_train: images train_set, np.ndarray
+    #     :return y_train: segmentation labels train_set, np.ndarray
+    #     :return x_val: images validation_set, np.ndarray
+    #     :return y_val: segmentation labels validation_set, np.ndarray
+    #     """
+    #
+    #     # set train size by split_ratio var
+    #     train_size = round(len(x) * split_ratio)
+    #
+    #     # splitting
+    #     x_train = x[:train_size]
+    #     y_train = dict(list(y.items())[:train_size])
+    #
+    #     x_val = x[train_size:]
+    #     y_val = dict(list(y.items())[train_size:])
+    #
+    #     return x_train, y_train, x_val, y_val
 
     def _split_indexes(self, indexes):
         train_size = round(len(indexes) * self.split_ratio)

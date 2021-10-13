@@ -152,8 +152,6 @@ class PreProcessor:
         :return: resized image
         """
 
-        if len(image.shape) == 2:
-            image = image[:, :, tf.newaxis]
         image_resized = np.array(tf.image.resize(image,
                                                  self.target_size,
                                                  antialias=False,

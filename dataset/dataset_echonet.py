@@ -16,13 +16,13 @@ class EchoNetDataset(DatasetBase):
     reads the data from the given directory as follow:
 
     HOW TO:
-    dataset = CAMUSDataset(config.data_handler)
+    dataset = EchoNetDataset(config)
 
     # for training set:
-    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators(dataset_dir)
+    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators()
 
     # for test set:
-    dataset_gen = dataset.create_test_generator(test_set_dir)
+    test_gen = dataset.create_test_data_generator()
     """
 
     def __init__(self, config=None):
@@ -35,15 +35,16 @@ class EchoNetDataset(DatasetBase):
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
         n_channels: number of channels, int
-        split_ratio: ratio of splitting into train and validation, float
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
-        age: patients between two ages in list, list
-        sex: sex of patient, can be female(F) or male(M), list
         stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
-        view: view of the hear image, can be two chamber view(2CH) or four chamber view(4CH), list
-        image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
+        view: view of the hear image, can be four chamber view (4CH), list
+        df_dataset: information dataframe of the whole dataset, pd.DataFrame
+        _clean_data_df: contains the desired field inforamtions with image and labels full pathes
+        train_df_: information dataframe of train set, pd.DataFrame
+        val_df_: information dataframe of validation set, pd.DataFrame
+        test_df_: information dataframe of test set, pd.DataFrame
         """
 
         super(EchoNetDataset, self).__init__(config)
@@ -180,8 +181,8 @@ class EchoNetDataset(DatasetBase):
 
         if config is not None:
             cfg_dh = config.data_handler
-            self.stage = cfg_dh.echonet_dynamic_dataset.dataset_features.stage
-            self.view = cfg_dh.echonet_dynamic_dataset.dataset_features.view
+            self.stage = cfg_dh.dataset_features.stage
+            self.view = cfg_dh.dataset_features.view
             self.batch_size = cfg_dh.batch_size
             self.input_h = config.input_h
             self.input_w = config.input_w
@@ -191,8 +192,8 @@ class EchoNetDataset(DatasetBase):
             self.seed = cfg_dh.seed
             self.shuffle = cfg_dh.shuffle
             self.to_fit = cfg_dh.to_fit
-            self.dataset_dir = cfg_dh.echonet_dynamic_dataset.dataset_dir
-            self.info_df_dir = cfg_dh.echonet_dynamic_dataset.info_df_dir
+            self.dataset_dir = cfg_dh.dataset_dir
+            self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
     @property
     def input_size(self):
@@ -215,16 +216,16 @@ class EchoNetDataset(DatasetBase):
         self.shuffle = True
         self.to_fit = True
         self.dataset_dir = 'EchoNet-Dynamic'
-        self.info_df_dir = 'info_df.csv'
+        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
     def _fetch_data(self):
 
         """
-        fetches data from directory of A4C view images of CAMUS dataset
+        fetches data from directory of A4C view images of EchoNet-Dynamic dataset
 
         dataset_dir: directory address of the dataset
 
-        :return list_images_dir: list of the A4C view image paths
+        :return list_images_dir: list of the desired images view directories
         :return dict_labels_dir: dictionary of the type_map label paths
         """
 
@@ -264,26 +265,25 @@ class EchoNetDataset(DatasetBase):
         """
         This method gives you a table showing all features of each data in Pandas DataFrame format.
         Columns of this DataFrame are:
-          cases: The specific number of a patient in dataset
-          position: CAMUS dataset consist of 2 chamber (2CH) and 4 chamber (4CH) images
-          stage: CAMUS dataset consist of end_systolic (ES), end_diastolic (ED) and sequence(between ED and ES ) data
+          cases: The specific number of a case in dataset
+          position: EchoNet-Dynamic dataset consists of 4 chamber (4CH) images
+          stage: new EchoNet-Dynamic dataset consists of end_systolic (ES), end_diastolic (ED)
           mhd_filename: File name of the .mhd format image
           raw_filename: File name of the .raw format image
           mhd_label_name: File name of the .mhd format labeled image
           raw_label_name: File name of the .mhd format labeled image
-          ED_frame: The number of frame in sequence data that is showing ED
-          ES_frame: The number of frame in sequence data that is showing ES
-          NbFrame: The number of frames in sequence data
-          sex: sex of the patient that can be female(F) or male(M)
-          age: age of the patient
-          ImageQuality: there are 3 types of image quality (Good, Medium, Poor)
+          ED_frame: The number of frame in corresponding video that is showing ED
+          ES_frame: The number of frame in corresponding video data that is showing ES
+          NbFrame: The number of frames in corresponding video
           lv_edv: Left ventricle end_diastolic volume
           lv_esv: Left ventricle end_systolic volume
           lv_ef: Left ventricle ejection fraction
-          status: showing if the patient is for train set or for validation
+          status: showing weather the case is for train, validation or test set
 
-          :return Pandas DataFrame consisting features of each data in dataset
+          df_dataset: Pandas DataFrame consisting features of each data in dataset
         """
+
+        # checking if the dataframe already existed or not
         if os.path.exists(self.info_df_dir):
             self.df_dataset = pd.read_csv(self.info_df_dir)
         else:
@@ -309,6 +309,8 @@ class EchoNetDataset(DatasetBase):
                   'fps': [],
                   'status': []}
 
+            # finding the miss matches between the file_list and volume_tracing dataset
+            # there are 6 videos which doesn't have label so we have to ignore them
             vt_filename_unique = np.array(list(map(lambda x: x.split('.')[0], volume_tracing_df['FileName'].unique())))
             fl_filename_unique = file_list_df['FileName'].unique()
             data_diff = np.setdiff1d(fl_filename_unique, vt_filename_unique)
@@ -339,6 +341,7 @@ class EchoNetDataset(DatasetBase):
                     df['status'].append(str(case_file_list['Split'].values[0]))
 
             self.df_dataset = pd.DataFrame(df)
+            self.df_dataset.to_csv(self.info_df_dir, index=False)
 
     # def _add_train_val_to_data_frame(self, train_dir, val_dir):
     #
@@ -410,6 +413,9 @@ class EchoNetDataset(DatasetBase):
     #     return x_train, y_train, x_val, y_val
 
     def _split_indexes(self):
+        """
+        making splitting indexes for train, validation, test set from the echonet dataframe
+        """
         self.indexes = self._clean_data_df.index
         self.train_indices = self.indexes[self._clean_data_df['status'] == 'TRAIN']
         self.val_indices = self.indexes[self._clean_data_df['status'] == 'VAL']

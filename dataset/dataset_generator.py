@@ -159,6 +159,11 @@ class DatasetGenerator(tf.keras.utils.Sequence):
             if self.channel_last:
                 x_4ch = [np.moveaxis(x, 0, -1) for x in x_4ch]
 
+        elif len(x_4ch[0].shape) == 2:
+            if self.channel_last:
+                x_4ch = [x[:, :, tf.newaxis] for x in x_4ch]
+            else:
+                x_4ch = [x[tf.newaxis, :, :] for x in x_4ch]
 
         # x_4ch_data = np.array(x_4ch, dtype=object)
 
