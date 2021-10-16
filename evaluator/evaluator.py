@@ -166,7 +166,7 @@ class Evaluator:
         """
 
         tp, tn, fp, fn = self.get_conf_mat_elements(y_true, y_pred, threshold)
-        return (tp / (tp + fn)) * 100
+        return float((tp / (tp + fn)) * 100)
 
         # tp = 0
         # for i in range(len(y_true[0])):
@@ -186,7 +186,7 @@ class Evaluator:
         """
 
         tp, tn, fp, fn = self.get_conf_mat_elements(y_true, y_pred, threshold)
-        return (tn / (fp + tn)) * 100
+        return float((tn / (fp + tn)) * 100)
 
         # tn = 0
         # for i in range(len(y_true[0])):
