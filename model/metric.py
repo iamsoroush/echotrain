@@ -127,7 +127,8 @@ def get_hausdorff_distance(w, h, threshold=0.5):
             gt_points = K.cast(tf.where(y_true > threshold), dtype=tf.float32)
             y_pred = K.flatten(y_pred)
             p = y_pred
-            d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            # d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            d_matrix = tf.convert_to_tensor(cdist(all_img_locations, gt_points), tf.float32)
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
             k_max = K.max(p_k_min)
