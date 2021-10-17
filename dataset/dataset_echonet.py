@@ -326,7 +326,7 @@ class EchoNetDataset(DatasetBase):
                     continue
                 case_file_list = file_list_df[file_list_df['FileName'] == case]
                 case_volume_tracing = volume_tracing_df[volume_tracing_df['FileName'] == f'{case}.avi']
-                ED_ES_num_frames = case_volume_tracing['Frame'].unique()
+                ed_es_num_frames = case_volume_tracing['Frame'].unique()
 
                 for stage in stages:
                     df['case_id'].append(case)
@@ -337,8 +337,8 @@ class EchoNetDataset(DatasetBase):
                     df['video_file_dir'].append(f'Videos/{case}.avi')
                     df['view'].append('4CH')
                     df['stage'].append(stage)
-                    df['ed_frame'].append(ED_ES_num_frames[0])
-                    df['es_frame'].append(ED_ES_num_frames[1])
+                    df['ed_frame'].append(ed_es_num_frames[0])
+                    df['es_frame'].append(ed_es_num_frames[1])
                     df['lv_edv'].append(float(case_file_list['EDV']))
                     df['lv_esv'].append(float(case_file_list['ESV']))
                     df['lv_ef'].append(float(case_file_list['EF']))
