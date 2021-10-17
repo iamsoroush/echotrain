@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from skimage.color import rgb2gray
-from .augmentation import Augmentation
+from augmentation import Augmentation
 
 
 class PreProcessor:
@@ -48,7 +48,7 @@ class PreProcessor:
         pre_processed_img = image.copy()
 
         # converting the images to grayscale
-        if image.shape[-1] != 1 and len(image.shape) != 2:
+        if len(image.shape) != 2 and image.shape[-1] != 1:
             pre_processed_img = self._convert_to_gray(pre_processed_img)
 
         # resizing
