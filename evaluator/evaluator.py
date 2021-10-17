@@ -1,8 +1,8 @@
 import sys
 sys.path.append('..')
 
-from model import metric
-from model import loss
+from .model import metric
+from .model import loss
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -77,6 +77,7 @@ class Evaluator:
                 # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
                 y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
+                data_featurs.append(float(loss.soft_iou_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
                 data_featurs.append(float(metric.get_iou_coef()(y_true, y_pred)))
