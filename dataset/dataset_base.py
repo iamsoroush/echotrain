@@ -8,7 +8,7 @@ class DatasetBase(ABC):
         """
         Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-        if config==None, default values will be invoked using self._set_efault_values
+        if ``config==None``, default values will be invoked using ``self._set_default_values``
 
         :param config: dictionary of {config_name: config_value}
         """

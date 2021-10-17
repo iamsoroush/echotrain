@@ -11,10 +11,11 @@ import os
 
 
 class CAMUSDataset(DatasetBase):
+
     """
-    This class makes our dataset ready to use by given desired values to its parameters
+    This class makes our dataset ready to use by giving desired values to its parameters
     and by calling the ``create_data_generators`` or ``create_test_data_generator`` function,
-    reads the data from the given directory as follow:
+    reads the data from the given directory as follows:
 
     Example::
 
@@ -46,7 +47,7 @@ class CAMUSDataset(DatasetBase):
     def __init__(self, config=None):
 
         """
-        if config==None, default values will be invoked using self._set_efault_values
+        if ``config==None``, default values will be invoked using ``self._set_default_values``
 
         """
 

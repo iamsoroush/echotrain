@@ -10,27 +10,23 @@ from tqdm import tqdm
 
 
 class EchoNetDataset(DatasetBase):
+
     """
-    This class makes our dataset ready to use by given desired values to its parameters
+    This class makes our dataset ready to use by giving desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
-    reads the data from the given directory as follow:
+    reads the data from the given directory as follows:
 
-    HOW TO:
-    dataset = EchoNetDataset(config)
+    Example:
 
-    # for training set:
-    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators()
+        dataset = EchoNetDataset(config)
 
-    # for test set:
-    test_gen = dataset.create_test_data_generator()
-    """
+        # for training set:
+        train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators()
 
-    def __init__(self, config=None):
+        # for test set:
+        test_gen = dataset.create_test_data_generator()
 
-        """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
-
-        if config==None, default values will be invoked using self._set_efault_values
+    Attributes:
 
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
@@ -45,6 +41,16 @@ class EchoNetDataset(DatasetBase):
         train_df_: information dataframe of train set, pd.DataFrame
         val_df_: information dataframe of validation set, pd.DataFrame
         test_df_: information dataframe of test set, pd.DataFrame
+
+    """
+
+    def __init__(self, config=None):
+
+        """
+        Handles data loading: loading, preparing, data generators
+
+        if ``config==None``, default values will be invoked using ``self._set_default_values``
+
         """
 
         super(EchoNetDataset, self).__init__(config)
@@ -86,7 +92,7 @@ class EchoNetDataset(DatasetBase):
 
     def create_data_generators(self):
 
-        """Creates data generators based on batch_size, input_size
+        """Creates data generators based on ``batch_size``, ``input_size``
 
         :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
         :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors

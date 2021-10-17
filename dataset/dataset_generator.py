@@ -12,11 +12,13 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     """
     making data generators for both train_set and test_set
 
-    HOW TO:
-    train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
-                                      input_size, n_channels, to_fit, shuffle, seed)
-    val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
-                                    input_size, n_channels, to_fit, shuffle, seed)
+    Example:
+
+        train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
+                                          input_size, n_channels, to_fit, shuffle, seed)
+        val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
+                                        input_size, n_channels, to_fit, shuffle, seed)
+
     """
 
     def __init__(self,
