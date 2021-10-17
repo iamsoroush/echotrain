@@ -76,15 +76,17 @@ class Trainer:
 
         if self.callbacks_config.checkpoints.monitor is None:
             save_best_only = True
+            monitor = 'val_loss'
         else:
             save_best_only = False
+            monitor = self.callbacks_config.checkpoints.monitor
 
         callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
                                             save_weights_only=True,
                                             save_freq=self.callbacks_config.checkpoints.save_freq,
                                             save_best_only=save_best_only,
-                                            monitor=self.callbacks_config.checkpoints.monitor),
+                                            monitor=monitor),
             keras.callbacks.TensorBoard(log_dir=self.tensorboard_log,
                                         update_freq=self.callbacks_config.tensorboard.update_freq),
         ]
