@@ -75,9 +75,9 @@ class Trainer:
         checkpoints_template = self.checkpoints_addr.joinpath(checkpoints_name)
 
         if self.callbacks_config.checkpoints.monitor is None:
-            save_best_only = False
-        else:
             save_best_only = True
+        else:
+            save_best_only = False
 
         callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
