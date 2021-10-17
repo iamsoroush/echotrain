@@ -1,7 +1,7 @@
 # requirements
 
-from .dataset_generator import DatasetGenerator
-from .dataset_base import DatasetBase
+from dataset_generator import DatasetGenerator
+from dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset
 import random
 import configparser
@@ -11,26 +11,22 @@ import os
 
 
 class CAMUSDataset(DatasetBase):
-
     """
     This class makes our dataset ready to use by given desired values to its parameters
-    and by calling the "create_data_generators" or "create_test_data_generator" function,
+    and by calling the ``create_data_generators`` or ``create_test_data_generator`` function,
     reads the data from the given directory as follow:
 
-    HOW TO:
-    dataset = CAMUSDataset(config.data_handler)
+    Example::
 
-    # for training set:
-    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators(dataset_dir)
+        dataset = CAMUSDataset(config.data_handler)
 
-    # for test set:
-    dataset_gen = dataset.create_test_generator(test_set_dir)
-    """
+        # for training set:
+        train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators(dataset_dir)
 
-    def __init__(self, config):
+        # for test set:
+        dataset_gen = dataset.create_test_generator(test_set_dir)
 
-        """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
+    Attributes:
 
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
@@ -44,25 +40,19 @@ class CAMUSDataset(DatasetBase):
         stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
         view: view of the hear image, can be two chamber view(2CH) or four chamber view(4CH), list
         image_quality: quality of image in dataset, can be 'Good', 'Medium', 'Poor', list
+
+    """
+
+    def __init__(self, config=None):
+
+        """
+        if config==None, default values will be invoked using self._set_efault_values
+
         """
 
-        self.age = config.data_handler.dataset_features.age
-        self.sex = config.data_handler.dataset_features.sex
-        self.stage = config.data_handler.dataset_features.stage
-        self.view = config.data_handler.dataset_features.view
-        self.image_quality = config.data_handler.dataset_features.image_quality
-
         super(CAMUSDataset, self).__init__(config)
-        self.batch_size = config.data_handler.batch_size
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.input_size = (self.input_h, self.input_w)
-        self.n_channels = config.n_channels
-        self.split_ratio = config.data_handler.split_ratio
-        self.seed = config.data_handler.seed
-        self.shuffle = config.data_handler.shuffle
-        self.to_fit = config.data_handler.to_fit
-        self.dataset_dir = config.data_handler.dataset_dir
+
+        self._load_config(config)
 
         self.df_dataset = None
         self._build_data_frame()
@@ -72,55 +62,64 @@ class CAMUSDataset(DatasetBase):
             self.list_images_dir, self.list_labels_dir = self._shuffle_func(self.list_images_dir,
                                                                             self.list_labels_dir)
         # splitting
-        self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
-                                                                                         self.list_labels_dir,
-                                                                                         self.split_ratio)
+        train_indices, val_indices = self._split_indexes(self._clean_data_df.index)
+
+        self.train_df_ = self._clean_data_df.loc[train_indices]
+        self.val_df_ = self._clean_data_df.loc[val_indices]
+
+        self.x_train_dir = np.array(self.train_df_['image_path'].to_list())
+        self.y_train_dir = np.array(self.train_df_['label_path'].to_list())
+        self.y_train_dir = dict(zip(self.x_train_dir, self.y_train_dir))
+
+        self.x_val_dir = np.array(self.val_df_['image_path'].to_list())
+        self.y_val_dir = np.array(self.val_df_['label_path'].to_list())
+        self.y_val_dir = dict(zip(self.x_val_dir, self.y_val_dir))
+
+        # self.x_train_dir, self.y_train_dir, self.x_val_dir, self.y_val_dir = self._split(self.list_images_dir,
+        #                                                                                  self.list_labels_dir,
+        #                                                                                  self.split_ratio)
 
         # adding 'train' and 'validation' status to the data-frame
-        self.add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
+        self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
-    def create_data_generators(self):
+    def create_train_data_generator(self):
 
-        """Creates data generators based on batch_size, input_size
+        """Train data generator"""
 
-        :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
-        :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
-        :returns n_iter_train: number of iterations per epoch for train_data_gen
-        :returns n_iter_val: number of iterations per epoch for val_data_gen
-
-        """
-        # dataset_dir = self.dataset_dir
-
-        # list_images_dir, list_labels_dir = self._fetch_data()
-        #
-        # # shuffling
-        # if self.shuffle:
-        #     list_images_dir, list_labels_dir = self._shuffle_func(list_images_dir,
-        #                                                           list_labels_dir)
-        # # splitting
-        # x_train_dir, y_train_dir, x_val_dir, y_val_dir = self._split(list_images_dir,
-        #                                                              list_labels_dir,
-        #                                                              self.split_ratio)
-        #
-        # # adding 'train' and 'validation' status to the data-frame
-        # self.add_train_val_to_data_frame(x_train_dir, x_val_dir)
-
-        train_data_gen = DatasetGenerator(self.x_train_dir, self.y_train_dir, self.batch_size,
-                                          self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-        val_data_gen = DatasetGenerator(self.x_val_dir, self.y_val_dir, self.batch_size,
-                                        self.input_size, self.n_channels, self.to_fit, self.shuffle, self.seed)
-
+        train_data_gen = DatasetGenerator(self.x_train_dir,
+                                          self.y_train_dir,
+                                          self.batch_size,
+                                          self.input_size,
+                                          self.n_channels,
+                                          self.to_fit,
+                                          self.shuffle,
+                                          self.seed)
         n_iter_train = train_data_gen.get_n_iter()
-        n_iter_val = val_data_gen.get_n_iter()
+        return train_data_gen, n_iter_train
 
-        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
+    def create_validation_data_generator(self):
+
+        """Validation data generator
+
+        Here we will set ``shuffle=False`` because we don't need shuffling for validation data.
+        """
+
+        val_data_gen = DatasetGenerator(self.x_val_dir,
+                                        self.y_val_dir,
+                                        self.batch_size,
+                                        self.input_size,
+                                        self.n_channels,
+                                        self.to_fit,
+                                        shuffle=False)
+        n_iter_val = val_data_gen.get_n_iter()
+        return val_data_gen, n_iter_val
 
     def create_test_data_generator(self):
 
         """
-        Creates data generators based on batch_size, input_size
+        Creates data generators based on ``batch_size``, ``input_size``
 
-        :returns dataset_gen: training data generator which yields (batch_size, h, w, c) tensors
+        :returns dataset_gen: training data generator which yields ``(batch_size, h, w, c)`` tensors
         :returns n_iter_dataset: number of iterations per epoch for train_data_gen
         """
 
@@ -133,7 +132,8 @@ class CAMUSDataset(DatasetBase):
 
         return dataset_gen, n_iter_dataset
 
-    def get_data_frame(self):
+    @property
+    def raw_df(self):
 
         """
 
@@ -142,6 +142,63 @@ class CAMUSDataset(DatasetBase):
 
         return self.df_dataset
 
+    @property
+    def train_df(self):
+        return self.train_df_
+
+    @property
+    def validation_df(self):
+        return self.val_df_
+
+    def _load_config(self, config):
+
+        """Load all parameters from config file"""
+
+        self._set_default_params()
+
+        if config is not None:
+            cfg_dh = config.data_handler
+            self.age = cfg_dh.dataset_features.age
+            self.sex = cfg_dh.dataset_features.sex
+            self.stage = cfg_dh.dataset_features.stage
+            self.view = cfg_dh.dataset_features.view
+            self.image_quality = cfg_dh.dataset_features.image_quality
+            self.batch_size = cfg_dh.batch_size
+            self.input_h = config.input_h
+            self.input_w = config.input_w
+            # self.input_size = (self.input_h, self.input_w)
+            self.n_channels = config.n_channels
+            self.split_ratio = cfg_dh.split_ratio
+            self.seed = cfg_dh.seed
+            self.shuffle = cfg_dh.shuffle
+            self.to_fit = cfg_dh.to_fit
+            self.dataset_dir = cfg_dh.dataset_dir
+
+    @property
+    def input_size(self):
+        return self.input_h, self.input_w
+
+    def _set_default_params(self):
+
+        """Default values for parameters"""
+
+        self.age = [10, 100]
+        self.sex = ['M', 'F']
+        self.stage = ['ED', 'ES']
+        self.view = ["4CH"]
+        self.image_quality = ["Poor", "Medium", "Good"]
+
+        self.batch_size = 8
+        self.input_h = 256
+        self.input_w = 256
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = 1
+        self.split_ratio = 0.8
+        self.seed = 101
+        self.shuffle = True
+        self.to_fit = True
+        self.dataset_dir = 'training'
+
     def _fetch_data(self):
 
         """
@@ -149,33 +206,43 @@ class CAMUSDataset(DatasetBase):
 
         dataset_dir: directory address of the dataset
 
-        :return list_images_dir: list of the A4C view images directory
-        :return list_labels_dir: list of the type_map labels directory
+        :return list_images_dir: list of the A4C view image paths
+        :return dict_labels_dir: dictionary of the type_map label paths
         """
 
-        data_dir = self.df_dataset[self.df_dataset['view'].isin(self.view) &
-                                   self.df_dataset['stage'].isin(self.stage) &
-                                   self.df_dataset['image_quality'].isin(self.image_quality) &
-                                   self.df_dataset['sex'].isin(self.sex) &
-                                   (self.df_dataset['age'] >= self.age[0]) &
-                                   (self.df_dataset['age'] <= self.age[1])][['patient_id',
-                                                                             'mhd_image_filename',
-                                                                             'mhd_label_filename']]
+        self._clean_data_df = self.df_dataset[self.df_dataset['view'].isin(self.view) &
+                                              self.df_dataset['stage'].isin(self.stage) &
+                                              self.df_dataset['image_quality'].isin(self.image_quality) &
+                                              self.df_dataset['sex'].isin(self.sex) &
+                                              (self.df_dataset['age'] >= self.age[0]) &
+                                              (self.df_dataset['age'] <= self.age[1])]
 
-        x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
-                          for patient_id, patient_image_dir in zip(data_dir['patient_id'],
-                                                                   data_dir['mhd_image_filename'])])
+        self._clean_data_df['image_path'] = self._clean_data_df.apply(
+            lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_image_filename']), axis=1)
+        self._clean_data_df['label_path'] = self._clean_data_df.apply(
+            lambda x: os.path.join(self.dataset_dir, x['patient_id'], x['mhd_label_filename']), axis=1)
 
-        y_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_label_dir)
-                          for patient_id, patient_label_dir in zip(data_dir['patient_id'],
-                                                                   data_dir['mhd_label_filename'])])
+        # data_dir = self._clean_data_df[['patient_id',
+        #                                 'mhd_image_filename',
+        #                                 'mhd_label_filename']]
+        #
+        # x_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_image_dir)
+        #                   for patient_id, patient_image_dir in zip(data_dir['patient_id'],
+        #                                                            data_dir['mhd_image_filename'])])
+        #
+        # y_dir = np.array([os.path.join(self.dataset_dir, patient_id, patient_label_dir)
+        #                   for patient_id, patient_label_dir in zip(data_dir['patient_id'],
+        #                                                            data_dir['mhd_label_filename'])])
+
+        x_dir = list(self._clean_data_df['image_path'].unique())
+        y_dir = list(self._clean_data_df['label_path'].unique())
 
         list_images_dir = x_dir
-        list_labels_dir = {}
+        dict_labels_dir = {}
         for i in range(len(y_dir)):
-            list_labels_dir[x_dir[i]] = y_dir[i]
+            dict_labels_dir[x_dir[i]] = y_dir[i]
 
-        return list_images_dir, list_labels_dir
+        return list_images_dir, dict_labels_dir
 
     def _build_data_frame(self):
 
@@ -234,6 +301,7 @@ class CAMUSDataset(DatasetBase):
 
             for echo_data in echo_data_list:
                 elements = echo_data.split('_')
+
                 df['patient_id'].append(elements[0])
                 df['view'].append(elements[1])
                 df['stage'].append(elements[2])
@@ -266,7 +334,7 @@ class CAMUSDataset(DatasetBase):
 
         self.df_dataset = pd.DataFrame(df)
 
-    def add_train_val_to_data_frame(self, train_dir, val_dir):
+    def _add_train_val_to_data_frame(self, train_dir, val_dir):
 
         """
         adding the updates of the status of the patients
@@ -308,31 +376,37 @@ class CAMUSDataset(DatasetBase):
         y = dict(y_list)
         return x, y
 
-    @staticmethod
-    def _split(x, y, split_ratio):
+    # @staticmethod
+    # def _split(x, y, split_ratio):
+    #
+    #     """
+    #     splits the dataset into train and validation set by the corresponding ratio
+    #     the ratio is "train portion/whole data"
+    #
+    #     :param x: list of images, np.ndarray
+    #     :param y: list of segmentation labels, np.ndarray
+    #     :param split_ratio: split ratio for trainset, float
+    #
+    #     :return x_train: images train_set, np.ndarray
+    #     :return y_train: segmentation labels train_set, np.ndarray
+    #     :return x_val: images validation_set, np.ndarray
+    #     :return y_val: segmentation labels validation_set, np.ndarray
+    #     """
+    #
+    #     # set train size by split_ratio var
+    #     train_size = round(len(x) * split_ratio)
+    #
+    #     # splitting
+    #     x_train = x[:train_size]
+    #     y_train = dict(list(y.items())[:train_size])
+    #
+    #     x_val = x[train_size:]
+    #     y_val = dict(list(y.items())[train_size:])
+    #
+    #     return x_train, y_train, x_val, y_val
 
-        """
-        splits the dataset into train and validation set by the corresponding ratio
-        the ratio is "train portion/whole data"
-
-        :param x: list of images, np.ndarray
-        :param y: list of segmentation labels, np.ndarray
-        :param split_ratio: split ratio for trainset, float
-
-        :return x_train: images train_set, np.ndarray
-        :return y_train: segmentation labels train_set, np.ndarray
-        :return x_val: images validation_set, np.ndarray
-        :return y_val: segmentation labels validation_set, np.ndarray
-        """
-
-        # set train size by split_ratio var
-        train_size = round(len(x) * split_ratio)
-
-        # splitting
-        x_train = x[:train_size]
-        y_train = dict(list(y.items())[:train_size])
-
-        x_val = x[train_size:]
-        y_val = dict(list(y.items())[train_size:])
-
-        return x_train, y_train, x_val, y_val
+    def _split_indexes(self, indexes):
+        train_size = round(len(indexes) * self.split_ratio)
+        train_indices = indexes[:train_size]
+        val_indices = indexes[train_size:]
+        return train_indices, val_indices

@@ -1,5 +1,8 @@
 from tensorflow.keras import backend as K
 import tensorflow as tf
+import numpy as np
+from sklearn.utils.extmath import cartesian
+from scipy.spatial.distance import cdist
 
 
 def get_iou_coef(threshold=0.5, smooth=0.001):
@@ -49,7 +52,7 @@ def get_soft_iou(smooth=0.001):
         # axis = tuple(range(1, len(y_pred.shape) - 1))
         axis = [1, 2]
 
-        intersection = K.sum(K.abs(y_true * y_pred, axis=axis))
+        intersection = K.sum(K.abs(y_true * y_pred), axis=axis)
         union = K.sum(y_true, axis=axis) + K.sum(y_pred, axis=axis) - intersection
         iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
         return iou
@@ -110,3 +113,110 @@ def get_soft_dice(epsilon=1e-6):
         return K.mean((numerator + epsilon) / (denominator + epsilon))
 
     return soft_dice
+
+
+def get_hausdorff_distance(w, h, threshold=0.5):
+    all_img_locations = tf.convert_to_tensor(cartesian([np.arange(w),
+                                                        np.arange(h)]),
+                                             dtype=tf.float32)
+
+    def hausdorff_distance(y_true, y_pred):
+
+        def hausdorff(y_true, y_pred):
+            y_true = K.reshape(y_true, [w, h])
+            gt_points = K.cast(tf.where(y_true > threshold), dtype=tf.float32)
+            y_pred = K.flatten(y_pred)
+            p = y_pred
+            # d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            d_matrix = tf.convert_to_tensor(cdist(all_img_locations, gt_points), tf.float32)
+            k_min = tf.cast(K.min(d_matrix, 1), 'float32')
+            p_k_min = p * k_min
+            k_max = K.max(p_k_min)
+            return float(k_max)
+
+        y_pred = K.cast(y_pred > threshold, tf.float32)
+        y_true = K.cast(y_true, 'float32')
+
+        batched_losses_1 = tf.map_fn(lambda x:
+                                     hausdorff(x[0], x[1]),
+                                     (y_true, y_pred),
+                                     dtype=tf.float32)
+
+        batched_losses_2 = tf.map_fn(lambda x:
+                                     hausdorff(x[0], x[1]),
+                                     (y_pred, y_true),
+                                     dtype=tf.float32)
+
+        stacked = tf.stack([batched_losses_1, batched_losses_2])
+
+        return K.mean(K.max(stacked, axis=0))
+
+    return hausdorff_distance
+
+
+def get_mad(w, h, threshold=0.5):
+    all_img_locations = tf.convert_to_tensor(cartesian([np.arange(w),
+                                                        np.arange(h)]),
+                                             dtype=tf.float32)
+
+    def mad_distance(y_true, y_pred):
+
+        def mad(y_true, y_pred):
+            y_true = K.reshape(y_true, [w, h])
+            gt_points = K.cast(tf.where(y_true > 0.5), dtype=tf.float32)
+            y_pred = K.flatten(y_pred)
+            p = y_pred
+            # d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            d_matrix = tf.convert_to_tensor(cdist(all_img_locations, gt_points), tf.float32)
+            k_min = tf.cast(K.min(d_matrix, 1), 'float32')
+            p_k_min = p * k_min
+            k_mean = K.mean(p_k_min)
+            return float(k_mean)
+
+        y_pred = K.cast(y_pred > threshold, tf.float32)
+        y_true = K.cast(y_true, 'float32')
+
+        batched_losses_1 = tf.map_fn(lambda x:
+                                     mad(x[0], x[1]),
+                                     (y_true, y_pred),
+                                     dtype=tf.float32)
+
+        batched_losses_2 = tf.map_fn(lambda x:
+                                     mad(x[0], x[1]),
+                                     (y_pred, y_true),
+                                     dtype=tf.float32)
+
+        stacked = tf.stack([batched_losses_1, batched_losses_2])
+        return K.mean(stacked)
+
+    return mad_distance
+
+
+def _pw_euc_distance_tf(mat_1, mat_2):
+
+    """
+    Computes the pairwise Euclidean distance matrix between two tensorflow matrices A & B, similiar to scikit-learn cdist.
+    For example:
+    A = [[1, 2],
+         [3, 4]]
+    B = [[1, 2],
+         [3, 4]]
+    should return:
+        [[0, 2.82],
+         [2.82, 0]]
+    :param mat_1: m_a x n matrix
+    :param mat_2: m_b x n matrix
+    :return: euclidean distance matrix (m_a x m_b)
+    """
+
+    # squared norms of each row in A and B
+    na = tf.reduce_sum(tf.square(mat_1), 1)
+    nb = tf.reduce_sum(tf.square(mat_2), 1)
+
+    # na as a row and nb as a co"lumn vectors
+    na = tf.reshape(na, [-1, 1])
+    nb = tf.reshape(nb, [1, -1])
+
+    # return pairwise euclidead difference matrix
+    distance_mat = tf.sqrt(tf.maximum(na - 2 * tf.matmul(mat_1, mat_2, False, True) + nb, 0.0))
+    return distance_mat

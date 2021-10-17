@@ -11,33 +11,43 @@ from mlflow.tracking import MlflowClient
 
 class Trainer:
 
+    """Handles MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
+
+    tensorboard_logs -> base_dir/logs
+    checkpoints -> base_dir/checkpoints
+
+    Attributes:
+
+        epochs: number of epochs for training
+        callbacks_config: contains some information for callbacks includes:
+
+            - checkpoints: contains some information for checkpoints callback includes:
+
+                - save_freq: determines when checkpoints saved it could have values like "epoch" or "batch"
+                - evaluation_metrics: determines metrics which may be used for finding the best model weights in
+                  export function
+
+            - tensorboard: contains information for tensorboard callback includes:
+
+                - update_freq: determines the frequency of time that tensorboard values will be updated it could be
+                  "epoch" or "batch"
+
+        export_config: contains some information for finding the best weights for model, includes:
+
+            - metric: one of the metrics that defined in the evaluation_metrics list
+            - mode: determine whether max value of the metric is appropriate or min,
+              it could be "max" or "min" based on the chosen metric
+
+        checkpoints_addr: the path where the checkpoints is going to save
+        tensorboard_log:  the path where the tensorboard logs is going to save
+
+    """
+
     def __init__(self, base_dir: Path, config):
 
         """
-        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
-
-        tensorboard_logs => base_dir/logs
-        checkpoints => base_dir/checkpoints
-
         :param base_dir: experiment directory, containing config.yaml file
         :param config: a Python object with attributes as config values
-
-        Attributes
-            epochs int: number of epochs for training
-            callbacks_config dict: contains some information for callbacks includes:
-                checkpoints dict: contains some information for checkpoints callback includes:
-                    save_freq str: determines when checkpoints saved it could have values like "epoch" or "batch"
-                    evaluation_metrics list: determines metrics which may be used for finding the best model weights in
-                     export function
-                tensorboard dict: contains information for tensorboard callback includes:
-                    update_freq: determines the frequency of time that tensorboard values will be updated it could be
-                     "epoch" or "batch"
-            export_config dict: contains some information for finding the best weights for model, includes:
-                metric str: one of the metrics that defined in the evaluation_metrics list
-                mode str: determine whether max value of the metric is appropriate or min,
-                 it could be "max" or "min" based on the chosen metric
-            checkpoints_addr: the path where the checkpoints is going to save
-            tensorboard_log:  the path where the tensorboard logs is going to save
         """
 
         self.base_dir = base_dir
@@ -71,7 +81,7 @@ class Trainer:
 
         callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
-                                            save_weights_only=True,
+                                            save_weights_only=False,
                                             save_freq=self.callbacks_config.checkpoints.save_freq,
                                             save_best_only=save_best_only,
                                             monitor=self.callbacks_config.checkpoints.monitor),
@@ -84,7 +94,7 @@ class Trainer:
 
         """Trains the model on given data generators.
 
-        Use Dataset and Model classes fir
+        Use Dataset and Model classes dir
 
         :param model: tensorflow model to be trained, it has to have a `fit` method
         :param train_data_gen: training data generator
@@ -92,7 +102,7 @@ class Trainer:
         :param n_iter_train: iterations per epoch for train_data_gen
         :param n_iter_val: iterations per epoch for val_data_gen
 
-        :returns fit history
+        :returns fit_history:
 
         """
 
@@ -131,16 +141,22 @@ class Trainer:
                 f.write(run.info.run_id)
 
             # Fit
-            history = model.fit(train_data_gen, steps_per_epoch=n_iter_train, initial_epoch=initial_epoch,
-                                epochs=self.epochs, validation_data=val_data_gen, validation_steps=n_iter_val,
+            history = model.fit(train_data_gen,
+                                steps_per_epoch=n_iter_train,
+                                initial_epoch=initial_epoch,
+                                epochs=self.epochs,
+                                validation_data=val_data_gen,
+                                validation_steps=n_iter_val,
                                 callbacks=self.my_callbacks)
         return history
 
     def export(self):
 
-        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory
+        """Exports the best version of the weights of the model, and config.yaml file into exported sub_directory.
 
-        :returns exported_dir
+        This method will delete all checkpoints after exporting the best one
+
+        :returns exported_dir:
         """
 
         metric, mode = self.export_config.metric, self.export_config.mode
@@ -165,6 +181,10 @@ class Trainer:
         copy(chp_addr, self.exported_dir.joinpath(selected_checkpoint))
 
         copy(self.config_file_path, self.exported_dir.joinpath('config.yaml'))
+
+        # Delete checkpoints
+        for ch in checkpoints:
+            os.remove(self.checkpoints_addr.joinpath(ch))
 
         return self.exported_dir
 

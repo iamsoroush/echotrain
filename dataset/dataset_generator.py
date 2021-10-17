@@ -19,8 +19,16 @@ class DatasetGenerator(tf.keras.utils.Sequence):
                                     input_size, n_channels, to_fit, shuffle, seed)
     """
 
-    def __init__(self, list_images_dir, list_labels_dir,
-                 batch_size, input_size, n_channels, to_fit=True, shuffle=True, seed=None):
+    def __init__(self,
+                 list_images_dir,
+                 list_labels_dir,
+                 batch_size,
+                 input_size,
+                 n_channels,
+                 channel_last=True,
+                 to_fit=True,
+                 shuffle=True,
+                 seed=None):
 
         """
         Handles data generators
@@ -46,6 +54,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_size = batch_size
         self.input_size = input_size
         self.n_channels = n_channels
+        self.channel_last = channel_last
         self.seed = seed
         self.shuffle = shuffle
         self.to_fit = to_fit
@@ -130,10 +139,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         self.batch_index += 1
         yield batch_index
 
-    @staticmethod
-    def generate_x(dir_list):
+    def generate_x(self, dir_list):
         """
-        reads A4C view images of CAMUS dataset
+        reads A4C view images from dataset
 
         :param dir_list:
 
@@ -143,17 +151,28 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading images of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # X_4CH_ED: list[numpy.ndarray]
-        x_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+
+        x_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          dir_list))
 
-        x_4ch_data = np.array(x_4ch, dtype=object)
+        if len(x_4ch[0].shape) == 3:
+            if self.channel_last:
+                x_4ch = [np.moveaxis(x, 0, -1) for x in x_4ch]
 
-        return x_4ch_data
+        elif len(x_4ch[0].shape) == 2:
+            if self.channel_last:
+                x_4ch = [x[:, :, tf.newaxis] for x in x_4ch]
+            else:
+                x_4ch = [x[tf.newaxis, :, :] for x in x_4ch]
+
+        # x_4ch_data = np.array(x_4ch, dtype=object)
+
+        return x_4ch
 
     def generate_y(self, dir_list):
 
         """
-        reads A4C view segmentation labels of CAMUS dataset
+        reads A4C view segmentation labels from dataset
 
         :param dir_list
 
@@ -163,8 +182,12 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # y_4ch: list[numpy.ndarray]
-        y_4ch = list(map(lambda x: np.moveaxis(io.imread(x, plugin='simpleitk'), 0, -1),
+        y_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          [self.list_labels_dir[image_path] for image_path in dir_list]))
+
+        if len(y_4ch[0].shape) == 3:
+            if self.channel_last:
+                y_4ch = [np.moveaxis(y, 0, -1) for y in y_4ch]
 
         # to categorical
         y_4ch_cat = [to_categorical(y) for y in y_4ch]
@@ -172,25 +195,9 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # extract just left ventricle label from y_4ch_cat
         y_4ch_lv = [y[:, :, 1] for y in y_4ch_cat]
 
-        y_4ch_data = np.array(y_4ch_lv, dtype=object)
+        # y_4ch_data = np.array(y_4ch_lv, dtype=object)
 
-        return y_4ch_data
-
-    def resizing(self, image):
-
-        """
-        resizing image into the target_size dimensions
-
-        :param image: input image, np.ndarray
-
-        :return image_resized: resized image, np.ndarray
-        """
-
-        image_resized = np.array(tf.image.resize(image,
-                                                 self.input_size,
-                                                 antialias=False,
-                                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR))
-        return image_resized
+        return y_4ch_lv
 
     def random_visualization(self):
 

@@ -11,6 +11,7 @@ class UNetBaseline(ModelBase):
     """Unet V2 implementation from CAMUS paper.
 
     from the paper:
+
         - model input: (256, 256, 1)
         - density normalization after resizing
         - no augmentation
@@ -20,8 +21,8 @@ class UNetBaseline(ModelBase):
         - activation: relu
         - final activation: softmax (we used sigmoid because of binary output)
         - optimizer: Adam(lr=1e-4)
-        - loss: crossentropy + weight decay(L2 regularization of the weights) (we will not apply weight decay, we will
-            try regularization if the model over-fits)
+        - loss: crossentropy and weight decay(L2 regularization of the weights). we will not apply weight decay, we will
+          try regularization if the model over-fits
         - epochs: 30
         - params: ~18M
         - batch size: 10
@@ -54,7 +55,7 @@ class UNetBaseline(ModelBase):
         compile model from get_model_graph method with the optimizer,
         metrics and loss function written in config_example.yaml file
 
-        :return: compiled model
+        :return model: compiled model
         """
 
         model = self.get_model_graph()
@@ -71,7 +72,7 @@ class UNetBaseline(ModelBase):
         Output of this method will be used for inference (by loading saved checkpoints) and training (by compiling the
         graph)
 
-        :return: a model of type tensorflow.keras.Model
+        :return model: a model of type tensorflow.keras.Model
             input_shape:(input_h, input_w, 1)
             output_shape:(input_h, input_w, 1)
         """
@@ -265,60 +266,3 @@ class UNetBaseline(ModelBase):
             return connection, x
 
         return wrapper
-
-
-# def iou_coef(y_true, y_pred, smooth=1):
-#     """
-#
-#     :param y_true: label image from the dataset
-#     :param y_pred: model segmented image prediction
-#     :param smooth:
-#     :return:calculate Intersection over Union for y_true and y_pred
-#     """
-#
-#     threshlod = 0.5
-#
-#     y_pred_thresholded = K.cast(y_pred > threshlod, tf.float32)
-#
-#     intersection = K.sum(K.abs(y_true * y_pred_thresholded), axis=[1, 2])
-#     union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2]) - intersection
-#     iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
-#     return iou
-#
-#
-# def dice_coef(y_true, y_pred):
-#     """
-#
-#     :param y_true: label image from the dataset
-#     :param y_pred: model segmented image prediction
-#     :param smooth:
-#     :return: calculate dice coefficient between y_true and y_pred
-#     """
-#
-#     smooth = 1
-#     threshold = 0.5
-#
-#     y_pred_thresholded = K.cast(y_pred > threshold, tf.float32)
-#
-#     intersection = K.sum(y_true * y_pred_thresholded, axis=[1, 2])
-#     union = K.sum(y_true, axis=[1, 2]) + K.sum(y_pred_thresholded, axis=[1, 2])
-#     dice = K.mean((2. * intersection + smooth)/(union + smooth), axis=0)
-#     return dice
-#
-#
-# def dice_coef_loss(y_true, y_pred):
-#     """
-#
-#     :param y_true: label image from the dataset
-#     :param y_pred: model segmented image prediction
-#     :return: dice coefficient loss function
-#     """
-#     return 1 - dice_coef(y_true, y_pred)
-#
-#
-# def hausdorff(y_true, y_pred):
-#     pass
-#
-#
-# def mean_absolute_distance(y_true, y_pred):
-#     pass

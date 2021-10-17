@@ -8,19 +8,25 @@ import tensorflow as tf
 
 class EchoInference:
 
-    def __init__(self, exported_dir):
+    """Inference engine for Echo Segmentation.
 
-        """Checks config and load model and preprocessor
+    Attributes:
 
-        :param exported_dir: path to exported folder containing config and checkpoint files
-
-        Attributes:
             config: config file as a python object
             model_class: model's class name to import
             preprocessor_class: preprocessor's class name to import
             model_obj: model's class, contains .load_model() and .post_process() for single image
             model: tf.keras.Model ready to predict
             preprocessor: preprocessor object, ready to preprocess the input image for model.predict
+
+    """
+
+    def __init__(self, exported_dir):
+
+        """Checks config and load model and preprocessor
+
+        :param exported_dir: path to exported folder containing config and checkpoint files
+
         """
 
         self.config, self.model_class, self.preprocessor_class = None, None, None
@@ -34,7 +40,8 @@ class EchoInference:
         """Pre-process, process, post-process and resize input image.
 
         :param image: gray(0, 255) of shape(org_h, org_w, 1)
-        :returns result: gray(0, 255) of shape(org_h, org_w, 1)
+
+        :return result: gray(0, 255) of shape(org_h, org_w, 1)
         """
 
         res = self.pre_process(image)
@@ -71,7 +78,7 @@ class EchoInference:
 
     def post_process(self, processed_image):
 
-        """Postprocesses the raw output of processing step. This method returns the final result.
+        """Post-processes the raw output of processing step. This method returns the final result.
 
         :param processed_image: use self.process method's output
 
@@ -96,7 +103,7 @@ class EchoInference:
         except IndexError:
             raise Exception(f'could not find any .yaml files on specified path: {base_dir}')
 
-        self.config = load_config_file(config_path)
+        self.config = _load_config_file(config_path)
 
         try:
             self.model_class = self.config.model_class
@@ -110,13 +117,13 @@ class EchoInference:
 
     def _load_model(self, base_dir):
 
-        """Loads and returns the tf.keras.Model based on config file and .hdf5 file
+        """Loads and returns the ``tf.keras.Model`` based on config file and .hdf5 file
 
         :param base_dir: path to exported folder
-        :returns model: tf.keras.Model ready to make predictions
+        :returns model: ``tf.keras.Model`` ready to make predictions
 
-        :raises AssertionError(could not import model_class)
-        :raises Exception(f'could not find a checkpoint(.hdf5) file on {base_dir}')
+        :raises AssertionError: could not import model_class
+        :raises Exception: f'could not find a checkpoint(.hdf5) file on {base_dir}'
         """
 
         model_class = locate(self.model_class)
@@ -146,7 +153,7 @@ class EchoInference:
         return preprocessor
 
 
-def load_config_file(path):
+def _load_config_file(path):
 
     """
     loads the json config file and returns a dictionary
@@ -155,6 +162,14 @@ def load_config_file(path):
     :return: a dictionary of {config_name: config_value}
     """
 
+    class Struct:
+        def __init__(self, **entries):
+            for k, v in entries.items():
+                if isinstance(v, dict):
+                    self.__dict__[k] = Struct(**v)
+                else:
+                    self.__dict__[k] = v
+
     with open(path) as f:
         # use safe_load instead load
         data_map = yaml.safe_load(f)
@@ -162,11 +177,3 @@ def load_config_file(path):
     config_obj = Struct(**data_map)
     return config_obj
 
-
-class Struct:
-    def __init__(self, **entries):
-        for k, v in entries.items():
-            if isinstance(v, dict):
-                self.__dict__[k] = Struct(**v)
-            else:
-                self.__dict__[k] = v
