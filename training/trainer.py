@@ -11,33 +11,43 @@ from mlflow.tracking import MlflowClient
 
 class Trainer:
 
+    """Handles MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
+
+    tensorboard_logs -> base_dir/logs
+    checkpoints -> base_dir/checkpoints
+
+    Attributes:
+
+        epochs: number of epochs for training
+        callbacks_config: contains some information for callbacks includes:
+
+            - checkpoints: contains some information for checkpoints callback includes:
+
+                - save_freq: determines when checkpoints saved it could have values like "epoch" or "batch"
+                - evaluation_metrics: determines metrics which may be used for finding the best model weights in
+                  export function
+
+            - tensorboard: contains information for tensorboard callback includes:
+
+                - update_freq: determines the frequency of time that tensorboard values will be updated it could be
+                  "epoch" or "batch"
+
+        export_config: contains some information for finding the best weights for model, includes:
+
+            - metric: one of the metrics that defined in the evaluation_metrics list
+            - mode: determine whether max value of the metric is appropriate or min,
+              it could be "max" or "min" based on the chosen metric
+
+        checkpoints_addr: the path where the checkpoints is going to save
+        tensorboard_log:  the path where the tensorboard logs is going to save
+
+    """
+
     def __init__(self, base_dir: Path, config):
 
         """
-        handles: MLFlow, paths, callbacks(tensorboard, lr, model checkpointing, ...), continuous training
-
-        tensorboard_logs => base_dir/logs
-        checkpoints => base_dir/checkpoints
-
         :param base_dir: experiment directory, containing config.yaml file
         :param config: a Python object with attributes as config values
-
-        Attributes
-            epochs int: number of epochs for training
-            callbacks_config dict: contains some information for callbacks includes:
-                checkpoints dict: contains some information for checkpoints callback includes:
-                    save_freq str: determines when checkpoints saved it could have values like "epoch" or "batch"
-                    evaluation_metrics list: determines metrics which may be used for finding the best model weights in
-                     export function
-                tensorboard dict: contains information for tensorboard callback includes:
-                    update_freq: determines the frequency of time that tensorboard values will be updated it could be
-                     "epoch" or "batch"
-            export_config dict: contains some information for finding the best weights for model, includes:
-                metric str: one of the metrics that defined in the evaluation_metrics list
-                mode str: determine whether max value of the metric is appropriate or min,
-                 it could be "max" or "min" based on the chosen metric
-            checkpoints_addr: the path where the checkpoints is going to save
-            tensorboard_log:  the path where the tensorboard logs is going to save
         """
 
         self.base_dir = base_dir
@@ -84,7 +94,7 @@ class Trainer:
 
         """Trains the model on given data generators.
 
-        Use Dataset and Model classes fir
+        Use Dataset and Model classes dir
 
         :param model: tensorflow model to be trained, it has to have a `fit` method
         :param train_data_gen: training data generator
@@ -92,7 +102,7 @@ class Trainer:
         :param n_iter_train: iterations per epoch for train_data_gen
         :param n_iter_val: iterations per epoch for val_data_gen
 
-        :returns fit history
+        :returns fit_history:
 
         """
 
@@ -146,7 +156,7 @@ class Trainer:
 
         This method will delete all checkpoints after exporting the best one
 
-        :returns exported_dir
+        :returns exported_dir:
         """
 
         metric, mode = self.export_config.metric, self.export_config.mode
