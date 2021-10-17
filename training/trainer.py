@@ -81,7 +81,7 @@ class Trainer:
 
         callbacks = [
             keras.callbacks.ModelCheckpoint(filepath=str(checkpoints_template),
-                                            save_weights_only=False,
+                                            save_weights_only=True,
                                             save_freq=self.callbacks_config.checkpoints.save_freq,
                                             save_best_only=save_best_only,
                                             monitor=self.callbacks_config.checkpoints.monitor),
