@@ -1,21 +1,29 @@
 import sys
 sys.path.append('..')
 
-from .model import metric
-from .model import loss
+import pathlib
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+from model import metric
+from model import loss
+from utils.handling_yaml import load_config_file
+from .evaluator_base import EvaluatorBase
 
-class Evaluator:
+
+class Evaluator(EvaluatorBase):
     """
     This class is for evaluating the model and data according to the metrics and losses
 
     Example::
 
         eval = Evaluator(config)
-        eval.build_data_frame(model,data_generator,n_iter)
+        df = eval.build_data_frame(model,data_generator,n_iter)
+
+        # Or use exported folder
+        eval_report = eval.generate_report(exported_dir)
 
     """
 
@@ -24,6 +32,8 @@ class Evaluator:
         """
 
         """
+
+        super().__init__()
 
     def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
 
@@ -109,6 +119,16 @@ class Evaluator:
                 data_frame_numpy.append(data_featurs)
 
         return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indexes)
+
+    def generate_report(self, exported_dir):
+        config_path = list(pathlib.Path(exported_dir).glob('*.yaml'))[0]
+        config = load_config_file(config_path)
+
+        val_data_gen, n_iter_val, val_df = self._create_val_data_gen(config)
+        inference_model = self._load_model(config, exported_dir)
+
+        eval_report = self.build_data_frame(inference_model, val_data_gen, n_iter_val, val_df.index)
+        return eval_report
 
     @staticmethod
     def model_certainty(y_true, y_pred):
