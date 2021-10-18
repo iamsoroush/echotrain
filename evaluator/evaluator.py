@@ -53,7 +53,7 @@ class Evaluator(EvaluatorBase):
 
         # building the dataframe
         new_columns = ['iou_coef_loss',
-                       'soft_iou_loss'
+                       'soft_iou_loss',
                        'dice_coef_loss',
                        'soft_dice_loss',
                        'iou_coef',
@@ -81,16 +81,18 @@ class Evaluator(EvaluatorBase):
 
         with tqdm(total=len(val_data_indexes)) as pbar:
             for _ in range(n_iter):
-                batch = next(data_gen_val_preprocessed)
+                x_b, y_b = next(data_gen_val_preprocessed)
                 # batch = pre_processor.batch_preprocess(batch)
-                for j in range(len(batch[0])):
+
+                processed_batch = model.predict(x_b)
+                for y_pred, y_true in zip(processed_batch, y_b):
                     data_featurs = []
-                    _, input_h, input_w, _ = batch[1].shape
+                    input_h, input_w, _ = y_pred.shape
                     # y_true = batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
-                    y_true = np.expand_dims(batch[1][j], axis=0)
+                    # y_true = np.expand_dims(batch[1][j], axis=0)
                     # y_pred = model.predict(
                     # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
-                    y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
+                    # y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
 
                     data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                     data_featurs.append(float(loss.soft_iou_loss(y_true, y_pred)))
@@ -126,6 +128,56 @@ class Evaluator(EvaluatorBase):
 
                     data_frame_numpy.append(data_featurs)
                     pbar.update(1)
+
+        # with tqdm(total=len(val_data_indexes)) as pbar:
+        #     for _ in range(n_iter):
+        #         batch = next(data_gen_val_preprocessed)
+        #         # batch = pre_processor.batch_preprocess(batch)
+        #
+        #         batch_processed = model.predict(batch)
+        #         for j in range(len(batch[0])):
+        #             data_featurs = []
+        #             _, input_h, input_w, _ = batch[1].shape
+        #             # y_true = batch[1][j].reshape((1, self.input_h, self.input_w, self.n_channels))
+        #             y_true = np.expand_dims(batch[1][j], axis=0)
+        #             # y_pred = model.predict(
+        #             # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
+        #             y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
+        #
+        #             data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
+        #             data_featurs.append(float(loss.soft_iou_loss(y_true, y_pred)))
+        #             data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
+        #             data_featurs.append(float(loss.soft_dice_loss(y_true, y_pred)))
+        #             data_featurs.append(float(metric.get_iou_coef()(y_true, y_pred)))
+        #             data_featurs.append(float(metric.get_soft_iou()(y_true, y_pred)))
+        #             data_featurs.append(float(metric.get_dice_coeff()(y_true, y_pred)))
+        #             data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
+        #             # data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
+        #             # data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
+        #
+        #             certainty = self.model_certainty(y_true, y_pred)
+        #             data_featurs.append(certainty[0])
+        #             data_featurs.append(certainty[1])
+        #             data_featurs.append(certainty[2])
+        #             data_featurs.append(certainty[3])
+        #
+        #             data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.5))
+        #             data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.5))
+        #
+        #             data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.1))
+        #             data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.1))
+        #
+        #             data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.3))
+        #             data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.3))
+        #
+        #             data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.7))
+        #             data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.7))
+        #
+        #             data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.9))
+        #             data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.9))
+        #
+        #             data_frame_numpy.append(data_featurs)
+        #             pbar.update(1)
 
         return pd.DataFrame(data_frame_numpy, columns=new_columns, index=val_data_indexes)
 
