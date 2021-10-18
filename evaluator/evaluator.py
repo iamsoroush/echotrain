@@ -51,6 +51,7 @@ class Evaluator(EvaluatorBase):
 
         # building the dataframe
         new_columns = ['iou_coef_loss',
+                       'soft_iou_loss'
                        'dice_coef_loss',
                        'soft_dice_loss',
                        'iou_coef',
@@ -86,6 +87,7 @@ class Evaluator(EvaluatorBase):
                 # y_pred = model.predict(
                 # batch[0][j].reshape((1, self.input_h, self.input_w, self.n_channels)))
                 y_pred = model.predict(np.expand_dims(batch[0][j], axis=0))
+
                 data_featurs.append(float(loss.iou_coef_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.soft_iou_loss(y_true, y_pred)))
                 data_featurs.append(float(loss.dice_coef_loss(y_true, y_pred)))
@@ -96,10 +98,12 @@ class Evaluator(EvaluatorBase):
                 data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
                 data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
-                data_featurs.append(self.model_certainty(y_true, y_pred)[0])
-                data_featurs.append(self.model_certainty(y_true, y_pred)[1])
-                data_featurs.append(self.model_certainty(y_true, y_pred)[2])
-                data_featurs.append(self.model_certainty(y_true, y_pred)[3])
+
+                certainty = self.model_certainty(y_true, y_pred)
+                data_featurs.append(certainty[0])
+                data_featurs.append(certainty[1])
+                data_featurs.append(certainty[2])
+                data_featurs.append(certainty[3])
 
                 data_featurs.append(self.true_positive_rate(y_true, y_pred, 0.5))
                 data_featurs.append(self.true_negative_rate(y_true, y_pred, 0.5))
