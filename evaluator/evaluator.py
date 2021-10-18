@@ -58,8 +58,8 @@ class Evaluator(EvaluatorBase):
                        'soft_iou_coef',
                        'dice_coef',
                        'soft_dice',
-                       'mad',
-                       'hausdorff',
+                       # 'mad',
+                       # 'hausdorff',
                        'truecertainty',
                        'falsecertainty',
                        'ambigous',
@@ -96,8 +96,8 @@ class Evaluator(EvaluatorBase):
                 data_featurs.append(float(metric.get_soft_iou()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_dice_coeff()(y_true, y_pred)))
                 data_featurs.append(float(metric.get_soft_dice()(y_true, y_pred)))
-                data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
-                data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
+                # data_featurs.append(float(metric.get_mad(input_w, input_h)(y_true, y_pred)))
+                # data_featurs.append(float(metric.get_hausdorff_distance(input_w, input_h)(y_true, y_pred)))
 
                 certainty = self.model_certainty(y_true, y_pred)
                 data_featurs.append(certainty[0])
