@@ -189,7 +189,7 @@ class Evaluator(EvaluatorBase):
         inference_model = self._load_model(config, exported_dir)
 
         eval_report = self.build_data_frame(inference_model, val_data_gen, n_iter_val, val_df.index)
-        return eval_report
+        return eval_report, val_df
 
     @staticmethod
     def model_certainty(y_true, y_pred):
@@ -248,7 +248,7 @@ class Evaluator(EvaluatorBase):
         """
 
         tp, tn, fp, fn = self.get_conf_mat_elements(y_true, y_pred, threshold)
-        return float((tp / (tp + fn)) * 100)
+        return float((tp / (tp + fn)))
 
         # tp = 0
         # for i in range(len(y_true[0])):
@@ -268,7 +268,7 @@ class Evaluator(EvaluatorBase):
         """
 
         tp, tn, fp, fn = self.get_conf_mat_elements(y_true, y_pred, threshold)
-        return float((tn / (fp + tn)) * 100)
+        return float((tn / (fp + tn)))
 
         # tn = 0
         # for i in range(len(y_true[0])):
