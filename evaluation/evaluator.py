@@ -84,7 +84,7 @@ class Evaluator(EvaluatorBase):
                         data_features.append(float(func(y_true, y_pred)))
 
                     data_frame_numpy.append(data_features)
-                    pbar.update(1)
+                pbar.update(len(y_b))
 
         # with tqdm(total=len(val_data_indexes)) as pbar:
         #     for _ in range(n_iter):
