@@ -4,7 +4,9 @@ sys.path.append('echotrain')
 import pathlib
 import argparse
 
-from evaluator.evaluator import Evaluator
+import pandas as pd
+
+from evaluation import Evaluator
 
 
 def parse_args():
@@ -24,9 +26,10 @@ if __name__ == '__main__':
     experiment_dir = pathlib.Path(args.experiment_dir)
     exported_dir = experiment_dir.joinpath('exported')
 
-    eval = Evaluator()
-    eval_report = eval.generate_report(exported_dir)
+    evaluator = Evaluator(exported_dir=exported_dir)
+    eval_report, val_df = evaluator.generate_report()
     summary_report = eval_report.describe()
 
-    eval_report.to_csv(experiment_dir.joinpath('eval_report.csv'))
+    merged_df = pd.merge(val_df, eval_report, left_index=True, right_index=True)
+    merged_df.to_csv(experiment_dir.joinpath('evaluation_report.csv'))
     summary_report.to_csv(experiment_dir.joinpath('summary_report.csv'))
