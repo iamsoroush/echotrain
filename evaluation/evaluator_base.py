@@ -2,11 +2,15 @@ from abc import ABC, abstractmethod
 from pydoc import locate
 import pathlib
 
+from utils.handling_yaml import load_config_file
+
 
 class EvaluatorBase(ABC):
 
-    def __init__(self):
-        pass
+    def __init__(self, exported_dir):
+        self.exported_dir = exported_dir
+        self.config = None
+        self._load_config()
 
     @abstractmethod
     def build_data_frame(self, model, data_gen_val_preprocessed, n_iter, val_data_indexes):
@@ -15,34 +19,40 @@ class EvaluatorBase(ABC):
 
         pass
 
-    @abstractmethod
-    def generate_report(self, exported_dir):
+    def generate_report(self):
 
         """Generates report using given config file and exported model"""
 
-        pass
+        val_data_gen, n_iter_val, val_df = self._create_val_data_gen()
+        inference_model = self._load_model()
 
-    @staticmethod
-    def _create_val_data_gen(config):
+        eval_report = self.build_data_frame(inference_model, val_data_gen, n_iter_val, val_df.index)
+        return eval_report, val_df
 
-        dataset_class_path = config.dataset_class
-        preprocessor_class_path = config.preprocessor_class
+    def _load_config(self):
+        if self.exported_dir is not None:
+            config_path = list(pathlib.Path(self.exported_dir).glob('*.yaml'))[0]
+            self.config = load_config_file(config_path)
+
+    def _create_val_data_gen(self):
+
+        dataset_class_path = self.config.dataset_class
+        preprocessor_class_path = self.config.preprocessor_class
 
         # Dataset
         print('preparing dataset ...')
         dataset_class = locate(f'{dataset_class_path}')
-        dataset = dataset_class(config)
+        dataset = dataset_class(self.config)
         _, val_data_gen, _, n_iter_val = dataset.create_data_generators()
 
         # Preprocessor
         print('preparing pre-processor ...')
         preprocessor_class = locate(f'{preprocessor_class_path}')
-        preprocessor = preprocessor_class(config)
+        preprocessor = preprocessor_class(self.config)
         val_data_gen = preprocessor.add_preprocess(val_data_gen, False)
         return val_data_gen, n_iter_val, dataset.validation_df
 
-    @staticmethod
-    def _load_model(config, exported_dir):
+    def _load_model(self):
 
         """Loads and returns the ``tf.keras.Model`` based on config file and .hdf5 file
 
@@ -55,14 +65,14 @@ class EvaluatorBase(ABC):
 
         # Model
         print('preparing model ...')
-        model_class_path = config.model_class
+        model_class_path = self.config.model_class
         model_class = locate(f'{model_class_path}')
-        model_obj = model_class(config=config)
+        model_obj = model_class(config=self.config)
 
         try:
-            checkpoint_path = list(pathlib.Path(exported_dir).glob('*.hdf5'))[0]
+            checkpoint_path = list(pathlib.Path(self.exported_dir).glob('*.hdf5'))[0]
         except IndexError:
-            raise Exception(f'could not find a checkpoint(.hdf5) file on {exported_dir}')
+            raise Exception(f'could not find a checkpoint(.hdf5) file on {self.exported_dir}')
 
         model = model_obj.load_model(checkpoint_path=checkpoint_path)
         print(f'loaded model using this checkpoint: {checkpoint_path}')
