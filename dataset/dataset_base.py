@@ -1,5 +1,9 @@
+import sys
+sys.path.append('..')
+
 from abc import abstractmethod
-from . import BaseClass
+
+from model.base_class import BaseClass
 
 
 class DatasetBase(BaseClass):
