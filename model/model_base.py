@@ -17,21 +17,6 @@ class ModelBase(BaseClass):
 
     """
 
-    def __init__(self, config=None):
-
-        """
-
-        :param config: a Python object with attributes as config values
-
-        """
-
-        super().__init__(config)
-        self.config = config
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.n_channels = config.n_channels
-        self.inference_threshold = config.model.inference_threshold
-
     @abstractmethod
     def generate_training_model(self):
 

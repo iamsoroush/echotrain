@@ -16,16 +16,16 @@ class Augmentation(BaseClass):
         y = masks(batch)
         data = augmented batch
 
+    Augmentation part of config file:
+
+        config.pre_process.augmentation, containing:
+
+            rotation_range - the range limitation for rotation in augmentation
+            flip_proba - probability for flipping
+
     """
 
     def __init__(self, config=None):
-
-        """
-        :param config: augmentation part of config file: config.pre_process.augmentation, containing:
-          rotation_range - the range limitation for rotation in augmentation
-          flip_proba - probability for flipping
-        """
-
         super().__init__(config)
 
         self.transform = A.Compose([

@@ -16,10 +16,6 @@ class PreProcessor(BaseClass):
 
     """
 
-    def __init__(self, config=None):
-
-        super().__init__(config)
-
     @abstractmethod
     def img_preprocess(self, image, inference=False):
 

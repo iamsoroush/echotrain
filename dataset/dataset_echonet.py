@@ -48,14 +48,9 @@ class EchoNetDataset(DatasetBase):
 
         """
         Handles data loading: loading, preparing, data generators
-
-        if ``config==None``, default values will be invoked using ``self._set_default_values``
-
         """
 
-        super(EchoNetDataset, self).__init__(config)
-
-        self._load_config(config)
+        super().__init__(config)
 
         self.df_dataset = None
         self._build_data_frame()
@@ -90,21 +85,54 @@ class EchoNetDataset(DatasetBase):
         # # adding 'train' and 'validation' status to the data-frame
         # self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
-    def create_data_generators(self):
+    def _load_params(self, config):
+        cfg_dh = config.data_handler
+        self.stage = cfg_dh.dataset_features.stage
+        self.view = cfg_dh.dataset_features.view
+        self.batch_size = cfg_dh.batch_size
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = config.n_channels
+        # self.split_ratio = cfg_dh.split_ratio
+        self.seed = cfg_dh.seed
+        self.shuffle = cfg_dh.shuffle
+        self.to_fit = cfg_dh.to_fit
+        self.dataset_dir = cfg_dh.dataset_dir
+        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
-        """Creates data generators based on ``batch_size``, ``input_size``
+    def _set_defaults(self):
 
-        :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
-        :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
-        :returns n_iter_train: number of iterations per epoch for train_data_gen
-        :returns n_iter_val: number of iterations per epoch for val_data_gen
+        """Default values for parameters"""
 
-        """
+        self.stage = ['ED', 'ES']
+        self.view = ['4CH']
 
-        train_data_gen, n_iter_train = self.create_train_data_generator()
-        val_data_gen, n_iter_val = self.create_validation_data_generator()
+        self.batch_size = 8
+        self.input_h = 128
+        self.input_w = 128
+        self.n_channels = 1
+        self.seed = 101
+        self.shuffle = True
+        self.to_fit = True
+        self.dataset_dir = 'EchoNet-Dynamic'
+        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
-        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
+    # def create_data_generators(self):
+    #
+    #     """Creates data generators based on ``batch_size``, ``input_size``
+    #
+    #     :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
+    #     :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
+    #     :returns n_iter_train: number of iterations per epoch for train_data_gen
+    #     :returns n_iter_val: number of iterations per epoch for val_data_gen
+    #
+    #     """
+    #
+    #     train_data_gen, n_iter_train = self.create_train_data_generator()
+    #     val_data_gen, n_iter_val = self.create_validation_data_generator()
+    #
+    #     return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
     def create_train_data_generator(self):
 
@@ -179,48 +207,9 @@ class EchoNetDataset(DatasetBase):
     def test_df(self):
         return self.test_df_
 
-    def _load_config(self, config):
-
-        """Load all parameters from config file"""
-
-        self._set_default_params()
-
-        if config is not None:
-            cfg_dh = config.data_handler
-            self.stage = cfg_dh.dataset_features.stage
-            self.view = cfg_dh.dataset_features.view
-            self.batch_size = cfg_dh.batch_size
-            self.input_h = config.input_h
-            self.input_w = config.input_w
-            # self.input_size = (self.input_h, self.input_w)
-            self.n_channels = config.n_channels
-            # self.split_ratio = cfg_dh.split_ratio
-            self.seed = cfg_dh.seed
-            self.shuffle = cfg_dh.shuffle
-            self.to_fit = cfg_dh.to_fit
-            self.dataset_dir = cfg_dh.dataset_dir
-            self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
-
     @property
     def input_size(self):
         return self.input_h, self.input_w
-
-    def _set_default_params(self):
-
-        """Default values for parameters"""
-
-        self.stage = ['ED', 'ES']
-        self.view = ['4CH']
-
-        self.batch_size = 8
-        self.input_h = 128
-        self.input_w = 128
-        self.n_channels = 1
-        self.seed = 101
-        self.shuffle = True
-        self.to_fit = True
-        self.dataset_dir = 'EchoNet-Dynamic'
-        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
     def _fetch_data(self):
 

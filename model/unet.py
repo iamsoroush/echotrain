@@ -8,32 +8,27 @@ from .loss import dice_coef_loss
 
 
 class UNet(ModelBase):
+    """
 
-    def __init__(self, config):
+    Example::
 
-        """
-        HOWTO:
         first you have to call UNet class: unet=UNet(config=config)
         then 2 methods have been provided:
-                get_model_graph(): this method gives you non_compiled unet model
-                generate_training_model(): this method gives you compiled model with
-                attributes designated in config.(you can see options you have at Attributes section below.)
+            get_model_graph(): this method gives you non_compiled unet model
+            generate_training_model(): this method gives you compiled model with
+            attributes designated in config.(you can see options you have at Attributes section below.)
 
 
-        :param config:
-
-        Attributes:
-            input_h:height of your image
-            input_w:width of your image
-            n_channels:number of channels of image
-            optimizer:
-                type: can be "adam"
-                initial_lr:default would be 0.001
-            metrics: 'acc', 'dice_coef', 'iou', '2d_hausdorff' is supported
-            loss:'binary_crossentropy', 'dice_coef_loss' is supported
-        """
-
-        super(UNet, self).__init__(config=config)
+    Attributes:
+        input_h:height of your image
+        input_w:width of your image
+        n_channels:number of channels of image
+        optimizer:
+            type: can be "adam"
+            initial_lr:default would be 0.001
+        metrics: 'acc', 'dice_coef', 'iou', '2d_hausdorff' is supported
+        loss:'binary_crossentropy', 'dice_coef_loss' is supported
+    """
 
     def post_process(self, predicted):
 

@@ -8,6 +8,8 @@ class BaseClass(ABC):
         if config is not None:
             self._load_params(config)
 
+        self.config = config
+
     @abstractmethod
     def _load_params(self, config):
 
