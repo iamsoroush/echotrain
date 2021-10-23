@@ -52,6 +52,7 @@ class Trainer:
 
         self.base_dir = base_dir
         self._load_params(config)
+        self.config = config
         self._check_for_exported()
 
         # mlflow.set_tracking_uri(f'file:{self.mlflow_tracking_uri}')
@@ -131,6 +132,9 @@ class Trainer:
         with active_run as run:
             # Add params from config file to mlflow
             self._add_config_file_to_mlflow()
+
+            # Set datasetLoader as a tag
+            mlflow.set_tag("dataset_class", str(self.config.dataset_class))
 
             mlflow.tensorflow.autolog(every_n_iter=1,
                                       log_models=False,
