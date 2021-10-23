@@ -33,9 +33,9 @@ pre_process:
   do_resizing: True
   do_normalization: True
   augmentation:
-    rotation_proba: 0.5
+    rotation_proba: 0.0
     rotation_range: 45
-    flip_proba: 0.5
+    flip_proba: 0.0
 
 trainer:
   epochs: 30
@@ -49,7 +49,7 @@ trainer:
   export:
     metric: "val_loss"
     mode: "min"
-  mlflow:
-    tracking_uri: '/content/drive/MyDrive/AIMedic/Experiments/MLFlow Experiments'
-    experiment_name: 'echo_seg_echonet_dynamic'
-#    run_name: 'baseline-0'
+
+mlflow:
+  tracking_uri: '/content/drive/MyDrive/AIMedic/Experiments/MLFlow Experiments'
+  experiment_name: 'echo_seg_echonet_dynamic'

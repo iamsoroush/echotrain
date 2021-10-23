@@ -92,7 +92,7 @@ class Trainer:
         ]
         return callbacks
 
-    def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val):
+    def train(self, model, train_data_gen, val_data_gen, n_iter_train, n_iter_val, active_run: mlflow.ActiveRun):
 
         """Trains the model on given data generators.
 
@@ -103,6 +103,7 @@ class Trainer:
         :param val_data_gen: validation data generator
         :param n_iter_train: iterations per epoch for train_data_gen
         :param n_iter_val: iterations per epoch for val_data_gen
+        :param active_run: will be used for mlflow logging as a context manager, i.e. ``with active_run:``
 
         :returns fit_history:
 
@@ -115,11 +116,11 @@ class Trainer:
             print(f'found latest checkpoint: {latest_checkpoint}')
             # initial_epoch = re.findall('model\\.([0-9]+)(-[+-]?[0-9]+\\.[0-9]+)*', latest_checkpoint.split('/')[-1])
             initial_epoch = int(re.findall('model\\.([0-9]+)', latest_checkpoint.name)[0])
-            print(f'initial epoch: {initial_epoch}')
             model.load_weights(latest_checkpoint)
+        print(f'initial epoch: {initial_epoch}')
 
-        run_id = self._load_existing_run()
-        active_run = self._setup_mlflow(run_id)
+        # run_id = self._load_existing_run()
+        # active_run = self._setup_mlflow(run_id)
 
         # if mlflow.get_experiment_by_name(self.mlflow_experiment_name) is None:
         #
@@ -139,8 +140,7 @@ class Trainer:
                                       silent=False)
 
             # Write run_id
-            with open(self.run_id_path, 'w') as f:
-                f.write(run.info.run_id)
+            self._write_mlflow_run_id(run)
 
             # Fit
             history = model.fit(train_data_gen,
@@ -158,7 +158,7 @@ class Trainer:
 
         This method will delete all checkpoints after exporting the best one
 
-        :returns exported_dir:
+        :returns exported_dir: directory to exported model and config file.
         """
 
         metric, mode = self.export_config.metric, self.export_config.mode
@@ -216,54 +216,57 @@ class Trainer:
         self.config_file_path = self.base_dir.joinpath(config_file_name)
 
         # MLFlow
-        self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
-        self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
-        # self.run_name = config.trainer.mlflow.run_name
-        self.run_name = self.base_dir.name
+        # self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
+        # self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
+        # self.run_name = self.base_dir.name
 
-    def _load_existing_run(self):
+    # def _load_existing_run(self):
+    #
+    #     """Loads run_id if exists, if not, returns None"""
+    #
+    #     run_id = None
+    #
+    #     if self.run_id_path.exists():
+    #         with open(self.run_id_path, 'r') as f:
+    #             run_id = f.readline()
+    #
+    #     return run_id
 
-        """Loads run_id if exists, if not, returns None"""
-
-        run_id = None
-
-        if self.run_id_path.exists():
-            with open(self.run_id_path, 'r') as f:
-                run_id = f.readline()
-
-        return run_id
-
-    def _setup_mlflow(self, run_id):
-
-        """Sets up mlflow.
-
-        tracking_uri/
-            experiment_id/
-                run1
-                run2
-                ...
-        """
-
-        mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-        client = MlflowClient(self.mlflow_tracking_uri)
-
-        if run_id is not None:
-            mlflow.set_experiment(self.mlflow_experiment_name)
-            active_run = mlflow.start_run(run_id=run_id)
-        else:
-            experiment = client.get_experiment_by_name(self.mlflow_experiment_name)
-            if experiment is not None:
-                experiment_id = experiment.experiment_id
-            else:
-                experiment_id = mlflow.create_experiment(self.mlflow_experiment_name)
-
-            active_run = mlflow.start_run(experiment_id=experiment_id, run_name=self.run_name)
-
-        return active_run
+    # def _setup_mlflow(self, run_id):
+    #
+    #     """Sets up mlflow.
+    #
+    #     tracking_uri/
+    #         experiment_id/
+    #             run1
+    #             run2
+    #             ...
+    #     """
+    #
+    #     mlflow.set_tracking_uri(self.mlflow_tracking_uri)
+    #     client = MlflowClient(self.mlflow_tracking_uri)
+    #
+    #     if run_id is not None:
+    #         mlflow.set_experiment(self.mlflow_experiment_name)
+    #         active_run = mlflow.start_run(run_id=run_id)
+    #     else:
+    #         experiment = client.get_experiment_by_name(self.mlflow_experiment_name)
+    #         if experiment is not None:
+    #             experiment_id = experiment.experiment_id
+    #         else:
+    #             experiment_id = mlflow.create_experiment(self.mlflow_experiment_name)
+    #
+    #         active_run = mlflow.start_run(experiment_id=experiment_id, run_name=self.run_name)
+    #
+    #     return active_run
 
     def _add_config_file_to_mlflow(self):
 
-        """Adds parameters from config file to mlflow"""
+        """Adds parameters from config file to mlflow.
+
+        Be sure to call this function inside a context manager using a ``mlflow.ActiveRun``.
+
+        """
 
         def param_extractor(dictionary):
 
@@ -290,3 +293,7 @@ class Trainer:
             params[name] = item_value
 
         mlflow.log_params(params)
+
+    def _write_mlflow_run_id(self, run: mlflow.ActiveRun):
+        with open(self.run_id_path, 'w') as f:
+            f.write(run.info.run_id)
