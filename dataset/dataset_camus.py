@@ -410,3 +410,32 @@ class CAMUSDataset(DatasetBase):
         train_indices = indexes[:train_size]
         val_indices = indexes[train_size:]
         return train_indices, val_indices
+
+
+if __name__ == '__main__':
+    # from dataset_echonet import EchoNetDataset
+    from echotrain.model.pre_processing import PreProcessor
+    from echotrain.utils.handling_yaml import load_config_file
+    import matplotlib.pyplot as plt
+
+    config_path = "../config/config_example.yaml"
+    config = load_config_file(config_path)
+    dataset = CAMUSDataset(config)
+
+    train_gen, val_gen, n_iter_train, n_iter_val = dataset.create_data_generators()
+    test_gen, n_iter_test = dataset.create_test_data_generator()
+
+    print(n_iter_train)
+    preprocessor = PreProcessor(config)
+    preprocessed_train_gen = preprocessor.add_preprocess(train_gen, False)
+
+    for i in range(10):
+        batch = next(preprocessed_train_gen)
+        fig, ax = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        print(batch[0][0].shape)
+        ax[0].axis('off')
+        ax[0].imshow(batch[0][0], cmap='gray')
+        ax[1].axis('off')
+        ax[1].imshow(batch[1][0], cmap='gray')
+        plt.show()

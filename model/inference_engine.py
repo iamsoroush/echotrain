@@ -116,7 +116,6 @@ class EchoInference:
             raise Exception('could not find preprocessor_class')
 
     def _load_model(self, base_dir):
-
         """Loads and returns the ``tf.keras.Model`` based on config file and .hdf5 file
 
         :param base_dir: path to exported folder

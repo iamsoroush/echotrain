@@ -29,6 +29,7 @@ class Augmentation:
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
             A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)
+            A.ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=1),
         ])
 
     def batch_augmentation(self, batch):
