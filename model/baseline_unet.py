@@ -48,10 +48,10 @@ class UNetBaseline(ModelBase):
         self.kernel_initializer = 'glorot_uniform'
 
     def _load_params(self, config):
-        self.optimizer_type = self.config.model.optimizer.type
-        self.learning_rate = self.config.model.optimizer.initial_lr
-        self.loss_type = self.config.model.loss_type
-        self.metrics = self.config.model.metrics
+        self.optimizer_type = config.model.optimizer.type
+        self.learning_rate = config.model.optimizer.initial_lr
+        self.loss_type = config.model.loss_type
+        self.metrics = config.model.metrics
 
     def _set_defaults(self):
         self.optimizer_type = 'adam'

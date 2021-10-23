@@ -5,10 +5,9 @@ class BaseClass(ABC):
 
     def __init__(self, config=None):
         self._set_defaults()
+        self.config = config
         if config is not None:
             self._load_params(config)
-
-        self.config = config
 
     @abstractmethod
     def _load_params(self, config):
