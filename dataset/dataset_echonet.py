@@ -210,14 +210,12 @@ class EchoNetDataset(DatasetBase):
         """Default values for parameters"""
 
         self.stage = ['ED', 'ES']
-        self.view = ["4CH"]
+        self.view = ['4CH']
 
         self.batch_size = 8
-        self.input_h = 256
-        self.input_w = 256
-        # self.input_size = (self.input_h, self.input_w)
+        self.input_h = 128
+        self.input_w = 128
         self.n_channels = 1
-        # self.split_ratio = 0.8
         self.seed = 101
         self.shuffle = True
         self.to_fit = True
@@ -389,34 +387,6 @@ class EchoNetDataset(DatasetBase):
         random.Random(seed).shuffle(y_list)
         y = dict(y_list)
         return x, y
-
-    # @staticmethod
-    # def _split(x, y, split_ratio):
-    #     """
-    #     splits the dataset into train and validation set by the corresponding ratio
-    #     the ratio is "train portion/whole data"
-    #
-    #     :param x: list of images, np.ndarray
-    #     :param y: list of segmentation labels, np.ndarray
-    #     :param split_ratio: split ratio for trainset, float
-    #
-    #     :return x_train: images train_set, np.ndarray
-    #     :return y_train: segmentation labels train_set, np.ndarray
-    #     :return x_val: images validation_set, np.ndarray
-    #     :return y_val: segmentation labels validation_set, np.ndarray
-    #     """
-    #
-    #     # set train size by split_ratio var
-    #     train_size = round(len(x) * split_ratio)
-    #
-    #     # splitting
-    #     x_train = x[:train_size]
-    #     y_train = dict(list(y.items())[:train_size])
-    #
-    #     x_val = x[train_size:]
-    #     y_val = dict(list(y.items())[train_size:])
-    #
-    #     return x_train, y_train, x_val, y_val
 
     def _split_indexes(self):
         """
