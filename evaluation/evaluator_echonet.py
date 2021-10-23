@@ -10,20 +10,35 @@ class EvaluatorEchoNet(Evaluator):
     def __init__(self, exported_dir):
         super().__init__(exported_dir)
 
-    def generate_report(self):
+    def generate_report(self, on='test'):
 
         """Generates report using given config file and exported model"""
 
-        test_data_gen, n_iter_test, test_df = self._create_test_data_gen()
-        preprocessed_data_gen = self._add_preprocessing(test_data_gen)
+        assert on in ('validation', 'test'), 'pass either "test" or "validation" for "on" argument.'
+
+        if on is 'test':
+            data_gen, n_iter, df = self._create_test_data_gen()
+        else:
+            data_gen, n_iter, df = self._create_val_data_gen()
+
+        preprocessed_data_gen = self._add_preprocessing(data_gen)
         inference_model = self._load_model()
 
-        eval_report = self.build_data_frame(inference_model, preprocessed_data_gen, n_iter_test, test_df.index)
-        return eval_report, test_df
+        eval_report = self.build_data_frame(inference_model, preprocessed_data_gen, n_iter, df.index)
+
+        return eval_report, df
 
     def _create_test_data_gen(self):
-        print('preparing dataset ...')
+        print('preparing test dataset ...')
         dataset = EchoNetDataset(config=None)
         _, test_data_gen, _, n_iter_test = dataset.create_test_data_generator()
 
         return test_data_gen, n_iter_test, dataset.test_df
+
+    def _create_val_data_gen(self):
+        print('preparing validation dataset ...')
+        dataset = EchoNetDataset(config=None)
+        _, val_data_gen, _, n_iter_val = dataset.create_validation_data_generator()
+
+        return val_data_gen, n_iter_val, dataset.validation_df
+
