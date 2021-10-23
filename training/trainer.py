@@ -6,7 +6,6 @@ import yaml
 
 from tensorflow import keras
 import mlflow
-from mlflow.tracking import MlflowClient
 
 
 class Trainer:
@@ -54,8 +53,6 @@ class Trainer:
         self._load_params(config)
         self.config = config
         self._check_for_exported()
-
-        # mlflow.set_tracking_uri(f'file:{self.mlflow_tracking_uri}')
 
         if not os.path.isdir(self.checkpoints_addr):
             os.makedirs(self.checkpoints_addr)
@@ -223,46 +220,6 @@ class Trainer:
         # self.mlflow_tracking_uri = config.trainer.mlflow.tracking_uri
         # self.mlflow_experiment_name = config.trainer.mlflow.experiment_name
         # self.run_name = self.base_dir.name
-
-    # def _load_existing_run(self):
-    #
-    #     """Loads run_id if exists, if not, returns None"""
-    #
-    #     run_id = None
-    #
-    #     if self.run_id_path.exists():
-    #         with open(self.run_id_path, 'r') as f:
-    #             run_id = f.readline()
-    #
-    #     return run_id
-
-    # def _setup_mlflow(self, run_id):
-    #
-    #     """Sets up mlflow.
-    #
-    #     tracking_uri/
-    #         experiment_id/
-    #             run1
-    #             run2
-    #             ...
-    #     """
-    #
-    #     mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-    #     client = MlflowClient(self.mlflow_tracking_uri)
-    #
-    #     if run_id is not None:
-    #         mlflow.set_experiment(self.mlflow_experiment_name)
-    #         active_run = mlflow.start_run(run_id=run_id)
-    #     else:
-    #         experiment = client.get_experiment_by_name(self.mlflow_experiment_name)
-    #         if experiment is not None:
-    #             experiment_id = experiment.experiment_id
-    #         else:
-    #             experiment_id = mlflow.create_experiment(self.mlflow_experiment_name)
-    #
-    #         active_run = mlflow.start_run(experiment_id=experiment_id, run_name=self.run_name)
-    #
-    #     return active_run
 
     def _add_config_file_to_mlflow(self):
 

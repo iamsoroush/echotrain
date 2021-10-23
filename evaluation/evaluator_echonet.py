@@ -31,14 +31,14 @@ class EvaluatorEchoNet(Evaluator):
     def _create_test_data_gen(self):
         print('preparing test dataset ...')
         dataset = EchoNetDataset(config=None)
-        _, test_data_gen, _, n_iter_test = dataset.create_test_data_generator()
+        test_data_gen, n_iter_test = dataset.create_test_data_generator()
 
         return test_data_gen, n_iter_test, dataset.test_df
 
     def _create_val_data_gen(self):
         print('preparing validation dataset ...')
         dataset = EchoNetDataset(config=None)
-        _, val_data_gen, _, n_iter_val = dataset.create_validation_data_generator()
+        val_data_gen, n_iter_val = dataset.create_validation_data_generator()
 
         return val_data_gen, n_iter_val, dataset.validation_df
 
