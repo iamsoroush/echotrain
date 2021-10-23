@@ -49,10 +49,7 @@ class ResNetUNet(ModelBase):
 
     def get_model_graph(self,isfreez=True):
 
-        resnet_unet=sm.Unet('resnet34',encoder_weights='imagenet',input_shape=(256 ,256 ,3),encoder_freeze=isfreez)
-        input=Input((256,256,3))
-        output=resnet_unet(input)
-        model=Model(input,output)
+        model=sm.Unet('resnet34',encoder_weights='imagenet',input_shape=(256 ,256 ,3),encoder_freeze=isfreez)
 
         return model
 
