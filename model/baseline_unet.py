@@ -52,12 +52,20 @@ class UNetBaseline(ModelBase):
         self.learning_rate = config.model.optimizer.initial_lr
         self.loss_type = config.model.loss_type
         self.metrics = config.model.metrics
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.n_chanels = config.n_channels
+        self.inference_threshold = config.model.inference_threshold
 
     def _set_defaults(self):
         self.optimizer_type = 'adam'
         self.learning_rate = 0.001
         self.loss_type = 'binary_crossentropy'
         self.metrics = ['iou']
+        self.input_h = 128
+        self.input_w = 128
+        self.n_channels = 1
+        self.inference_threshold = 0.5
 
     def post_process(self, predicted):
 
