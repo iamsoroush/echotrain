@@ -1,7 +1,9 @@
 import albumentations as A
 
+from .base_class import BaseClass
 
-class Augmentation:
+
+class Augmentation(BaseClass):
 
     """
     This class is implementing augmentation on the batches of data
@@ -24,7 +26,7 @@ class Augmentation:
           flip_proba - probability for flipping
         """
 
-        self._load_params(config)
+        super().__init__(config)
 
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
@@ -72,14 +74,11 @@ class Augmentation:
             yield augmented_batch
 
     def _load_params(self, config):
-        self._set_defaults()
+        aug_config = config.pre_process.augmentation
 
-        if config is not None:
-            aug_config = config.pre_process.augmentation
-
-            self.rotation_range = aug_config.rotation_range
-            self.rotation_proba = aug_config.rotation_proba
-            self.flip_proba = aug_config.flip_proba
+        self.rotation_range = aug_config.rotation_range
+        self.rotation_proba = aug_config.rotation_proba
+        self.flip_proba = aug_config.flip_proba
 
     def _set_defaults(self):
         self.rotation_range = 45

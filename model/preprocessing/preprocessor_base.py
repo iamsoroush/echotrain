@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+
+from ..base_class import BaseClass
 
 
-class PreProcessor(ABC):
+class PreProcessor(BaseClass):
     """
      PreProcess module used for images, batches, generators
 
@@ -16,10 +18,7 @@ class PreProcessor(ABC):
 
     def __init__(self, config=None):
 
-        self._set_defaults()
-
-        if config is not None:
-            self._load_params(config)
+        super().__init__(config)
 
     @abstractmethod
     def img_preprocess(self, image, inference=False):
@@ -54,11 +53,3 @@ class PreProcessor(ABC):
 
         :returns preprocessed_gen: preprocessed data generator.
         """
-
-    @abstractmethod
-    def _load_params(self, config):
-        pass
-
-    @abstractmethod
-    def _set_defaults(self):
-        pass

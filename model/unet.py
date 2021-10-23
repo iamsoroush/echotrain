@@ -35,25 +35,28 @@ class UNet(ModelBase):
 
         super(UNet, self).__init__(config=config)
 
-        try:
-            self.optimizer_type = config.model.optimizer.type
-        except AttributeError:
-            self.optimizer_type = 'adam'
+    def post_process(self, predicted):
 
-        try:
-            self.learning_rate = config.model.optimizer.initial_lr
-        except AttributeError:
-            self.learning_rate = 0.001
+        """Post processes the output of self.model.predict
 
-        try:
-            self.loss_type = config.model.loss_type
-        except AttributeError:
-            self.loss_type = 'binary_crossentropy'
+        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, 1).int8
 
-        try:
-            self.metrics = config.model.metrics
-        except AttributeError:
-            self.metrics = ['iou']
+        """
+
+        return (predicted > self.inference_threshold).astype(int)
+
+    def _load_params(self, config):
+        self.optimizer_type = self.config.model.optimizer.type
+        self.learning_rate = self.config.model.optimizer.initial_lr
+        self.loss_type = self.config.model.loss_type
+        self.metrics = self.config.model.metrics
+
+    def _set_defaults(self):
+        self.optimizer_type = 'adam'
+        self.learning_rate = 0.001
+        self.loss_type = 'binary_crossentropy'
+        self.metrics = ['iou']
 
     def generate_training_model(self):
         """
@@ -149,39 +152,4 @@ class UNet(ModelBase):
         if self.loss_type == 'binary_crossentropy':
             return 'binary_crossentropy'
         if self.loss_type == 'dice_coef_loss':
-            return self._dice_coef_loss
-
-    def _iou_coef(self, y_true, y_pred, smooth=1):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :param smooth:
-         :return:calculate Intersection over Union for y_true and y_pred
-         """
-        intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-        union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
-        iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
-        return iou
-
-    def _dice_coef(self, y_true, y_pred, smooth=1):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :param smooth:
-         :return: calculate dice coefficient between y_true and y_pred
-         """
-        y_true_f = K.flatten(y_true)
-        y_pred_f = K.flatten(y_pred)
-        intersection = K.sum(y_true_f * y_pred_f)
-        return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-
-    def _dice_coef_loss(self, y_true, y_pred):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :return: dice coefficient loss function
-         """
-        return -1 * (self._dice_coef(y_true, y_pred))
+            return dice_coef_loss
