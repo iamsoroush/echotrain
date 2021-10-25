@@ -3,23 +3,26 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 from echotrain.dataset.dataset_camus import CAMUSDataset
 from echotrain.dataset.dataset_generator import DatasetGenerator
+from echotrain.dataset.dataset_echonet import EchoNetDataset
 
 
 class EFEstimation:
 
     def __init__(self, config):
 
+        self.config = config
         self.dataset_class = config.dataset_class
         self.batch_size = config.data_handler.batch_size
         self.input_h = config.input_h
         self.input_w = config.input_w
         self.n_channels = config.n_channels
 
-    def ef_estimation(self, ed_frame, es_frame):
-
+    def ef_train_model(self):
         area_train, volume_train = self._data_for_training()
         model = self._area_to_volume_model(area_train, volume_train)
+        return model
 
+    def ef_estimation(self, ed_frame, es_frame, model):
         ed_volume = self._area_to_volume_conversion(self._area(ed_frame), model)
         es_volume = self._area_to_volume_conversion(self._area(es_frame), model)
 
@@ -27,7 +30,7 @@ class EFEstimation:
 
     @staticmethod
     def _area_to_volume_conversion(area, model):
-        return model.predict(area)
+        return model.predict(np.array([area]).reshape(-1,1))
 
     @staticmethod
     def _area_to_volume_model(area_train, volume_train):
@@ -43,7 +46,7 @@ class EFEstimation:
     def _data_for_training(self):
 
         if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
-            camus = CAMUSDataset(config)
+            camus = CAMUSDataset(self.config)
             DF = camus.train_df
             dictdir = {}
             for i in DF.index:
@@ -66,7 +69,7 @@ class EFEstimation:
             return area_list, volume_list
 
         if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
-            echonet = EchoNetDataset(config)
+            echonet = EchoNetDataset(self.config)
             DF = echonet.train_df
             dictdir = {}
             for i in DF.index:
@@ -87,3 +90,4 @@ class EFEstimation:
             volume_list = np.array(volume_list).reshape(-1, 1)
 
             return area_list, volume_list
+
