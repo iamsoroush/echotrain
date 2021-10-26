@@ -1,8 +1,10 @@
-from echotrain.model.metric imprt mae, mse, r2_score
+from echotrain.model.metric import mae, mse, r2_score
 from echotrain.model.ejection_fraction.ejection_fraction_estimation import EFEstimation
 from echotrain.dataset.dataset_camus import CAMUSDataset
 from echotrain.dataset.dataset_generator import DatasetGenerator
 from echotrain.dataset.dataset_echonet import EchoNetDataset
+import numpy as np
+import pickle
 
 class EFEvaluation:
 
@@ -21,11 +23,22 @@ class EFEvaluation:
         model = model.fit(area_train, volume_train)
         return model
 
+    @staticmethod
+    def save_model(model ,name): #.sav format
+        pickle.dump(model,open(name ,'wb'))
+
     def evaluation_of_ef_model(self, model):
 
-
-
-
+        efe = EFEstimation(self.config)
+        ed_es_data = self._data_for_ef_evaluation('val')[0]
+        ef_true = self._data_for_ef_evaluation('val')[1]
+        ef_pred = []
+        for i in range(len(ed_es_data)):
+            ef_pred.append(efe.ef_estimation(ed_es_data[i][0], ed_es_data[i][1], model))
+        ef_pred = np.array(ef_pred)
+        return {'mean_absoulute_error_validation' : mae(ef_true, ef_pred),
+                'mean_squared_error_validation' : mse(ef_true, ef_pred)}
+                #'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
     def _data_for_training_AtoV(self):
 
@@ -128,7 +141,7 @@ class EFEvaluation:
         if dataset_type == 'val':
             if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
                 echonet = EchoNetDataset(self.config)
-                DF = echonet.val_df
+                DF = echonet.val_df_
                 dictdir = {}
                 for i in DF.index:
                     dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[

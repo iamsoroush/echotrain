@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
-from sklearn.ensemble import GradientBoostingRegressor
-
-
+import pickle
 
 class EFEstimation:
 
@@ -15,6 +13,10 @@ class EFEstimation:
         self.input_w = config.input_w
         self.n_channels = config.n_channels
 
+    @staticmethod
+    def load_model(address):
+        return pickle.load(open(address,'rb'))
+
     def ef_estimation(self, ed_frame, es_frame, model):
         ed_volume = self._area_to_volume_conversion(self._area(ed_frame), model)
         es_volume = self._area_to_volume_conversion(self._area(es_frame), model)
@@ -24,13 +26,6 @@ class EFEstimation:
     @staticmethod
     def _area_to_volume_conversion(area, model):
         return model.predict(np.array([area]).reshape(-1,1))
-
-    @staticmethod
-    def _area_to_volume_model(area_train, volume_train):
-
-        gbr = GradientBoostingRegressor(n_estimators=50)
-        gbr.fit(area_train, volume_train)
-        return gbr
 
     @staticmethod
     def _area(image):
