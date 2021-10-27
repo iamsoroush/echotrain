@@ -3,7 +3,9 @@ from echotrain.model.ejection_fraction.ejection_fraction_estimation import EFEst
 from echotrain.dataset.dataset_camus import CAMUSDataset
 from echotrain.dataset.dataset_generator import DatasetGenerator
 from echotrain.dataset.dataset_echonet import EchoNetDataset
+from skimage.measure import regionprops
 import numpy as np
+import cv2
 import pickle
 
 class EFEvaluation:
@@ -19,7 +21,7 @@ class EFEvaluation:
 
     def train_AtoV_model(self,model):
 
-        area_train, volume_train = self._data_for_training_AtoV()
+        area_train, volume_train = self.data_for_training_FtoV()
         model = model.fit(area_train, volume_train)
         return model
 
@@ -40,7 +42,38 @@ class EFEvaluation:
                 'mean_squared_error_validation' : mse(ef_true, ef_pred)}
                 #'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
-    def _data_for_training_AtoV(self):
+    def data_for_training_RPtoV(self,dataset_type='train'):
+
+        if dataset_type == 'train':
+            frames, volumes = self.data_for_training_FtoV()
+            rps=[]
+            for frame in frames:
+                rp=[]
+                rp.append(regionprops(frame.astype(np.int64))[0].area)
+                rp.append(regionprops(frame.astype(np.int64))[0].convex_area)
+                rp.append(regionprops(frame.astype(np.int64))[0].eccentricity)
+                rp.append(regionprops(frame.astype(np.int64))[0].major_axis_length)
+                rp.append(regionprops(frame.astype(np.int64))[0].minor_axis_length)
+                rp.append(regionprops(frame.astype(np.int64))[0].orientation)
+                rps.append(rp)
+            rps=np.array(rps)
+            return rps , volumes
+        elif dataset_type == 'val':
+            frames, volumes = self.data_for_validating_FtoV()
+            rps = []
+            for frame in frames:
+                rp = []
+                rp.append(regionprops(frame.astype(np.int64))[0].area)
+                rp.append(regionprops(frame.astype(np.int64))[0].convex_area)
+                rp.append(regionprops(frame.astype(np.int64))[0].eccentricity)
+                rp.append(regionprops(frame.astype(np.int64))[0].major_axis_length)
+                rp.append(regionprops(frame.astype(np.int64))[0].minor_axis_length)
+                rp.append(regionprops(frame.astype(np.int64))[0].orientation)
+                rps.append(rp)
+            rps = np.array(rps)
+            return rps, volumes
+
+    def data_for_training_FtoV(self):
 
         if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
             camus = CAMUSDataset(self.config)
@@ -50,20 +83,17 @@ class EFEvaluation:
                 dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
             gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
                                    , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            list_of_labels = gen.generate_y(dictdir)
-            area_list = []
-            for frame in list_of_labels:
-                area_list.append(self._area(frame))
+            frame_list = gen.generate_y(dictdir)
             volume_list = []
             for i in DF.index:
                 if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
                     volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
                 elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
                     volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-            area_list = np.array(area_list).reshape(-1, 1)
+
             volume_list = np.array(volume_list).reshape(-1, 1)
 
-            return area_list, volume_list
+            return frame_list, volume_list
 
         if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
             echonet = EchoNetDataset(self.config)
@@ -73,20 +103,57 @@ class EFEvaluation:
                 dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
             gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
                                    , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            list_of_labels = gen.generate_y(dictdir)
-            area_list = []
-            for frame in list_of_labels:
-                area_list.append(self._area(frame))
+            frame_list = gen.generate_y(dictdir)
             volume_list = []
             for i in DF.index:
                 if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
                     volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
                 elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
                     volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-            area_list = np.array(area_list).reshape(-1, 1)
             volume_list = np.array(volume_list).reshape(-1, 1)
 
-            return area_list, volume_list
+            return frame_list, volume_list
+
+    def data_for_validating_FtoV(self):
+
+        if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
+            camus = CAMUSDataset(self.config)
+            DF = camus.val_df_
+            dictdir = {}
+            for i in DF.index:
+                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
+            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
+                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
+            frame_list = gen.generate_y(dictdir)
+            volume_list = []
+            for i in DF.index:
+                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
+                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
+                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
+                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
+
+            volume_list = np.array(volume_list).reshape(-1, 1)
+
+            return frame_list, volume_list
+
+        if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
+            echonet = EchoNetDataset(self.config)
+            DF = echonet.train_df
+            dictdir = {}
+            for i in DF.index:
+                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
+            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
+                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
+            frame_list = gen.generate_y(dictdir)
+            volume_list = []
+            for i in DF.index:
+                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
+                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
+                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
+                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
+            volume_list = np.array(volume_list).reshape(-1, 1)
+
+            return frame_list, volume_list
 
     def _data_for_ef_evaluation(self, dataset_type):
 
@@ -162,5 +229,5 @@ class EFEvaluation:
                     es_ev_patients.append(es_ev_each_patient)
                 return np.array(es_ev_patients),np.array(ef_label)
     @staticmethod
-    def _area(image):
+    def area(image):
         return float(cv2.countNonZero(image))
