@@ -35,10 +35,10 @@ class EFEvaluation:
                 'mean_squared_error_validation': mse(ef_true, ef_pred)}
         # 'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
-    def data_for_training_rptov(self):
+    def data_for_rptov(self,dataset_type):
 
         efe = EFEstimation()
-        frames, volumes = self.data_for_ftov()
+        frames, volumes = self.data_for_ftov(dataset_type)
         rps = []
         for frame in frames:
             rp = []
@@ -79,7 +79,7 @@ class EFEvaluation:
         gen = DatasetGenerator(np.array(list(image_paths.keys())), image_paths, self.batch_size
                                , (self.input_h, self.input_w), self.n_channels)
 
-        frames = gen.generate_y(image_paths)
+        frames = np.array(gen.generate_y(image_paths))
         volumes = np.array(volumes)
         return frames, volumes
 
