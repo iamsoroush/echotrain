@@ -3,14 +3,13 @@ from echotrain.model.ejection_fraction.ejection_fraction_estimation import EFEst
 from echotrain.dataset.dataset_camus import CAMUSDataset
 from echotrain.dataset.dataset_generator import DatasetGenerator
 from echotrain.dataset.dataset_echonet import EchoNetDataset
-from skimage.measure import regionprops
 import numpy as np
-import cv2
 import pickle
+
 
 class EFEvaluation:
 
-    def __init__(self,config):
+    def __init__(self, config):
 
         self.config = config
         self.dataset_class = config.dataset_class
@@ -19,215 +18,99 @@ class EFEvaluation:
         self.input_w = config.input_w
         self.n_channels = config.n_channels
 
-    def train_AtoV_model(self,model):
-
-        area_train, volume_train = self.data_for_training_FtoV()
-        model = model.fit(area_train, volume_train)
-        return model
-
     @staticmethod
-    def save_model(model ,name): #.sav format
-        pickle.dump(model,open(name ,'wb'))
+    def save_model(model, name):  # .sav format
+        pickle.dump(model, open(name, 'wb'))
 
     def evaluation_of_ef_model(self, model):
 
-        efe = EFEstimation(self.config)
+        efe = EFEstimation()
         ed_es_data = self._data_for_ef_evaluation('val')[0]
         ef_true = self._data_for_ef_evaluation('val')[1]
         ef_pred = []
         for i in range(len(ed_es_data)):
             ef_pred.append(efe.ef_estimation(ed_es_data[i][0], ed_es_data[i][1], model))
         ef_pred = np.array(ef_pred)
-        return {'mean_absoulute_error_validation' : mae(ef_true, ef_pred),
-                'mean_squared_error_validation' : mse(ef_true, ef_pred)}
-                #'r2-score_validation' : r2_score(ef_true, ef_pred)}
+        return {'mean_absoulute_error_validation': mae(ef_true, ef_pred),
+                'mean_squared_error_validation': mse(ef_true, ef_pred)}
+        # 'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
-    def data_for_training_RPtoV(self,dataset_type='train'):
+    def data_for_training_rptov(self):
 
-        if dataset_type == 'train':
-            frames, volumes = self.data_for_training_FtoV()
-            rps=[]
-            for frame in frames:
-                rp=[]
-                rp.append(regionprops(frame.astype(np.int64))[0].area)
-                rp.append(regionprops(frame.astype(np.int64))[0].convex_area)
-                rp.append(regionprops(frame.astype(np.int64))[0].eccentricity)
-                rp.append(regionprops(frame.astype(np.int64))[0].major_axis_length)
-                rp.append(regionprops(frame.astype(np.int64))[0].minor_axis_length)
-                rp.append(regionprops(frame.astype(np.int64))[0].orientation)
-                rps.append(rp)
-            rps=np.array(rps)
-            return rps , volumes
-        elif dataset_type == 'val':
-            frames, volumes = self.data_for_validating_FtoV()
-            rps = []
-            for frame in frames:
-                rp = []
-                rp.append(regionprops(frame.astype(np.int64))[0].area)
-                rp.append(regionprops(frame.astype(np.int64))[0].convex_area)
-                rp.append(regionprops(frame.astype(np.int64))[0].eccentricity)
-                rp.append(regionprops(frame.astype(np.int64))[0].major_axis_length)
-                rp.append(regionprops(frame.astype(np.int64))[0].minor_axis_length)
-                rp.append(regionprops(frame.astype(np.int64))[0].orientation)
-                rps.append(rp)
-            rps = np.array(rps)
-            return rps, volumes
+        efe = EFEstimation()
+        frames, volumes = self.data_for_ftov()
+        rps = []
+        for frame in frames:
+            rp = []
+            rp.append(efe.frame_to_rp(frame))
+            rps.append(rp)
+        return np.array(rps).reshape(-1, 6)
 
-    def data_for_training_FtoV(self):
+    def data_for_ftov(self, dataset_type):
 
         if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
             camus = CAMUSDataset(self.config)
-            DF = camus.train_df
-            dictdir = {}
-            for i in DF.index:
-                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
-            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            frame_list = gen.generate_y(dictdir)
-            volume_list = []
-            for i in DF.index:
-                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
-                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
-                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
-                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-
-            volume_list = np.array(volume_list).reshape(-1, 1)
-
-            return frame_list, volume_list
-
-        if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
+            if dataset_type == 'train':
+                DF = camus.train_df
+            if dataset_type == 'val':
+                DF = camus.val_df_
+            if dataset_type == 'test':
+                DF = camus.test_df_
+        elif self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
             echonet = EchoNetDataset(self.config)
-            DF = echonet.train_df
-            dictdir = {}
-            for i in DF.index:
-                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
-            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            frame_list = gen.generate_y(dictdir)
-            volume_list = []
-            for i in DF.index:
-                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
-                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
-                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
-                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-            volume_list = np.array(volume_list).reshape(-1, 1)
+            if dataset_type == 'train':
+                DF = echonet.train_df
+            if dataset_type == 'val':
+                DF = echonet.val_df_
+            if dataset_type == 'test':
+                DF = echonet.test_df_
 
-            return frame_list, volume_list
+        image_paths = {}
+        volumes = []
+        for i in DF.index:
+            if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
+                image_paths[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
+                    0]
+                volumes.append(DF.loc[i, ['lv_edv']].astype('float')[0])
+            if DF.loc[i, ['stage']].astype('string')[0] == 'ES':
+                image_paths[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
+                    0]
+                volumes.append(DF.loc[i, ['lv_esv']].astype('float')[0])
+        gen = DatasetGenerator(np.array(list(image_paths.keys())), image_paths, self.batch_size
+                               , (self.input_h, self.input_w), self.n_channels)
 
-    def data_for_validating_FtoV(self):
-
-        if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
-            camus = CAMUSDataset(self.config)
-            DF = camus.val_df_
-            dictdir = {}
-            for i in DF.index:
-                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
-            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            frame_list = gen.generate_y(dictdir)
-            volume_list = []
-            for i in DF.index:
-                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
-                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
-                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
-                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-
-            volume_list = np.array(volume_list).reshape(-1, 1)
-
-            return frame_list, volume_list
-
-        if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
-            echonet = EchoNetDataset(self.config)
-            DF = echonet.train_df
-            dictdir = {}
-            for i in DF.index:
-                dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[0]
-            gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                   , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-            frame_list = gen.generate_y(dictdir)
-            volume_list = []
-            for i in DF.index:
-                if DF.loc[i, ['stage']].astype('string')[0] == 'ED':
-                    volume_list.append(DF.loc[i, ['lv_edv']].astype('float32')[0])
-                elif DF.loc[i, ['stage']].astype('string')[0] == 'ES':
-                    volume_list.append(DF.loc[i, ['lv_esv']].astype('float32')[0])
-            volume_list = np.array(volume_list).reshape(-1, 1)
-
-            return frame_list, volume_list
+        frames = gen.generate_y(image_paths)
+        volumes = np.array(volumes)
+        return frames, volumes
 
     def _data_for_ef_evaluation(self, dataset_type):
 
+        echonet = EchoNetDataset(self.config)
         if dataset_type == 'train':
-            if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
-                echonet = EchoNetDataset(self.config)
-                DF = echonet.train_df
-                dictdir = {}
-                for i in DF.index:
-                    dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
-                        0]
-                gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                       , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-                list_of_labels = gen.generate_y(dictdir)
-                ef_label = []
-                es_ev_patients = []
-                for i in range(len(DF['case_id'].unique())):
-                    ef_label.append(DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :].loc[DF['stage'] == 'ES', ['lv_ef']]['lv_ef'].astype('float'))
+            DF = echonet.train_df
+        elif dataset_type == 'test':
+            DF = echonet.test_df_
+        elif dataset_type == 'val':
+            DF = echonet.val_df_
 
-                    es_ev_each_patient = []
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0],:][DF['stage'] == 'ED'].index[0])])
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :][DF['stage'] == 'ES'].index[0])])
-                    es_ev_patients.append(es_ev_each_patient)
-                return np.array(es_ev_patients),np.array(ef_label)
-
-        if dataset_type == 'test':
-            if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
-                echonet = EchoNetDataset(self.config)
-                DF = echonet.test_df
-                dictdir = {}
-                for i in DF.index:
-                    dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
-                        0]
-                gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                       , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-                list_of_labels = gen.generate_y(dictdir)
-                ef_label = []
-                es_ev_patients = []
-                for i in range(len(DF['case_id'].unique())):
-                    ef_label.append(DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :].loc[DF['stage'] == 'ES', ['lv_ef']]['lv_ef'].astype('float'))
-
-                    es_ev_each_patient = []
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0],:][DF['stage'] == 'ED'].index[0])])
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :][DF['stage'] == 'ES'].index[0])])
-                    es_ev_patients.append(es_ev_each_patient)
-                return np.array(es_ev_patients),np.array(ef_label)
-
-        if dataset_type == 'val':
-            if self.dataset_class == 'dataset.dataset_echonet.EchoNetDataset':
-                echonet = EchoNetDataset(self.config)
-                DF = echonet.val_df_
-                dictdir = {}
-                for i in DF.index:
-                    dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
-                        0]
-                gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
-                                       , self.batch_size, (self.input_h, self.input_w), self.n_channels)
-                list_of_labels = gen.generate_y(dictdir)
-                ef_label = []
-                es_ev_patients = []
-                for i in range(len(DF['case_id'].unique())):
-                    ef_label.append(DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :].loc[DF['stage'] == 'ES', ['lv_ef']]['lv_ef'].astype('float'))
-
-                    es_ev_each_patient = []
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0],:][DF['stage'] == 'ED'].index[0])])
-                    es_ev_each_patient.append(list_of_labels[DF.index.get_loc(
-                        DF.loc[DF['case_id'] == DF['case_id'].unique()[0], :][DF['stage'] == 'ES'].index[0])])
-                    es_ev_patients.append(es_ev_each_patient)
-                return np.array(es_ev_patients),np.array(ef_label)
-    @staticmethod
-    def area(image):
-        return float(cv2.countNonZero(image))
+        dictdir = {}
+        for i in DF.index:
+            dictdir[DF.loc[i, ['image_path']].astype('string')[0]] = DF.loc[i, ['label_path']].astype('string')[
+                0]
+        gen = DatasetGenerator(list(DF['image_path'].astype('string')), dictdir
+                               , self.batch_size, (self.input_h, self.input_w), self.n_channels)
+        ef_list = []
+        ed_es_list = []
+        for case in DF['case_id'].unique():
+            es_x_path = DF[DF['case_id'] == case][DF['stage'] == 'ES']['image_path'].astype('string')
+            ed_x_path = DF[DF['case_id'] == case][DF['stage'] == 'ED']['image_path'].astype('string')
+            es_y_path = DF[DF['case_id'] == case][DF['stage'] == 'ES']['label_path'].astype('string')
+            ed_y_path = DF[DF['case_id'] == case][DF['stage'] == 'ED']['label_path'].astype('string')
+            ef = DF[DF['case_id'] == case][DF['stage'] == 'ED']['lv_ef'].astype('float')
+            ed_es_frames = gen.generate_y({ed_x_path[ed_x_path.index[0]]: ed_y_path[ed_y_path.index[0]],
+                                           es_x_path[es_x_path.index[0]]: es_y_path[es_y_path.index[0]]})
+            ef_list.append(ef[ef.index[0]])
+            ed_es_list.append(ed_es_frames)
+        ef_list = np.array(ef_list)
+        ed_es_list = np.array(ed_es_list)
+        return ed_es_list, ef_list
