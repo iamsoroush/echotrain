@@ -8,6 +8,20 @@ import pickle
 
 
 class EFEvaluation:
+    """
+    This class provide tools to help you with evaluation ejection_fraction part of program.
+
+    HOW TO:
+    ef_ev = EFEvaluation(config)
+    model = ef_ev.evaluation_of_ef_model(model)
+        #returns MAE and MSE of the model on each patient on their ES and ED echo frame
+    X, y = ef_ev.data_for_rptov(dataset_type)
+        #returns a data set with rp of frames as X and volumes as y
+    X, y  = ef_ev.data_for_ftov(dataset_type)
+        #returns a data set with frames of labels in numpy format as X and volumes as y
+    ef_ev.save_model(model, name)
+        #save model with name.sav name
+    """
 
     def __init__(self, config):
 
@@ -20,9 +34,24 @@ class EFEvaluation:
 
     @staticmethod
     def save_model(model, name):  # .sav format
+        """
+
+        Args:
+            model: model for rp to volume transformation
+            name: name of the model that is going to be saved
+
+        """
         pickle.dump(model, open(name, 'wb'))
 
     def evaluation_of_ef_model(self, model):
+        """
+
+        Args:
+            model: model for rp to volume transformation
+
+        Returns:
+            MAE, MSE and R2 of the model on each patient on their ES and ED echo frame
+        """
 
         efe = EFEstimation()
         ed_es_data = self._data_for_ef_evaluation('val')[0]
@@ -36,6 +65,14 @@ class EFEvaluation:
         # 'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
     def data_for_rptov(self,dataset_type):
+        """
+
+        Args:
+            dataset_type: can be 'train','test','val'
+
+        Returns:
+            a data set with rp of frames as X and volumes as y
+        """
 
         efe = EFEstimation()
         frames, volumes = self.data_for_ftov(dataset_type)
@@ -47,6 +84,14 @@ class EFEvaluation:
         return np.array(rps).reshape(-1, 6)
 
     def data_for_ftov(self, dataset_type):
+        """
+
+        Args:
+            dataset_type: can be 'train','test','val'
+
+        Returns:
+            a data set with frames of labels in numpy format as X and volumes as y
+        """
 
         if self.dataset_class == 'dataset.dataset_camus.CAMUSDataset':
             camus = CAMUSDataset(self.config)
@@ -84,6 +129,15 @@ class EFEvaluation:
         return frames, volumes
 
     def _data_for_ef_evaluation(self, dataset_type):
+        """
+
+        Args:
+            dataset_type: can be 'train','test','val'
+
+        Returns:
+            a data set that have ED and ES label frame as numpy array as X
+            and EF in percentage as y
+        """
 
         echonet = EchoNetDataset(self.config)
         if dataset_type == 'train':
