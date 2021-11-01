@@ -60,7 +60,7 @@ class EFEvaluation:
         for i in range(len(ed_es_data)):
             ef_pred.append(efe.ef_estimation(ed_es_data[i][0], ed_es_data[i][1], model))
         ef_pred = np.array(ef_pred)
-        return {'mean_absoulute_error_validation': mae(ef_true, ef_pred),
+        return {'mean_absolute_error_validation': mae(ef_true, ef_pred),
                 'mean_squared_error_validation': mse(ef_true, ef_pred)}
         # 'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
@@ -81,7 +81,7 @@ class EFEvaluation:
             rp = []
             rp.append(efe.frame_to_rp(frame))
             rps.append(rp)
-        return np.array(rps).reshape(-1, 6)
+        return np.array(rps).reshape(-1, 6),volumes
 
     def data_for_ftov(self, dataset_type):
         """
