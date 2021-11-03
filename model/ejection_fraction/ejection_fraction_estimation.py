@@ -2,7 +2,6 @@ import numpy as np
 import pickle
 from skimage.measure import regionprops
 
-
 class EFEstimation:
     """
     This class estimates the volume of a frame or the ejection fraction(ef)
@@ -36,6 +35,22 @@ class EFEstimation:
         """
         return pickle.load(open(address, 'rb'))
 
+    @staticmethod
+    def volume_estimation_with_encoder(image, model_encoder, model_etov):
+        """
+
+        Args:
+            image: numpy frame of original image
+            model_encoder: model for image to encoded array transformation
+            model_etov: model for encoded array to volume transformation
+
+        Returns:
+            volume of left_ventricle of the image frame
+        """
+        image_en = model_encoder.predict(image)
+        volume = model_etov.predict(image_en)
+        return volume
+
     def volume_estimation(self,frame,model):
         """
 
@@ -66,6 +81,26 @@ class EFEstimation:
         es_rp = self.frame_to_rp(es_frame)
         ed_vol = model.predict(ed_rp)
         es_vol = model.predict(es_rp)
+        return (ed_vol - es_vol) / ed_vol * 100
+
+    @staticmethod
+    def ef_estimation_with_encoder(ed_image, es_image, model_encoder, model_etov):
+        """
+
+        Args:
+            ed_image: end_diastolic frame in numpy format
+            es_image: end_systolic frame in numpy format
+            model_encoder: model for image to encoded array transformation
+            model_etov: model for encoded array to volume transformation
+
+        Returns:
+            ejection_fraction in percentage
+
+        """
+        ed_en = model_encoder.predict(ed_image)
+        es_en = model_encoder.predict(es_image)
+        ed_vol = model_etov.predict(ed_en)
+        es_vol = model_etov.predict(es_en)
         return (ed_vol - es_vol) / ed_vol * 100
 
     @staticmethod
