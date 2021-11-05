@@ -1,7 +1,7 @@
 # requirements
 
-from .dataset_generator import DatasetGenerator
-from .dataset_base import DatasetBase
+from dataset_generator import DatasetGenerator
+from dataset_base import DatasetBase
 import random
 import numpy as np
 import pandas as pd

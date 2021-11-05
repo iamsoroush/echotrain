@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 from skimage.measure import regionprops
 
+
 class EFEstimation:
     """
     This class estimates the volume of a frame or the ejection fraction(ef)
@@ -51,7 +52,7 @@ class EFEstimation:
         volume = model_etov.predict(image_en)
         return volume
 
-    def volume_estimation(self,frame,model):
+    def volume_estimation(self, frame, model):
         """
 
         Args:
@@ -120,12 +121,10 @@ class EFEstimation:
                 minor_axis_length
                 orientation
         """
-        rp = []
-        rp.append(regionprops(frame.astype(np.int64))[0].area)
-        rp.append(regionprops(frame.astype(np.int64))[0].convex_area)
-        rp.append(regionprops(frame.astype(np.int64))[0].eccentricity)
-        rp.append(regionprops(frame.astype(np.int64))[0].major_axis_length)
-        rp.append(regionprops(frame.astype(np.int64))[0].minor_axis_length)
-        rp.append(regionprops(frame.astype(np.int64))[0].orientation)
-        rp = np.array(rp).reshape(1,-1)
+        rp = [regionprops(frame.astype(np.int64))[0].area, regionprops(frame.astype(np.int64))[0].convex_area,
+              regionprops(frame.astype(np.int64))[0].eccentricity,
+              regionprops(frame.astype(np.int64))[0].major_axis_length,
+              regionprops(frame.astype(np.int64))[0].minor_axis_length,
+              regionprops(frame.astype(np.int64))[0].orientation]
+        rp = np.array(rp).reshape(1, -1)
         return rp

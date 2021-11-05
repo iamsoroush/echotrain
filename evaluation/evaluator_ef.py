@@ -24,23 +24,12 @@ class EFEvaluation:
         #save model with name.sav name
     """
 
-    def __init__(self, config):
-
-        self.config = config
-        self.dataset_class = config.dataset_class
-        self.batch_size = config.data_handler.batch_size
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.n_channels = config.n_channels
-
     @staticmethod
     def save_model(model, name):  # .sav format
         """
-
         Args:
             model: model for rp to volume transformation
             name: name of the model that is going to be saved
-
         """
         pickle.dump(model, open(name, 'wb'))
 
@@ -55,8 +44,8 @@ class EFEvaluation:
         """
 
         efe = EFEstimation()
-        ed_es_data = self._data_for_ef_evaluation('val','label')[0]
-        ef_true = self._data_for_ef_evaluation('val','label')[1]
+        ed_es_data = self._data_for_ef_evaluation('val', 'label')[0]
+        ef_true = self._data_for_ef_evaluation('val', 'label')[1]
         ef_pred = []
         for i in range(len(ed_es_data)):
             ef_pred.append(efe.ef_estimation(ed_es_data[i][0], ed_es_data[i][1], model))
@@ -67,28 +56,28 @@ class EFEvaluation:
 
     def evaluation_of_ef_model_with_encoder(self, model_encoder, model_etov):
         """
-
         Args:
             model_encoder: model for image to encoded array transformation
             model_etov: model for encoded array to volume transformation
-
         Returns:
             MAE, MSE and R2 of the model on each patient on their ES and ED echo frame
         """
 
         efe = EFEstimation()
-        ed_es_data = self._data_for_ef_evaluation('val','image')[0]
-        ef_true = self._data_for_ef_evaluation('val','image')[1]
+        ed_es_data = self._data_for_ef_evaluation('val', 'image')[0]
+        ef_true = self._data_for_ef_evaluation('val', 'image')[1]
         ef_pred = []
         for i in range(len(ed_es_data)):
-            ef_pred.append(efe.ef_estimation_with_encoder(ed_es_data[i][0].reshape(1,112,112,1)
-                                                          , ed_es_data[i][1].reshape(1,112,112,1), model_encoder,model_etov))
+            ef_pred.append(efe.ef_estimation_with_encoder(ed_es_data[i][0].reshape(1, 112, 112, 1),
+                                                          ed_es_data[i][1].reshape(1, 112, 112, 1),
+                                                          model_encoder,
+                                                          model_etov))
         ef_pred = np.array(ef_pred)
         return {'mean_absolute_error_validation': mae(ef_true, ef_pred),
                 'mean_squared_error_validation': mse(ef_true, ef_pred)}
         # 'r2-score_validation' : r2_score(ef_true, ef_pred)}
 
-    def data_for_rptov(self,dataset_type):
+    def data_for_rptov(self, dataset_type):
         """
 
         Args:
@@ -102,10 +91,9 @@ class EFEvaluation:
         frames, volumes = self.data_for_ftov(dataset_type)
         rps = []
         for frame in frames:
-            rp = []
-            rp.append(efe.frame_to_rp(frame))
+            rp = [efe.frame_to_rp(frame)]
             rps.append(rp)
-        return np.array(rps).reshape(-1, 6),volumes
+        return np.array(rps).reshape(-1, 6), volumes
 
     def data_for_ftov(self, dataset_type, image_type):
         """
@@ -157,7 +145,7 @@ class EFEvaluation:
         volumes = np.array(volumes)
         return frames, volumes
 
-    def _data_for_ef_evaluation(self, dataset_type,image_type):
+    def _data_for_ef_evaluation(self, dataset_type, image_type):
         """
 
         Args:
@@ -194,10 +182,10 @@ class EFEvaluation:
             ef = DF[DF['case_id'] == case][DF['stage'] == 'ED']['lv_ef'].astype('float')
             if image_type == 'label':
                 ed_es_frames = gen.generate_y({ed_x_path[ed_x_path.index[0]]: ed_y_path[ed_y_path.index[0]],
-                                           es_x_path[es_x_path.index[0]]: es_y_path[es_y_path.index[0]]})
+                                               es_x_path[es_x_path.index[0]]: es_y_path[es_y_path.index[0]]})
             if image_type == 'image':
                 ed_es_frames = gen.generate_x({ed_x_path[ed_x_path.index[0]]: ed_y_path[ed_y_path.index[0]],
-                                           es_x_path[es_x_path.index[0]]: es_y_path[es_y_path.index[0]]})
+                                               es_x_path[es_x_path.index[0]]: es_y_path[es_y_path.index[0]]})
                 ed_es_frames = np.array(list(map(preprocessor.img_preprocess, ed_es_frames)))
             ef_list.append(ef[ef.index[0]])
             ed_es_list.append(ed_es_frames)
