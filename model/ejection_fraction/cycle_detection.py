@@ -2,12 +2,12 @@ import warnings
 import cv2
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d
-from scipy.signal import find_peaks, find_peaks_cwt, argrelextrema
+from scipy.signal import find_peaks, argrelextrema
 
 
 class CycleDetector:
     """
-    A class fo cycle detection of a segmented video label frames
+    A class for cycle detection of a segmented video label frames
 
     How To:
     cycle_detector = CycleDetector(video_label_frames)
@@ -17,7 +17,9 @@ class CycleDetector:
         """
 
         :param label_video_frames: list of segmented frames, list with dtype of numpy.array
-        :param method: name cycle detection methods,  string
+        :param method: name cycle detection methods ( radius, topological, argrelextrema), string
+        :param frame_area: list of the segemented area estimated with cv2.CountNonZero module, list of int
+        :param cycles: list of cycles found in the self.find_cycles() module, list of tuples of int
         """
         self.label_video_frames = label_video_frames
         self.method = method
@@ -26,9 +28,14 @@ class CycleDetector:
 
     def find_peaks(self, **kwargs):
         """
-
-        :param kwargs:
-        :return:
+        finds peaks and valleys with the method and parameters given
+        :param kwargs: radius --> 1. confidence, int ( default value == 20 )
+                       topological --> 1. width, int ( no default values )
+                                       2. prominence, int ( default value == 50 )
+                                       ...
+                       argrelextrema --> ...
+        :return: min peaks: as valleys, list of int
+        :return: max peaks: as peaks, list of int
         """
         min_peaks = []
         max_peaks = []
@@ -67,7 +74,7 @@ class CycleDetector:
                 elif max_flag:
                     max_peaks.append(i)
 
-        if self.method == 'Topological':
+        if self.method == 'topological':
             if not kwargs:
                 kwargs['prominence'] = 50
 
@@ -83,9 +90,9 @@ class CycleDetector:
 
     def find_cycles(self, **kwargs):
         """
-
-        :param kwargs:
-        :return:
+        finds cycles from min_praks and max_peaks
+        :param kwargs: same as self.find_peaks() module
+        :return: cycles: list of cycles, list of tuples of int
         """
         min_peaks, max_peaks = self.find_peaks(**kwargs)
         # assert (min_peaks != [] or max_peaks != []), f'there are no min_peak and max_peak'
@@ -111,8 +118,11 @@ class CycleDetector:
 
     def detect_ed_es(self):
         """
-
-        :return:
+        chooses a cycle and returns the ed ad es frames
+        :return ed_frame: end diastole frame, numpy.array
+        :return es_frame: end systole frame, numpy.array
+        :return ed_idx: end diastole frame number, int
+        :return es_idx: end systole frame, int
         """
         cycles = self.cycles
 
