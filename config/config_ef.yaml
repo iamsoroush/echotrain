@@ -1,0 +1,16 @@
+input_h = 256
+input_w = 256
+n_channels = 1
+dataset_class = "echonet"
+preprocess_class =
+exported_dir = ""
+estimation_method = "encoder"
+encoder:
+  encoder_address = ""
+  en_to_vol_model_dir = ""
+  train:
+    model_type = svr
+rp:
+  rp_to_vol_model_dir = ""
+  train:
+    model_type =
