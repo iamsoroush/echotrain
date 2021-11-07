@@ -1,7 +1,7 @@
 # requirements
 
-from .dataset_generator import DatasetGenerator
-from .dataset_base import DatasetBase
+from dataset.dataset_generator import DatasetGenerator
+from dataset.dataset_base import DatasetBase
 import random
 import numpy as np
 import pandas as pd
@@ -34,10 +34,10 @@ class EchoNetDataset(DatasetBase):
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
-        stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
+        stage: stage of heart in image, can be end_systolic(ES) or end_diastolic(ED), list
         view: view of the hear image, can be four chamber view (4CH), list
         df_dataset: information dataframe of the whole dataset, pd.DataFrame
-        _clean_data_df: contains the desired field inforamtions with image and labels full pathes
+        _clean_data_df: contains the desired field information with image and labels full pathes
         train_df_: information dataframe of train set, pd.DataFrame
         val_df_: information dataframe of validation set, pd.DataFrame
         test_df_: information dataframe of test set, pd.DataFrame
@@ -118,22 +118,6 @@ class EchoNetDataset(DatasetBase):
         self.dataset_dir = 'EchoNet-Dynamic'
         self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
-    # def create_data_generators(self):
-    #
-    #     """Creates data generators based on ``batch_size``, ``input_size``
-    #
-    #     :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
-    #     :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
-    #     :returns n_iter_train: number of iterations per epoch for train_data_gen
-    #     :returns n_iter_val: number of iterations per epoch for val_data_gen
-    #
-    #     """
-    #
-    #     train_data_gen, n_iter_train = self.create_train_data_generator()
-    #     val_data_gen, n_iter_val = self.create_validation_data_generator()
-    #
-    #     return train_data_gen, val_data_gen, n_iter_train, n_iter_val
-
     def create_train_data_generator(self):
 
         """Train data generator"""
@@ -187,11 +171,7 @@ class EchoNetDataset(DatasetBase):
 
     @property
     def raw_df(self):
-
-        """
-
-        :return pandas.DataFrame of all features of each data in dataset
-        """
+        """:return pandas.DataFrame of all features of each data in dataset"""
 
         return self.df_dataset
 
@@ -244,6 +224,7 @@ class EchoNetDataset(DatasetBase):
         #                                                            data_dir['mhd_label_filename'])])
 
         x_dir = list(self._clean_data_df['image_path'].unique())
+
         y_dir = list(self._clean_data_df['label_path'].unique())
 
         list_images_dir = x_dir
@@ -335,23 +316,6 @@ class EchoNetDataset(DatasetBase):
 
             self.df_dataset = pd.DataFrame(df)
             self.df_dataset.to_csv(self.info_df_dir, index=False)
-
-    # def _add_train_val_to_data_frame(self, train_dir, val_dir):
-    #
-    #     """
-    #     adding the updates of the status of the patients
-    #
-    #     :param train_dir: train set directory
-    #     :param val_dir: validation set directory
-    #     """
-    #
-    #     for each_dir in train_dir:
-    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
-    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'train'
-    #
-    #     for each_dir in val_dir:
-    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
-    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'validation'
 
     def _shuffle_func(self, x, y):
         """
