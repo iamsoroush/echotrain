@@ -1,5 +1,6 @@
 from model.ejection_fraction.ejection_fraction_base import EFBase
 from tensorflow.keras.models import load_model
+from .dataset.dataset_ef import EfDataset
 
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -32,7 +33,8 @@ class EFModel_Encoder(EFBase):
 
     def train(self):
 
-        images , volumes =
+        ef_dataset = EfDataset(self.config)
+        labels, volumes = ef_dataset.ef_dataset('image', 'train')
         encoding_model = self._load_encoder_model()
         encoded_images = encoding_model.predict(images)
         en_to_vol_model = self._en_to_vol_model()

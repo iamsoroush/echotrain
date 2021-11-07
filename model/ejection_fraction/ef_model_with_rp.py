@@ -1,5 +1,6 @@
 from model.ejection_fraction.ejection_fraction_base import EFBase
 from skimage.measure import regionprops
+from .dataset.dataset_ef import EfDataset
 
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -32,7 +33,8 @@ class EFModel_RP(EFBase):
 
     def train(self):
 
-        labels, volumes =
+        ef_dataset = EfDataset(self.config)
+        labels, volumes = ef_dataset.ef_dataset('label','train')
         rps = []
         for label in labels:
             rps.append(self._frame_to_rp(label))
