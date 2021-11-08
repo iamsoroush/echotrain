@@ -1,7 +1,8 @@
 from .model.ejection_fraction.ejection_fraction_base import EFBase
 from tensorflow.keras.models import load_model
-from .dataset.dataset_ef import EfDataset
+from .dataset.dataset_ef import EFDataset
 import os
+import shutil
 
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -34,8 +35,8 @@ class EFModel_Encoder(EFBase):
 
     def train(self):
 
-        ef_dataset = EfDataset(self.config)
-        images, volumes = ef_dataset.ef_dataset('image', 'train')
+        ef_dataset = EFDataset(self.config)
+        images, volumes = ef_dataset.volume_dataset('image', 'train')
         encoding_model = self._load_encoder_model()
         encoded_images = encoding_model.predict(images)
         en_to_vol_model = self._en_to_vol_model()
@@ -44,7 +45,9 @@ class EFModel_Encoder(EFBase):
 
     def export(self,model):
 
-        pickle.dump(model, open(os.path.join(self.exported_dir,'/exported/en_to_v.sav'), 'wb'))
+        pickle.dump(model, open('en_to_v.sav', 'wb'))
+        os.makedirs(os.path.join(self.exported_dir, 'exported'))
+        shutil.move('en_to_v.sav', os.path.join(self.exported_dir, 'exported'))
 
 
     def _load_encoder_model(self):
