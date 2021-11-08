@@ -1,16 +1,40 @@
-input_h = 256
-input_w = 256
-n_channels = 1
-dataset_class = "echonet"
-preprocess_class =
-exported_dir = ""
-estimation_method = "encoder"
+input_h : 256
+input_w : 256
+n_channels : 1
+exported_dir : "/content/drive/MyDrive/AIMedic_Moazed/Experiments_EF/encoder_new_test"
+estimation_method : "encoder"
 encoder:
-  encoder_address = ""
-  en_to_vol_model_dir = ""
+  encoder_address : ""
+  en_to_vol_model_dir : ""
   train:
-    model_type = svr
+    model_type : svr
 rp:
-  rp_to_vol_model_dir = ""
+  rp_to_vol_model_dir : ""
   train:
-    model_type =
+    model_type :
+
+model_class: model.resnet_model.ResNetUNet
+preprocessor_class: model.pre_processing.PreProcessor
+dataset_class: dataset.dataset_echonet.EchoNetDataset
+
+data_handler:
+  target_dataset_name: "EchoNet_Dynamic"
+  dataset_dir: "/content/EchoNet-Dynamic"
+  batch_size: 8
+  to_fit: True
+  shuffle: True
+  seed: 101
+  dataset_features:
+    stage: ["ES", "ED"]
+    view: ["4CH"]
+
+pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
+  do_resizing: True
+  do_normalization: True
+  augmentation:
+    rotation_proba: 0.5
+    rotation_range: 45
+    flip_proba: 0.5
