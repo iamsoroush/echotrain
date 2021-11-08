@@ -1,7 +1,7 @@
 input_h : 256
 input_w : 256
 n_channels : 1
-exported_dir : ""
+exported_dir : "/content/drive/MyDrive/AIMedic_Moazed/Experiments_EF/encoder_new_test"
 estimation_method : "encoder"
 encoder:
   encoder_address : ""
