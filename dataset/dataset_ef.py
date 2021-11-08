@@ -76,53 +76,58 @@ class EfDataset:
         type(string) : 'image' or 'label'
         subset(string) : 'train' or 'test' or 'val'
         return :
-        list x(list) , y(list)
-
-
+        list x(list if type = image , dic if type = label) , y(list) , main_y (dic)
 
         """
-
         dataframe = self.load_dataframe(subset)
 
-        x = []
         y = []
-
         if type == 'image':
-
+            x = []
+            main_y = {}
             for i in dataframe.iloc[:].iterrows():
                 image_path = i[1].image_path
+                label_path = i[1].label_path
                 x.append(image_path)
+                main_y[image_path] = label_path
+
                 if i[1].stage == 'ED':
                     label = i[1].lv_edv
                 else:
                     label = i[1].lv_esv
                 y.append(label)
         else:
+            x = {}
+            main_y = {}
             for i in dataframe.iloc[:].iterrows():
+                image_path = i[1].image_path
                 label_path = i[1].label_path
-                x.append(label_path)
+                x[image_path] = label_path
+                main_y[image_path] = label_path
+
                 if i[1].stage == 'ED':
                     label = i[1].lv_edv
                 else:
                     label = i[1].lv_esv
                 y.append(label)
-        return x, y
+        return x, y, main_y
 
-    def prepare_x_y(self, x, y, type):
+    def prepare_x_y(self, x, y, main_y, type):
         """
         This method load images or labels(masks) from directory path
         we use DatasetGenerator's generate_x for image type and generate_y for label type for loading data
         we use PreProcessor class
         at the end we convert x , y from list to numpy array
         input :
-        x (list) list of images or labels(mask) path
+        x (list if type = image , dic if type = label)  of images or labels(mask) path
         y (list) list of volumes
+        y_main(dic) a dictionary of images and masks useful for generator class
         type(string) : 'image' , 'label'
         return :
         x (np.ndarray) , y(np.ndarray)
 
         """
-        gen = DatasetGenerator(x, y, self.batch_size, (self.input_h, self.input_w), self.n_channels)
+        gen = DatasetGenerator(x, main_y, self.batch_size, (self.input_h, self.input_w), self.n_channels)
 
         preprocessor = PreProcessor(self.config)
 
@@ -153,6 +158,6 @@ class EfDataset:
 
         """
 
-        x, y = self.create_x_y(type, subset)
-        x, y = self.prepare_x_y(x, y, type)
+        x, y, main_y = self.create_x_y(type, subset)
+        x, y = self.prepare_x_y(x, y, main_y, type)
         return x, y
