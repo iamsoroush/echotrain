@@ -24,11 +24,10 @@ class TestClass:
         dataset = EchoNetDataset(config)
         return dataset
 
-    @staticmethod
     @pytest.mark.parametrize("x, y", [
         ([1, 2, 3], {1: 4, 2: 5, 3: 6}),
     ])
-    def test_shuffle_func(dataset, x, y):
+    def test_shuffle_func(self, dataset, x, y):
         shuffled_x, shuffled_y = dataset._shuffle_func(x, y)
 
         # Testing if both data and labels are shuffled the same.
