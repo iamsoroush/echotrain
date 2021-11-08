@@ -4,7 +4,7 @@ from dataset.dataset_generator import DatasetGenerator
 from model.pre_processing import PreProcessor
 
 
-class EfDataset:
+class EFDataset:
     """
     This class make dataset for EF models
     Need a config file as input
@@ -16,7 +16,7 @@ class EfDataset:
     and dataset can be created for subsets   {train . test , val }
     Example :
             EfDataset=EfDataset(config_file)
-            x_train , y_train = EfDataset.ef_dataset('image' , 'train')
+            x_train , y_train = EfDataset.volume_dataset('image' , 'train')
             x_val , y_val = EfDataset.ef_dataset('image' , 'val')
             or
             x_train , y_train = EfDataset.ef_dataset('label' , 'train')
@@ -43,7 +43,7 @@ class EfDataset:
             self.dataset_name = config.data_handler.target_dataset_name
             self.dataset_class_path = config.dataset_class
 
-    def load_dataframe(self, subset):
+    def _load_dataframe(self, subset):
         """
         this method create dataframe based on subset and database
         database type (camus or echonet) will be read from config file
@@ -67,7 +67,7 @@ class EfDataset:
 
         return dataframe
 
-    def create_x_y(self, type, subset):
+    def _create_x_y(self, type, subset):
 
         """
         this method create a list of image or label(mask) path and a list of EC , ED volumes
@@ -79,7 +79,7 @@ class EfDataset:
         list x(list if type = image , dic if type = label) , y(list) , main_y (dic)
 
         """
-        dataframe = self.load_dataframe(subset)
+        dataframe = self._load_dataframe(subset)
 
         y = []
         if type == 'image':
@@ -112,7 +112,7 @@ class EfDataset:
                 y.append(label)
         return x, y, main_y
 
-    def prepare_x_y(self, x, y, main_y, type):
+    def _prepare_x_y(self, x, y, main_y, type):
         """
         This method load images or labels(masks) from directory path
         we use DatasetGenerator's generate_x for image type and generate_y for label type for loading data
@@ -142,7 +142,7 @@ class EfDataset:
 
         return x, y
 
-    def ef_dataset(self, type, subset):
+    def volume_dataset(self, type, subset):
         """
         this method created dataset
         input :
@@ -155,9 +155,49 @@ class EfDataset:
         x.shape : (2552, 256, 256, 1)
         y.shape : (2552, 1)
 
-
         """
 
-        x, y, main_y = self.create_x_y(type, subset)
-        x, y = self.prepare_x_y(x, y, main_y, type)
+        x, y, main_y = self._create_x_y(type, subset)
+        x, y = self._prepare_x_y(x, y, main_y, type)
         return x, y
+
+    def ef_dataset(self, type, subset):
+        """
+        this method create a data set of both ED and ES images or labels(mask)(based on input type)
+        as x and their lv_ef as y
+        input :
+        type(string) : 'image' or 'label'
+        subset(string) : 'train' or 'test' or 'val'
+
+        return
+        ed_es_list (numpy array) example shape -> (7460, 2, 256, 256, 1) for train subset
+        ef_list (numpy array) example shape -> (7460,)
+        """
+        dataframe = self._load_dataframe(subset)
+
+        main_y = {}
+        ed_es_list = []
+        ef_list = []
+
+        for case in dataframe['case_id'].unique():
+            image_ed = (dataframe[dataframe['case_id'] == case][dataframe['stage'] == 'ED']['image_path'].values[0])
+            image_es = (dataframe[dataframe['case_id'] == case][dataframe['stage'] == 'ES']['image_path'].values[0])
+            label_ed = (dataframe[dataframe['case_id'] == case][dataframe['stage'] == 'ED']['label_path'].values[0])
+            label_es = (dataframe[dataframe['case_id'] == case][dataframe['stage'] == 'ES']['label_path'].values[0])
+
+            main_y[image_ed] = label_ed
+            main_y[image_es] = label_es
+
+            ef_list.append((dataframe[dataframe['case_id'] == case][dataframe['stage'] == 'ED']['lv_ef'].values[0]))
+
+            if type == 'image':
+                ed_es_frames, z = self._prepare_x_y({image_ed, image_es}, ef_list, main_y, type)
+            else:
+                ed_es_frames, z = self._prepare_x_y({image_ed: label_ed, image_es: label_es}, ef_list, main_y, type)
+
+            ed_es_list.append(ed_es_frames)
+
+        ed_es_list = np.array(ed_es_list)
+        ef_list = np.array(ef_list)
+
+        return ed_es_list, ef_list
