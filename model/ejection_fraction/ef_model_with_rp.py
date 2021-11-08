@@ -1,7 +1,8 @@
 from .model.ejection_fraction.ejection_fraction_base import EFBase
 from skimage.measure import regionprops
-from .dataset.dataset_ef import EfDataset
+from .dataset.dataset_ef import EFDataset
 import os
+import shutil
 
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -34,8 +35,8 @@ class EFModel_RP(EFBase):
 
     def train(self):
 
-        ef_dataset = EfDataset(self.config)
-        labels, volumes = ef_dataset.ef_dataset('label','train')
+        ef_dataset = EFDataset(self.config)
+        labels, volumes = ef_dataset.volume_dataset('label','train')
         rps = []
         for label in labels:
             rps.append(self._frame_to_rp(label))
@@ -46,7 +47,10 @@ class EFModel_RP(EFBase):
 
     def export(self,model):
 
-        pickle.dump(model, open(os.path.join(self.exported_dir, '/exported/rp_to_v.sav'), 'wb'))
+        pickle.dump(model, open('rp_to_v.sav', 'wb'))
+        os.makedirs(os.path.join(self.exported_dir, 'exported'))
+        shutil.move('rp_to_v.sav', os.path.join(self.exported_dir, 'exported'))
+
 
     @staticmethod
     def _frame_to_rp(frame):
