@@ -51,15 +51,29 @@ class EFModel_Encoder(EFBase):
 
 
     def _load_encoder_model(self):
+        """
+
+        Returns:load the encoding model that is saved in the encoder_address directory at config.yaml file
+
+        """
 
         return load_model(self.encoder_address)
 
     def _load_en_to_vol_model(self):
+        """
+
+        Returns:load model that is saved in en_to_vol_model_dir directory at config.yaml file
+
+        """
 
         return pickle.load(open(self.en_to_vol_model_dir, 'rb'))
 
     def _get_config(self):
+        """
 
+        Get needed information from config.yaml file
+
+        """
         try:
             self.estimation_method = self.config.estimation_method
             if self.estimation_method == "encoder":
@@ -73,6 +87,11 @@ class EFModel_Encoder(EFBase):
             print("estimation_method should be 'encoder'.")
 
     def _en_to_vol_model(self):
+        """
+
+        Returns:the sklearn model that is designated in model_type section of config.yaml file
+
+        """
 
         if self.en_to_vol_model_type == 'svr':
             return SVR(kernel='rbf')

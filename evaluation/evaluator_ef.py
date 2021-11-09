@@ -15,6 +15,16 @@ class EFEvaluator:
         self._get_config()
 
     def evaluate(self, dataset_subset):
+        """
+        Evaluate the model with the specific config in terms of ejection fraction.
+        This method export two csv file in exported_dir directory one of them is the whole dataframe for
+        each patient and the latter is the summary of the first.
+        Args:
+            dataset_subset: can be "val", "train", "test"
+
+        Returns:
+
+        """
 
         ef_dataset = EFDataset(self.config)
         ed_es_frames, ef_true = ef_dataset.ef_dataset(self.dataset_type, dataset_subset)
@@ -52,10 +62,15 @@ class EFEvaluator:
             dataset_df.loc[i * 2 + 1, ['ef_true', 'ef_pred', 'mae', 'mse']] = df_ef.loc[
                 i, ['ef_true', 'ef_pred', 'mae', 'mse']]
         dataset_df.to_csv(os.path.join(self.exported_dir, 'exported', 'dataframe_of_evaluation.csv'))
-        return dataset_df
+        dataset_df.describe().to_csv(os.path.join(self.exported_dir, 'exported', 'dataframe_of_evaluation_summary.csv'))
+        return dataset_df.describe()
 
     def _get_config(self):
+        """
 
+        Get needed information from config.yaml file
+
+        """
         self.estimation_method = self.config.estimation_method
         if self.estimation_method == 'encoder':
             self.dataset_type = 'image'
