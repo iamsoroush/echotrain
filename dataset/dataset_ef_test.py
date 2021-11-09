@@ -8,6 +8,8 @@ def test_volume_dataset():
 
     config_file = handling_yaml.load_config_file(config_path)
 
+    assert config_file is not None
+
     ef_dataset = EFDataset(config_file)
 
     subset = 'val'
