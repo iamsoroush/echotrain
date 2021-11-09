@@ -156,6 +156,9 @@ class EFDataset:
         y.shape : (2552, 1)
 
         """
+        assert subset in ('train', 'test', 'val'), 'pass either "test" or "validation" or "train" for "subset" ' \
+                                                   'argument. '
+        assert type in ('image', 'label'), 'pass either "image"  or "label" for "type" argument.'
 
         x, y, main_y = self._create_x_y(type, subset)
         x, y = self._prepare_x_y(x, y, main_y, type)
@@ -173,6 +176,9 @@ class EFDataset:
         ed_es_list (numpy array) example shape -> (7460, 2, 256, 256, 1) for train subset
         ef_list (numpy array) example shape -> (7460,)
         """
+        assert subset in ('train', 'test', 'val'), 'pass either "test" or "validation" or "train" for "subset" ' \
+                                                   'argument. '
+        assert type in ('image', 'label'), 'pass either "image"  or "label" for "type" argument.'
         dataframe = self._load_dataframe(subset)
 
         main_y = {}
