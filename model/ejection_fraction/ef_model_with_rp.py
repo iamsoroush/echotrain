@@ -78,11 +78,20 @@ class EFModel_RP(EFBase):
         return rp
 
     def _load_rp_to_vol_model(self):
+        """
+
+        Returns:load model that is saved in rp_to_vol_model_dir directory at config.yaml file
+
+        """
 
         return pickle.load(open(self.rp_to_vol_model_dir, 'rb'))
 
     def _get_config(self):
+        """
 
+        Get needed information from config.yaml file
+
+        """
         try:
             self.estimation_method = self.config.estimation_method
             if self.estimation_method == "rp":
