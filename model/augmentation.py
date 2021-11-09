@@ -1,4 +1,5 @@
 import albumentations as A
+import numpy as np
 
 from .base_class import BaseClass
 
@@ -49,7 +50,11 @@ class Augmentation(BaseClass):
         x = batch[0]
         y = batch[1]
 
-        x = x.astype('float32')
+        if 'list' in str(type(x)) or 'list' in str(type(y)):
+            x = np.array(x, dtype='float32')
+            y = np.array(y, dtype='float32')
+        else:
+            x = x.astype('float32')
 
         # implementing augmentation on every image and mask of the batch
         for i in range(len(x)):
