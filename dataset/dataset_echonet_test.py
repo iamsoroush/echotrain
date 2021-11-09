@@ -1,9 +1,6 @@
-import sys
 import os
 import warnings
-utils_dir = os.path.abspath('../echotrain/')
-sys.path.append(utils_dir)
-from dataset.dataset_echonet import EchoNetDataset
+from .dataset_echonet import EchoNetDataset
 # from handling_yaml import load_config_file
 from utils import load_config_file
 import pytest
