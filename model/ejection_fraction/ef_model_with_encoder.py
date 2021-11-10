@@ -1,6 +1,6 @@
-from .model.ejection_fraction.ejection_fraction_base import EFBase
+from .ejection_fraction_base import EFBase
 from tensorflow.keras.models import load_model
-from .dataset.dataset_ef import EFDataset
+from dataset.dataset_ef import EFDataset
 import os
 import shutil
 
@@ -31,7 +31,7 @@ class EFModel_Encoder(EFBase):
         es_en = self._load_encoder_model().predict(es_frame)
         ed_vol = self._load_en_to_vol_model().predict(ed_en)
         es_vol = self._load_en_to_vol_model().predict(es_en)
-        return (ed_vol - es_vol) / ed_vol * 100
+        return float((ed_vol - es_vol) / ed_vol * 100)
 
     def train(self):
 

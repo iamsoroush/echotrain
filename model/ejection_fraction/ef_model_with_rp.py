@@ -1,6 +1,6 @@
-from .model.ejection_fraction.ejection_fraction_base import EFBase
+from .ejection_fraction_base import EFBase
+from dataset.dataset_ef import EFDataset
 from skimage.measure import regionprops
-from .dataset.dataset_ef import EFDataset
 import os
 import shutil
 
@@ -31,7 +31,7 @@ class EFModel_RP(EFBase):
         es_rp = self._frame_to_rp(es_frame)
         ed_vol = self._load_rp_to_vol_model().predict(ed_rp)
         es_vol = self._load_rp_to_vol_model().predict(es_rp)
-        return (ed_vol - es_vol) / ed_vol * 100
+        return float((ed_vol - es_vol) / ed_vol * 100)
 
     def train(self):
 
