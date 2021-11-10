@@ -8,19 +8,20 @@ class EFDataset:
     """
     This class make dataset for EF models
     Need a config file as input
-    The dataset can be based on image frames of ES and ED like :
-            x : images , y : volumes (y is volume of ES OR EV based on image state)
-    or dataset can be based on label(mask) frames of ES and ED like :
-            x : label(mask) , y : volumes (y is volume of ES OR EV based on image state)
-    x and y types are numpy.ndarray
-    and dataset can be created for subsets   {train . test , val }
-    Example :
-            EfDataset=EfDataset(config_file)
-            x_train , y_train = EfDataset.volume_dataset('image' , 'train')
-            x_val , y_val = EfDataset.ef_dataset('image' , 'val')
-            or
-            x_train , y_train = EfDataset.ef_dataset('label' , 'train')
-            x_val , y_val = EfDataset.ef_dataset('label' , 'val')
+    This class has two main methods that create different datasets :
+
+        1) volume_dataset : x is   numpy array of ED and ES images or masks(based on input type of method)
+        and y is volume of ED and ES
+        this is useful for training process
+        ef_dataset = EFDataset(config_file)
+        x , y = ef_dataset.volume_dataset(type='image' , subset='train')
+
+        2) ef_dataset : x is numpy array of ED and ES images or masks(based on input type of method)
+        and y is volume of EF
+        this is useful for evaluation process
+        ef_dataset = EFDataset(config_file)
+        x , y = ef_dataset.ef_dataset(type='image' , subset='train')
+
 
     """
 
@@ -70,13 +71,14 @@ class EFDataset:
     def _create_x_y(self, type, subset):
 
         """
-        this method create a list of image or label(mask) path and a list of EC , ED volumes
+        this method create a list of image or label(mask) path and a list of ES , ED volumes
         it uses dataframes for collecting path and volumes
         input :
         type(string) : 'image' or 'label'
         subset(string) : 'train' or 'test' or 'val'
         return :
-        list x(list if type = image , dic if type = label) , y(list) , main_y (dic)
+        x(list if type = image , dic if type = label) , y(list) , main_y (dic containing images and masks path
+                                                                        useful for data generator)
 
         """
         dataframe = self._load_dataframe(subset)
@@ -156,10 +158,6 @@ class EFDataset:
         y.shape : (2552, 1)
 
         """
-        assert subset in ('train', 'test', 'val'), 'pass either "test" or "validation" or "train" for "subset" ' \
-                                                   'argument. '
-        assert type in ('image', 'label'), 'pass either "image"  or "label" for "type" argument.'
-
         x, y, main_y = self._create_x_y(type, subset)
         x, y = self._prepare_x_y(x, y, main_y, type)
         return x, y
@@ -176,9 +174,7 @@ class EFDataset:
         ed_es_list (numpy array) example shape -> (7460, 2, 256, 256, 1) for train subset
         ef_list (numpy array) example shape -> (7460,)
         """
-        assert subset in ('train', 'test', 'val'), 'pass either "test" or "validation" or "train" for "subset" ' \
-                                                   'argument. '
-        assert type in ('image', 'label'), 'pass either "image"  or "label" for "type" argument.'
+
         dataframe = self._load_dataframe(subset)
 
         main_y = {}
