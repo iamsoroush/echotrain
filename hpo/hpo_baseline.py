@@ -15,8 +15,8 @@ class HPOBaseline(kt.HyperModel):
 
         return model
 
-    @staticmethod
-    def fit(hp, model, x, y, **kwargs):
+    def fit(self, hp, model, x, y, **kwargs):
+
         return model.fit(x, y, **kwargs)
 
     def _get_parameters(self):
@@ -25,10 +25,11 @@ class HPOBaseline(kt.HyperModel):
         self.overwrite = True
         self.directory = ''
         self.project_name = "tune_hypermodel"
+        self.epoch_tuner = 2
 
     def generate_tuner(self):
         tuner = kt.RandomSearch(
-            HPOBaseline(),
+            HPOBaseline(self.config),
             objective=self.objecte,
             max_trials=self.max_trials,
             overwrite=self.overwrite,
@@ -39,4 +40,10 @@ class HPOBaseline(kt.HyperModel):
         return tuner
 
     def tune_model(self):
+        tuner = self.generate_tuner()
+        tuner.search(x,y,epochs = self.epoch_tuner)
+        return tuner
 
+    @staticmethod
+    def get_best_hp(tuner):
+        return tuner.get_best_hyperparamethers()[0]
