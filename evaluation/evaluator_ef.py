@@ -31,8 +31,7 @@ class EFEvaluator:
         df_ef = {'ef_true': [],
                  'ef_pred': [],
                  'mae': [],
-                 'mse': [],
-                 'r2_score': []}
+                 'mse': []}
         ef_pred = []
 
         for ed_es_frame in ed_es_frames:
@@ -42,11 +41,10 @@ class EFEvaluator:
         ef_pred = np.array(ef_pred).reshape(-1, 1)
         ef_true = ef_true.reshape(-1, 1)
         for i in range(len(ef_true)):
-            df_ef['ef_true'].append(ef_true[i])
-            df_ef['ef_pred'].append(ef_pred[i])
+            df_ef['ef_true'].append(float(ef_true[i]))
+            df_ef['ef_pred'].append(float(ef_pred[i]))
             df_ef['mae'].append(mae(ef_true[i], ef_pred[i]))
             df_ef['mse'].append(mse(ef_true[i], ef_pred[i]))
-            df_ef['r2_score'].append(r2_score(ef_true[i], ef_pred[i]))
 
         echonet = EchoNetDataset(self.config)
         dataset_df = echonet.val_df_
