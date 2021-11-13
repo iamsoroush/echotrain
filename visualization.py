@@ -10,7 +10,7 @@ class Visualisation:
         pass
 
     @staticmethod
-    def load_bad_images(dataframe, column, value):
+    def plot_image_by_column(dataframe, column, value):
         """
 
         Args:
@@ -49,7 +49,7 @@ class Visualisation:
             plt.show()
 
     @staticmethod
-    def load_bad_images_by_index(dataframe, indexes):
+    def plot_iamge_by_index(dataframe, indexes):
         """
 
         Args:
