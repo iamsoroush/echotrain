@@ -143,13 +143,7 @@ class Trainer:
                 f.write(run.info.run_id)
 
             # Fit
-            history = model.fit(train_data_gen,
-                                steps_per_epoch=n_iter_train,
-                                initial_epoch=initial_epoch,
-                                epochs=self.epochs,
-                                validation_data=val_data_gen,
-                                validation_steps=n_iter_val,
-                                callbacks=self.my_callbacks)
+            history = model.fit(train_data_gen,,,,
         return history
 
     def export(self):

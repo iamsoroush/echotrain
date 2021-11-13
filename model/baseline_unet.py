@@ -29,22 +29,24 @@ class UNetBaseline(ModelBase):
 
     """
 
-    def __init__(self, config):
+    def __init__(self, config, hp):
         super().__init__(config)
 
         self._read_config()
-
-        self.conv_kernel_size = (3, 3)
+        conv_kernel_size = hp.Int('conv_kernel_size',min_value=2, max_value=7, step=1)
+        self.conv_kernel_size = (conv_kernel_size, conv_kernel_size)
         self.conv_padding = 'same'
 
-        self.conv_trans_kernel_size = (2, 2)
+        conv_trans_kernel_size = hp.Int('conv_trans_kernel_size',min_value=2, max_value=7, step=1)
+        self.conv_trans_kernel_size = (conv_trans_kernel_size, conv_trans_kernel_size)
         self.conv_trans_strides = (2, 2)
         self.conv_trans_padding = 'same'
 
         self.max_pool_size = (2, 2)
         self.max_pool_strides = (2, 2)
 
-        self.activation = 'relu'
+        activation_function = hp.choice("activation_function", ['relu','elu','tanh'])
+        self.activation = activation_function
         self.final_activation = 'sigmoid'
 
         self.kernel_initializer = 'glorot_uniform'
@@ -76,7 +78,6 @@ class UNetBaseline(ModelBase):
             input_shape:(input_h, input_w, 1)
             output_shape:(input_h, input_w, 1)
         """
-
         input_tensor = tfk.Input((self.input_h, self.input_w, self.n_channels), name='input_tensor')
 
         # Encoder
