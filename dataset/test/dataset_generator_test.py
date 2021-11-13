@@ -2,9 +2,9 @@ import pytest
 import numpy as np
 import os
 import skimage.io as io
-from .dataset_echonet import EchoNetDataset
-from .dataset_camus import CAMUSDataset
-from .dataset_generator import DatasetGenerator
+from echotrain.dataset.dataset_echonet import EchoNetDataset
+from echotrain.dataset.dataset_camus import CAMUSDataset
+from echotrain.dataset.dataset_generator import DatasetGenerator
 from utils import load_config_file
 
 

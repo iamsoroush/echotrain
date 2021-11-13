@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from dataset.dataset_echonet import EchoNetDataset
 from dataset.dataset_generator import DatasetGenerator
-from .pre_processing import PreProcessor
+from echotrain.model.pre_processing import PreProcessor
 from utils import load_config_file
 
 

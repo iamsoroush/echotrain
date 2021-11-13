@@ -1,5 +1,5 @@
 import pytest
-from .eval_funcs import *
+from echotrain.evaluation.eval_funcs import *
 
 
 class TestClass:

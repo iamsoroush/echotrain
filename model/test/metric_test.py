@@ -1,4 +1,4 @@
-from .metric import *
+from echotrain.model.metric import *
 import numpy as np
 import pytest
 from tensorflow.keras import backend as K

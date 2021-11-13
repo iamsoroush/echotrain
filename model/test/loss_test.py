@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 from dataset.dataset_echonet import EchoNetDataset
 from dataset.dataset_generator import DatasetGenerator
-from .loss import iou_coef_loss, dice_coef_loss, soft_dice_loss, soft_iou_loss
+from echotrain.model.loss import iou_coef_loss, dice_coef_loss, soft_dice_loss, soft_iou_loss
 from utils import load_config_file
 
 
