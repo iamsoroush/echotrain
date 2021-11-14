@@ -16,7 +16,7 @@ class HPOBaseline(kt.HyperModel):
         return model
 
     def fit(self, model, hp, *args, **kwargs):
-        return model.fit(*args,epochs =hp.Int("epochs", min_value=5, max_value=25, step=5) , **kwargs)
+        return model.fit(*args, epochs=hp.Int("epochs", min_value=5, max_value=25, step=5), **kwargs)
 
     def _get_parameters(self):
         self.objective = "val_accuracy"
@@ -42,6 +42,12 @@ class HPOBaseline(kt.HyperModel):
         tuner = self.generate_tuner()
         tuner.search(x, y, epochs=self.epoch_tuner)
         return tuner
+
+    def train(self, x, y):
+        tuner = self.tune_model(x, y)
+        best_hp = self.get_best_hp(tuner)
+        model = self.build(best_hp)
+        self.fit(model, best_hp, x, y)
 
     @staticmethod
     def get_best_hp(tuner):
