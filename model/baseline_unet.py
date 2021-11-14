@@ -45,7 +45,7 @@ class UNetBaseline(ModelBase):
         self.max_pool_size = (2, 2)
         self.max_pool_strides = (2, 2)
 
-        activation_function = hp.choice("activation_function", ['relu','elu','tanh'])
+        activation_function = hp.Choice("activation_function", ['relu','elu','tanh'])
         self.activation = activation_function
         self.final_activation = 'sigmoid'
 
