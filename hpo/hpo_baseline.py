@@ -27,7 +27,7 @@ class HPOBaseline:
 
         return tuner
 
-    def tune_model(self, x, y):
+    def search_hp(self, x, y):
         tuner = self.generate_tuner()
         tuner.search(x, y, epochs=self.epoch_tuner)
         return tuner
@@ -36,9 +36,13 @@ class HPOBaseline:
     def get_best_hp(tuner):
         return tuner.get_best_hyperparamethers()[0]
 
-    def train(self, x, y):
+    @staticmethod
+    def get_tuner_summary(tuner):
+        return tuner.result_summary()
+
+    def retrain_model(self, x, y):
         hypermodel = HyperModel(self.config)
-        tuner = self.tune_model(x, y)
+        tuner = self.search_hp(x, y)
         best_hp = self.get_best_hp(tuner)
 
         model = hypermodel.build(best_hp)

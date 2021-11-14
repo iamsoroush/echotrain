@@ -1,10 +1,8 @@
-from abc import ABC
-
 import keras_tuner as kt
 from model.baseline_unet import UNetBaseline
 
 
-class HyperModel(kt.HyperModel, ABC):
+class HyperModel(kt.HyperModel):
 
     def __init__(self, config):
         super(HyperModel, self).__init__()
