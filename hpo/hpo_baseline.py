@@ -8,12 +8,11 @@ class HPOBaseline:
         self.config = config
 
     def _get_parameters(self):
-        self.objective = "val_accuracy"
+        self.objective = kt.Objective("iou_coef", direction="max"),
         self.max_trials = 3
         self.overwrite = True
         self.directory = ''
         self.project_name = "tune_hypermodel"
-        self.epoch_tuner = 2
 
     def generate_tuner(self):
         tuner = kt.RandomSearch(
