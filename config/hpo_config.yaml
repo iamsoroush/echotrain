@@ -1,0 +1,66 @@
+input_h: 128
+input_w: 128
+n_channels: 1
+
+model_class: model.baseline_unet.UNetBaseline
+preprocessor_class: model.pre_processing.PreProcessor
+dataset_class: dataset.dataset_echonet.EchoNetDataset
+
+hpo :
+  objective :
+    name : "iou_coef"
+    direction : "max"
+  max_traial : 3
+  overwrite : True
+  directory : "...."
+  project_name : "...."
+  epoch_tuner : 2
+
+
+data_handler:
+  target_dataset_name: "EchoNet_Dynamic"
+  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamic"
+  batch_size: 8
+  to_fit: True
+  shuffle: True
+  seed: 101
+  dataset_features:
+    stage: ["ES", "ED"]
+    view: ["4CH"]
+
+model:
+  name: "baseline-unet"
+  optimizer:
+    type: "adam"
+    initial_lr: 0.0001
+  loss_type: "binary_crossentropy"
+  metrics: ["dice_coef", "iou", "acc"]
+  inference_threshold: 0.5
+
+pre_process:
+  format: "gray_scale"
+  max: 255
+  min: 0
+  do_resizing: True
+  do_normalization: True
+  augmentation:
+    rotation_proba: 0.5
+    rotation_range: 45
+    flip_proba: 0.5
+
+trainer:
+  epochs: 30
+  callbacks:
+    checkpoints:
+      save_freq: "epoch"
+      evaluation_metrics: ["val_loss", "val_dice_coef"]
+      monitor: "val_loss"  # set null if you want to checkpoint in every epoch
+    tensorboard:
+      update_freq: "epoch"
+  export:
+    metric: "val_loss"
+    mode: "min"
+  mlflow:
+    tracking_uri: '/content/drive/MyDrive/AIMedic/Experiments/MLFlow Experiments'
+    experiment_name: 'echo_seg_echonet_dynamic'
+#    run_name: 'baseline-0'

@@ -1,6 +1,7 @@
 import keras_tuner as kt
 import os
 from .hypermodel_unet_baseline import HyperModel
+from tensorflow import keras
 
 
 class HPOBaseline:
@@ -10,17 +11,19 @@ class HPOBaseline:
         self._get_parameters()
 
     def _get_parameters(self):
-        self.objective = kt.Objective("iou_coef", direction="max")
-        self.max_trials = 3
-        self.overwrite = True
-        self.directory = ''
-        self.project_name = "tune_hypermodel"
-        self.epoch_tuner = 2
+        hpo_config = self.config.hpo
+        self.objective = hpo_config.objective
+        self.direction = hpo_config.direction
+        self.max_trials = hpo_config.max_trials
+        self.overwrite = hpo_config.overwrite
+        self.directory = hpo_config.directory
+        self.project_name = hpo_config.project_name
+        self.epoch_tuner = hpo_config.epoch_tuner
 
     def generate_tuner(self):
         tuner = kt.RandomSearch(
             HyperModel(self.config),
-            objective=self.objective,
+            objective=kt.Objective(self.objective, direction=self.direction),
             max_trials=self.max_trials,
             overwrite=self.overwrite,
             directory=self.directory,
@@ -36,7 +39,9 @@ class HPOBaseline:
                      steps_per_epoch=n_iter_train,
                      epochs=self.epoch_tuner,
                      validation_data=validation_generator,
-                     validation_steps=n_iter_val)
+                     validation_steps=n_iter_val,
+                     callbacks=[keras.callbacks.TensorBoard(self.directory + '/logs')],
+                     )
         return tuner
 
     def get_best_hp(self, tuner):
