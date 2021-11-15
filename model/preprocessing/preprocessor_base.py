@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from ..base_class import BaseClass
+from echotrain.model.base_class import BaseClass
 
 
 class PreProcessor(BaseClass):

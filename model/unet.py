@@ -2,9 +2,9 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
 
-from .model_base import ModelBase
-from .metric import get_iou_coef, get_dice_coeff
-from .loss import dice_coef_loss
+from echotrain.model.model_base import ModelBase
+from echotrain.model.metric import get_iou_coef, get_dice_coeff
+from echotrain.model.loss import dice_coef_loss
 
 
 class UNet(ModelBase):

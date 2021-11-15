@@ -1,5 +1,3 @@
-# requirements
-
 import skimage.io as io  # to read the .mhd and .raw data
 import numpy as np
 import tensorflow as tf

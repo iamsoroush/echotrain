@@ -1,17 +1,16 @@
 import os
 import pytest
-import numpy as np
-from dataset.dataset_echonet import EchoNetDataset
-from dataset.dataset_generator import DatasetGenerator
+from echotrain.dataset.dataset_echonet import EchoNetDataset
+from echotrain.dataset.dataset_generator import DatasetGenerator
 from echotrain.model.augmentation import Augmentation
-from utils import load_config_file
+from echotrain.utils import load_config_file
 
 
 class TestClass:
 
     @pytest.fixture
     def config(self):
-        config_path = "./config/config_example_echonet.yaml"
+        config_path = "../echotrain/config/config_example_echonet.yaml"
         config = load_config_file(os.path.abspath(config_path))
         return config
 

@@ -1,7 +1,7 @@
 import albumentations as A
 import numpy as np
 
-from .base_class import BaseClass
+from echotrain.model.base_class import BaseClass
 
 
 class Augmentation(BaseClass):
