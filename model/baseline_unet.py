@@ -222,7 +222,7 @@ class UNetBaseline(ModelBase):
                 use_bias=False,
                 kernel_initializer=self.kernel_initializer,
                 name=conv_name,
-                kernel_regularizer=
+                kernel_regularizer=self.kernel_regularizer
             )(input_tensor)
 
             x = tfkl.BatchNormalization(name=bn_name)(x)
@@ -249,7 +249,9 @@ class UNetBaseline(ModelBase):
                 activation=None,
                 name=transconv_name,
                 use_bias=False,
-                kernel_initializer=self.kernel_initializer)(input_tensor)
+                kernel_initializer=self.kernel_initializer,
+                kernel_regularizer=self.kernel_regularizer
+            )(input_tensor)
 
             x = tfkl.BatchNormalization(name=bn_name)(x)
             x = tfkl.Activation(self.activation, name=act_name)(x)
