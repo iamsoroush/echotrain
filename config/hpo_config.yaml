@@ -10,7 +10,7 @@ hpo :
   objective :
     name : "iou_coef"
     direction : "max"
-  max_traial : 3
+  max_trials : 3
   overwrite : True
   directory : "...."
   project_name : "...."

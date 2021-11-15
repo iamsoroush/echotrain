@@ -12,8 +12,8 @@ class HPOBaseline:
 
     def _get_parameters(self):
         hpo_config = self.config.hpo
-        self.objective = hpo_config.objective
-        self.direction = hpo_config.direction
+        self.objective = hpo_config.objective.name
+        self.direction = hpo_config.objective.direction
         self.max_trials = hpo_config.max_trials
         self.overwrite = hpo_config.overwrite
         self.directory = hpo_config.directory
