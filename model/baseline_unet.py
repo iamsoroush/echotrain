@@ -7,7 +7,6 @@ from .loss import dice_coef_loss
 
 
 class UNetBaseline(ModelBase):
-
     """Unet V2 implementation from CAMUS paper.
 
     from the paper:
@@ -32,12 +31,13 @@ class UNetBaseline(ModelBase):
     def __init__(self, config, hp):
         super().__init__(config)
 
+        self.hp = hp
         self._read_config()
-        conv_kernel_size = hp.Int('conv_kernel_size',min_value=2, max_value=7, step=1)
+        conv_kernel_size = hp.Int('conv_kernel_size', min_value=2, max_value=7, step=1)
         self.conv_kernel_size = (conv_kernel_size, conv_kernel_size)
         self.conv_padding = 'same'
 
-        conv_trans_kernel_size = hp.Int('conv_trans_kernel_size',min_value=2, max_value=7, step=1)
+        conv_trans_kernel_size = hp.Int('conv_trans_kernel_size', min_value=2, max_value=7, step=1)
         self.conv_trans_kernel_size = (conv_trans_kernel_size, conv_trans_kernel_size)
         self.conv_trans_strides = (2, 2)
         self.conv_trans_padding = 'same'
@@ -45,7 +45,7 @@ class UNetBaseline(ModelBase):
         self.max_pool_size = (2, 2)
         self.max_pool_strides = (2, 2)
 
-        activation_function = hp.Choice("activation_function", ['relu','elu','tanh'])
+        activation_function = hp.Choice("activation_function", ['relu', 'elu', 'tanh'])
         self.activation = activation_function
         self.final_activation = 'sigmoid'
 
@@ -119,12 +119,12 @@ class UNetBaseline(ModelBase):
             self.optimizer_type = 'adam'
 
         try:
-            self.learning_rate = self.config.model.optimizer.initial_lr
+            self.learning_rate = self.hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log")
         except AttributeError:
             self.learning_rate = 0.001
 
         try:
-            self.loss_type = self.config.model.loss_type
+            self.loss_type = self.hp.Choice('loss_function', ['binary_crossentropy', 'dice_coef_loss'])
         except AttributeError:
             self.loss_type = 'binary_crossentropy'
 
