@@ -8,12 +8,12 @@ dataset_class: dataset.dataset_echonet.EchoNetDataset
 
 hpo :
   objective :
-    name : "iou_coef"
+    name : "dice_coef"
     direction : "max"
   max_trials : 3
   overwrite : True
-  directory : "...."
-  project_name : "...."
+  directory : ""
+  project_name : "test_hpo"
   epoch_tuner : 2
 
 
@@ -32,7 +32,7 @@ model:
   name: "baseline-unet"
   activation_function: 'relu'
   kernel_initializer: 'glorot_uniform'
-  kernel_regularizer: None
+  kernel_regularizer: 'l1'
   optimizer:
     type: "adam"
     initial_lr: 0.0001

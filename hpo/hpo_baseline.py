@@ -27,8 +27,7 @@ class HPOBaseline:
             max_trials=self.max_trials,
             overwrite=self.overwrite,
             directory=self.directory,
-            project_name=self.project_name,
-        )
+            project_name=self.project_name)
 
         return tuner
 
