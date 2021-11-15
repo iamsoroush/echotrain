@@ -41,7 +41,7 @@ class HPOBaseline:
 
     def get_best_hp(self, tuner):
         best_model = tuner.get_best_models()[0]
-        best_model.save(os.path.join(self.directory, "model_with_best_hp.h5"))
+        best_model.save(os.path.join(self.directory, "model_with_best_hp_graph.h5"))
         return tuner.get_best_hyperparameters()[0]
 
     @staticmethod
@@ -56,3 +56,4 @@ class HPOBaseline:
         # hypermodel.fit(best_hp, model, train_generator, validation_generator, epochs=1)
         hypermodel.fit(best_hp, model, train_generator, steps_per_epoch=n_iter_train,
                        validation_data=validation_generator, validation_steps=n_iter_val, epochs=1)
+        model.save_weights(os.path.join(self.directory, "model_with_best_hp_weights.hdf5"))
