@@ -19,7 +19,7 @@ hpo :
 
 data_handler:
   target_dataset_name: "EchoNet_Dynamic"
-  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamic"
+  dataset_dir: "/content/EchoNet-Dynamic"
   batch_size: 8
   to_fit: True
   shuffle: True
@@ -30,6 +30,9 @@ data_handler:
 
 model:
   name: "baseline-unet"
+  activation_function: 'relu'
+  kernel_initializer: 'glorot_uniform'
+  kernel_regularizer: None
   optimizer:
     type: "adam"
     initial_lr: 0.0001

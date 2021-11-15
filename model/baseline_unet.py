@@ -30,26 +30,52 @@ class UNetBaseline(ModelBase):
 
     def __init__(self, config, hp):
         super().__init__(config)
-
+        self.config = config
         self.hp = hp
         self._read_config()
-        conv_kernel_size = hp.Int('conv_kernel_size', min_value=2, max_value=7, step=1)
-        self.conv_kernel_size = (conv_kernel_size, conv_kernel_size)
+        #conv_kernel_size = hp.Int('conv_kernel_size', min_value=2, max_value=7, step=1)
+        self.conv_kernel_size = (3, 3)
         self.conv_padding = 'same'
 
-        conv_trans_kernel_size = hp.Int('conv_trans_kernel_size', min_value=2, max_value=7, step=1)
-        self.conv_trans_kernel_size = (conv_trans_kernel_size, conv_trans_kernel_size)
+        #conv_trans_kernel_size = hp.Int('conv_trans_kernel_size', min_value=2, max_value=7, step=1)
+        self.conv_trans_kernel_size = (3, 3)
         self.conv_trans_strides = (2, 2)
         self.conv_trans_padding = 'same'
 
         self.max_pool_size = (2, 2)
         self.max_pool_strides = (2, 2)
 
-        activation_function = hp.Choice("activation_function", ['relu', 'elu', 'tanh'])
+        activation_function = hp.Choice("activation_function", ['relu', 'elu', 'tanh'],
+                                        default=config.model.activation_function)
         self.activation = activation_function
         self.final_activation = 'sigmoid'
 
-        self.kernel_initializer = 'glorot_uniform'
+        kernel_initializer_selection = hp.Choice('kernel_initializer',
+                                            ['random_normal', 'random_uniform', 'glorot_normal', 'glorot_uniform',None],
+                                                 default=config.model.kernel_initializer)
+        if kernel_initializer_selection == 'random_normal':
+            self.kernel_initializer = tfk.initializers.RandomNormal()
+        if kernel_initializer_selection == 'random_uniform':
+            self.kernel_initializer = tfk.initializers.RandomUniform()
+        if kernel_initializer_selection == 'glorot_normal':
+            self.kernel_initializer = tfk.initializers.GlorotNormal()
+        if kernel_initializer_selection == 'glorot_uniform':
+            self.kernel_initializer = tfk.initializers.GlorotUniform()
+        if kernel_initializer_selection is None:
+            self.kernel_initializer = None
+
+        kernel_regularizer_selection = hp.Choice('kernel_regularizer',
+                                            ['l1', 'l2', 'l1_l2',None],
+                                                 default=config.model.keras_regularizer)
+        if kernel_regularizer_selection == 'random_normal':
+            self.kernel_regularizer = tfk.regularizers.L1 ()
+        if kernel_regularizer_selection == 'random_uniform':
+            self.kernel_regularizer = tfk.regularizers.l2()
+        if kernel_regularizer_selection == 'glorot_normal':
+            self.kernel_regularizer = tfk.regularizers.l1_l2()
+        if kernel_regularizer_selection == None:
+            self.kernel_regularizer = None
+
 
     def generate_training_model(self):
 
@@ -114,17 +140,20 @@ class UNetBaseline(ModelBase):
         """Tries to read parameters from config"""
 
         try:
-            self.optimizer_type = self.config.model.optimizer.type
+            self.optimizer_type = self.hp.Choice('optimizer_type',['adam','sgd','rmsprop','adagrad'],
+                                                 default=self.config.model.optimizer.type)
         except AttributeError:
             self.optimizer_type = 'adam'
 
         try:
-            self.learning_rate = self.hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log")
+            self.learning_rate = self.hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log",
+                                               default=self.config.model.optimizer.initial_lr)
         except AttributeError:
             self.learning_rate = 0.001
 
         try:
-            self.loss_type = self.hp.Choice('loss_function', ['binary_crossentropy', 'dice_coef_loss'])
+            self.loss_type = self.hp.Choice('loss_function', ['binary_crossentropy', 'dice_coef_loss'],
+                                            default=self.config.model.loss_type)
         except AttributeError:
             self.loss_type = 'binary_crossentropy'
 
@@ -159,6 +188,12 @@ class UNetBaseline(ModelBase):
 
         if self.optimizer_type == 'adam':
             return tfk.optimizers.Adam(learning_rate=self.learning_rate)
+        if self.optimizer_type == 'sgd':
+            return tfk.optimizers.SGD(learning_rate=self.learning_rate)
+        if self.optimizer_type == 'rmsprop':
+            return tfk.optimizers.RMSprop(learning_rate=self.learning_rate)
+        if self.optimizer_type == 'adagrad':
+            return tfk.optimizers.Adagrad(learning_rate=self.learning_rate)
 
     def _get_loss(self):
         """
@@ -187,6 +222,7 @@ class UNetBaseline(ModelBase):
                 use_bias=False,
                 kernel_initializer=self.kernel_initializer,
                 name=conv_name,
+                kernel_regularizer=
             )(input_tensor)
 
             x = tfkl.BatchNormalization(name=bn_name)(x)
