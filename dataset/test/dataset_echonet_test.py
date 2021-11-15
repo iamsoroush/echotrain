@@ -1,3 +1,4 @@
+import os
 from echotrain.dataset.dataset_echonet import EchoNetDataset
 from echotrain.utils import load_config_file
 import pytest
@@ -7,7 +8,10 @@ class TestClass:
 
     @pytest.fixture
     def config(self):
-        config_path = "../echotrain/config/config_example_echonet.yaml"
+        root_dir = os.path.abspath(os.curdir)
+        if 'echotrain' not in root_dir:
+            os.path.join(root_dir, 'echotrian').replace('\\', '/')
+        config_path = os.path.join(root_dir, "config/config_example_echonet.yaml")
         config = load_config_file(config_path)
         return config
 
