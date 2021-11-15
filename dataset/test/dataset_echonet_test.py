@@ -10,7 +10,7 @@ class TestClass:
     def config(self):
         root_dir = os.path.abspath(os.curdir)
         if 'echotrain' not in root_dir:
-            os.path.join(root_dir, 'echotrian').replace('\\', '/')
+            root_dir = os.path.join(root_dir, 'echotrian').replace('\\', '/')
         config_path = os.path.join(root_dir, "config/config_example_echonet.yaml")
         config = load_config_file(config_path)
         return config
