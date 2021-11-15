@@ -26,7 +26,7 @@ class HPOBaseline:
             objective=kt.Objective(self.objective, direction=self.direction),
             max_trials=self.max_trials,
             overwrite=self.overwrite,
-            directory=self.directory,
+            directory=os.path.join(self.directory, self.project_name),
             project_name=self.project_name)
 
         return tuner
@@ -38,7 +38,7 @@ class HPOBaseline:
                      epochs=self.epoch_tuner,
                      validation_data=validation_generator,
                      validation_steps=n_iter_val,
-                     callbacks=[keras.callbacks.TensorBoard(self.directory + '/logs')],
+                     callbacks=[keras.callbacks.TensorBoard(os.path.join(self.directory, 'logs'))],
                      )
         return tuner
 
@@ -51,4 +51,3 @@ class HPOBaseline:
 
     def export_config(self):
         pass
-

@@ -14,5 +14,5 @@ class HyperModel(kt.HyperModel):
         return model
 
     def fit(self, hp, model, *args, **kwargs):
-        model.fit(*args, **kwargs)
-        return model
+        return model.fit(*args, **kwargs)
+
