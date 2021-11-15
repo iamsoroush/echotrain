@@ -51,7 +51,7 @@ class UNetBaseline(ModelBase):
         self.final_activation = 'sigmoid'
 
         kernel_initializer_selection = hp.Choice('kernel_initializer',
-                                            ['random_normal', 'random_uniform', 'glorot_normal', 'glorot_uniform',None],
+                                            ['random_normal', 'random_uniform', 'glorot_normal', 'glorot_uniform','None'],
                                                  default=config.model.kernel_initializer)
         if kernel_initializer_selection == 'random_normal':
             self.kernel_initializer = tfk.initializers.RandomNormal()
@@ -61,11 +61,11 @@ class UNetBaseline(ModelBase):
             self.kernel_initializer = tfk.initializers.GlorotNormal()
         if kernel_initializer_selection == 'glorot_uniform':
             self.kernel_initializer = tfk.initializers.GlorotUniform()
-        if kernel_initializer_selection is None:
+        if kernel_initializer_selection == 'None':
             self.kernel_initializer = None
 
         kernel_regularizer_selection = hp.Choice('kernel_regularizer',
-                                            ['l1', 'l2', 'l1_l2',None],
+                                            ['l1', 'l2', 'l1_l2','None'],
                                                  default=config.model.keras_regularizer)
         if kernel_regularizer_selection == 'random_normal':
             self.kernel_regularizer = tfk.regularizers.L1 ()
@@ -73,7 +73,7 @@ class UNetBaseline(ModelBase):
             self.kernel_regularizer = tfk.regularizers.l2()
         if kernel_regularizer_selection == 'glorot_normal':
             self.kernel_regularizer = tfk.regularizers.l1_l2()
-        if kernel_regularizer_selection == None:
+        if kernel_regularizer_selection == 'None':
             self.kernel_regularizer = None
 
 
