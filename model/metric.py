@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 from sklearn.utils.extmath import cartesian
 from scipy.spatial.distance import cdist
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 
 
 def get_iou_coef(threshold=0.5, smooth=0.001):
@@ -220,3 +222,12 @@ def _pw_euc_distance_tf(mat_1, mat_2):
     # return pairwise euclidead difference matrix
     distance_mat = tf.sqrt(tf.maximum(na - 2 * tf.matmul(mat_1, mat_2, False, True) + nb, 0.0))
     return distance_mat
+
+def mae (y_true, y_pred):
+    return mean_absolute_error(y_true, y_pred)
+
+def mse (y_true, y_pred):
+    return mean_squared_error(y_true, y_pred)
+
+def r2_score (y_true, y_pred):
+    return r2_score(y_true,y_pred)
