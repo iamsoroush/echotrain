@@ -1,9 +1,6 @@
-import sys
-sys.path.append('..')
-
 from abc import abstractmethod
 
-from model.base_class import BaseClass
+from echotrain.model.base_class import BaseClass
 
 
 class DatasetBase(BaseClass):

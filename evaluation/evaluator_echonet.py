@@ -1,8 +1,5 @@
-import sys
-sys.path.append('..')
-
-from .evaluator import Evaluator
-from dataset.dataset_echonet import EchoNetDataset
+from echotrain.evaluation.evaluator import Evaluator
+from echotrain.dataset.dataset_echonet import EchoNetDataset
 
 
 class EvaluatorEchoNet(Evaluator):

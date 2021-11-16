@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pydoc import locate
 import pathlib
 
-from utils import load_config_file
+from echotrain.utils import load_config_file
 
 
 class EvaluatorBase(ABC):

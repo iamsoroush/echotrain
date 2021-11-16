@@ -1,5 +1,3 @@
-# requirements
-
 from .dataset_generator import DatasetGenerator
 from .dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset

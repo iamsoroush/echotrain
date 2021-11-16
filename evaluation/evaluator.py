@@ -1,7 +1,7 @@
 import pandas as pd
 
-from model import metric
-from model import loss
+from echotrain.model import metric
+from echotrain.model import loss
 
 from .evaluator_base import EvaluatorBase
 from .eval_funcs import *

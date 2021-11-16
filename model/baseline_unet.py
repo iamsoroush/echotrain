@@ -1,9 +1,9 @@
 import tensorflow.keras as tfk
 import tensorflow.keras.layers as tfkl
 
-from .model_base import ModelBase
-from .metric import get_dice_coeff, get_iou_coef
-from .loss import dice_coef_loss
+from echotrain.model.model_base import ModelBase
+from echotrain.model.metric import get_dice_coeff, get_iou_coef
+from echotrain.model.loss import dice_coef_loss
 
 
 class UNetBaseline(ModelBase):
