@@ -51,16 +51,21 @@ class HPOBaseline:
         return tuner.results_summary()
 
     def export_config(self, main_config_bath, tuner):
-        hps = ['lr', 'loss_function', 'activation_function', 'kernel_initializer', 'kernel_regularizer']
-        best_results = {'hpo_best_results': {}}
         result_file = os.path.join(self.directory, 'best_hp_config.yaml')
-        for hp in hps:
-            best_results['hpo_best_results'][hp] = tuner.get_best_hyperparameters()[0].get(hp)
+        best_hp = tuner.get_best_hyperparameters()[0]
+        best_hp_values = best_hp.values
 
         with open(main_config_bath, 'r') as yamlfile:
             cur_yaml = yaml.safe_load(yamlfile)
-            cur_yaml.update(best_results)
-            print(cur_yaml)
+
+        for key, value in cur_yaml.items():
+            if key == 'model':
+                for key2, value2 in value.items():
+                    if key2 == 'optimizer':
+                        cur_yaml['model']['optimizer']['type'] = best_hp_values['optimizer_type']
+                        cur_yaml['model']['optimizer']['initial_lr'] = best_hp_values['lr']
+                    elif key2 in best_hp_values.keys():
+                        cur_yaml['model'][key2] = best_hp_values[key2]
 
         with open(result_file, 'w') as yamlfile:
-            yaml.safe_dump(cur_yaml, yamlfile)
+            yaml.safe_dump(cur_yaml, yamlfile, default_flow_style=False)
