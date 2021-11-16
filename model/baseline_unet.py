@@ -152,7 +152,7 @@ class UNetBaseline(ModelBase):
             self.learning_rate = 0.001
 
         try:
-            self.loss_type = self.hp.Choice('loss_function', ['binary_crossentropy', 'dice_coef_loss'],
+            self.loss_type = self.hp.Choice('loss_type', ['binary_crossentropy', 'dice_coef_loss'],
                                             default=self.config.model.loss_type)
         except AttributeError:
             self.loss_type = 'binary_crossentropy'
