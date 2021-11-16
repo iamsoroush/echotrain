@@ -11,7 +11,7 @@ import argparse
 from pydoc import locate
 
 from training import Trainer
-from utils.handling_yaml import load_config_file
+from utils import load_config_file, check_for_config_file, setup_mlflow
 
 
 def parse_args():
@@ -25,24 +25,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def check(experiment_dir: pathlib.Path):
-    if not experiment_dir.is_dir():
-        raise Exception(f'{experiment_dir} is not a directory.')
-
-    yaml_files = list(experiment_dir.glob('*.yaml'))
-    if not any(yaml_files):
-        raise Exception(f'no .yaml files found.')
-    elif len(yaml_files) > 1:
-        raise Exception(f'found more than one .yaml files.')
-
-    return yaml_files[0]
-
-
 if __name__ == '__main__':
     args = parse_args()
 
     experiment_dir = pathlib.Path(args.experiment_dir)
-    config_path = check(experiment_dir)
+    config_path = check_for_config_file(experiment_dir)
     config_file = load_config_file(config_path.absolute())
 
     try:
@@ -76,15 +63,19 @@ if __name__ == '__main__':
     model_obj = model_class(config_file)
     model = model_obj.generate_training_model()
 
-    # Trainer
+    # Train
+    mlflow_active_run = setup_mlflow(mlflow_tracking_uri=config_file.mlflow.tracking_uri,
+                                     mlflow_experiment_name=config_file.mlflow.experiment_name,
+                                     base_dir=experiment_dir)
     trainer = Trainer(base_dir=experiment_dir, config=config_file)
 
+    print('training ...')
     history = trainer.train(model=model,
                             train_data_gen=train_data_gen,
                             val_data_gen=val_data_gen,
                             n_iter_train=n_iter_train,
-                            n_iter_val=n_iter_val)
+                            n_iter_val=n_iter_val,
+                            active_run=mlflow_active_run)
 
-    trainer.export()
-
-'model.unet.UNet'
+    exported_dir = trainer.export()
+    print(f'exported to {exported_dir}.')

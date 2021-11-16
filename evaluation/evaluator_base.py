@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pydoc import locate
 import pathlib
 
-from utils.handling_yaml import load_config_file
+from echotrain.utils import load_config_file
 
 
 class EvaluatorBase(ABC):
@@ -17,16 +17,15 @@ class EvaluatorBase(ABC):
 
         """Generates a report as a pandas dataframe, each row represents a single data point (evaluation image)."""
 
-        pass
-
     def generate_report(self):
 
         """Generates report using given config file and exported model"""
 
         val_data_gen, n_iter_val, val_df = self._create_val_data_gen()
+        preprocessed_data_gen = self._add_preprocessing(val_data_gen)
         inference_model = self._load_model()
 
-        eval_report = self.build_data_frame(inference_model, val_data_gen, n_iter_val, val_df.index)
+        eval_report = self.build_data_frame(inference_model, preprocessed_data_gen, n_iter_val, val_df.index)
         return eval_report, val_df
 
     def _load_config(self):
@@ -37,7 +36,7 @@ class EvaluatorBase(ABC):
     def _create_val_data_gen(self):
 
         dataset_class_path = self.config.dataset_class
-        preprocessor_class_path = self.config.preprocessor_class
+        # preprocessor_class_path = self.config.preprocessor_class
 
         # Dataset
         print('preparing dataset ...')
@@ -45,22 +44,31 @@ class EvaluatorBase(ABC):
         dataset = dataset_class(self.config)
         _, val_data_gen, _, n_iter_val = dataset.create_data_generators()
 
-        # Preprocessor
+        # # Preprocessor
+        # print('preparing pre-processor ...')
+        # preprocessor_class = locate(f'{preprocessor_class_path}')
+        # preprocessor = preprocessor_class(self.config)
+        # val_data_gen = preprocessor.add_preprocess(val_data_gen, False)
+        return val_data_gen, n_iter_val, dataset.validation_df
+
+    def _add_preprocessing(self, data_gen):
+        preprocessor_class_path = self.config.preprocessor_class
+
         print('preparing pre-processor ...')
         preprocessor_class = locate(f'{preprocessor_class_path}')
         preprocessor = preprocessor_class(self.config)
-        val_data_gen = preprocessor.add_preprocess(val_data_gen, False)
-        return val_data_gen, n_iter_val, dataset.validation_df
+        preprocessed_data_gen = preprocessor.add_preprocess(data_gen, False)
+
+        return preprocessed_data_gen
 
     def _load_model(self):
 
         """Loads and returns the ``tf.keras.Model`` based on config file and .hdf5 file
 
-        :param exported_dir: path to exported folder
         :returns model: ``tf.keras.Model`` ready to make predictions
 
         :raises AssertionError: could not import model_class
-        :raises Exception: f'could not find a checkpoint(.hdf5) file on {base_dir}'
+        :raises Exception: could not find a checkpoint(.hdf5) file on {base_dir}
         """
 
         # Model

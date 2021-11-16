@@ -1,9 +1,9 @@
 import tensorflow.keras as tfk
 import tensorflow.keras.layers as tfkl
 
-from .model_base import ModelBase
-from .metric import get_dice_coeff, get_iou_coef
-from .loss import dice_coef_loss
+from echotrain.model.model_base import ModelBase
+from echotrain.model.metric import get_dice_coeff, get_iou_coef
+from echotrain.model.loss import dice_coef_loss
 
 
 class UNetBaseline(ModelBase):
@@ -32,8 +32,6 @@ class UNetBaseline(ModelBase):
     def __init__(self, config):
         super().__init__(config)
 
-        self._read_config()
-
         self.conv_kernel_size = (3, 3)
         self.conv_padding = 'same'
 
@@ -48,6 +46,37 @@ class UNetBaseline(ModelBase):
         self.final_activation = 'sigmoid'
 
         self.kernel_initializer = 'glorot_uniform'
+
+    def _load_params(self, config):
+        self.optimizer_type = config.model.optimizer.type
+        self.learning_rate = config.model.optimizer.initial_lr
+        self.loss_type = config.model.loss_type
+        self.metrics = config.model.metrics
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.n_chanels = config.n_channels
+        self.inference_threshold = config.model.inference_threshold
+
+    def _set_defaults(self):
+        self.optimizer_type = 'adam'
+        self.learning_rate = 0.001
+        self.loss_type = 'binary_crossentropy'
+        self.metrics = ['iou']
+        self.input_h = 128
+        self.input_w = 128
+        self.n_channels = 1
+        self.inference_threshold = 0.5
+
+    def post_process(self, predicted):
+
+        """Post processes the output of self.model.predict
+
+        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, 1).int8
+
+        """
+
+        return (predicted > self.inference_threshold).astype(int)
 
     def generate_training_model(self):
 
@@ -107,30 +136,6 @@ class UNetBaseline(ModelBase):
 
         model = tfk.Model(input_tensor, x)
         return model
-
-    def _read_config(self):
-
-        """Tries to read parameters from config"""
-
-        try:
-            self.optimizer_type = self.config.model.optimizer.type
-        except AttributeError:
-            self.optimizer_type = 'adam'
-
-        try:
-            self.learning_rate = self.config.model.optimizer.initial_lr
-        except AttributeError:
-            self.learning_rate = 0.001
-
-        try:
-            self.loss_type = self.config.model.loss_type
-        except AttributeError:
-            self.loss_type = 'binary_crossentropy'
-
-        try:
-            self.metrics = self.config.model.metrics
-        except AttributeError:
-            self.metrics = ['iou']
 
     def _get_metrics(self):
 

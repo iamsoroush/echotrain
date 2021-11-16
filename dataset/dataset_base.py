@@ -1,19 +1,29 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import abstractmethod
+
+from echotrain.model.base_class import BaseClass
 
 
-class DatasetBase(ABC):
+class DatasetBase(BaseClass):
+    """
+    Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-    def __init__(self, config):
+    """
+
+    def create_data_generators(self):
+
+        """Creates data generators based on ``batch_size``, ``input_res``
+
+        :returns train_data_gen: training data generator which yields ``(batch_size, h, w, c)`` tensors
+        :returns val_data_gen: validation data generator which yields ``(batch_size, h, w, c)`` tensors
+        :returns n_iter_train: number of iterations per epoch for train_data_gen
+        :returns n_iter_val: number of iterations per epoch for val_data_gen
 
         """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
 
-        if ``config==None``, default values will be invoked using ``self._set_default_values``
+        train_data_gen, n_iter_train = self.create_train_data_generator()
+        val_data_gen, n_iter_val = self.create_validation_data_generator()
 
-        :param config: dictionary of {config_name: config_value}
-        """
-
-        self.config = config
+        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
     @abstractmethod
     def create_train_data_generator(self):
@@ -38,22 +48,6 @@ class DatasetBase(ABC):
         """
 
         pass
-
-    def create_data_generators(self):
-
-        """Creates data generators based on ``batch_size``, ``input_res``
-
-        :returns train_data_gen: training data generator which yields ``(batch_size, h, w, c)`` tensors
-        :returns val_data_gen: validation data generator which yields ``(batch_size, h, w, c)`` tensors
-        :returns n_iter_train: number of iterations per epoch for train_data_gen
-        :returns n_iter_val: number of iterations per epoch for val_data_gen
-
-        """
-
-        train_data_gen, n_iter_train = self.create_train_data_generator()
-        val_data_gen, n_iter_val = self.create_validation_data_generator()
-
-        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
 
     @property
     @abstractmethod
@@ -84,8 +78,3 @@ class DatasetBase(ABC):
         """
 
         pass
-
-    @abstractmethod
-    def _set_default_params(self):
-
-        """Provides default values for all parameters"""

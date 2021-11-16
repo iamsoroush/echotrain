@@ -1,5 +1,3 @@
-# requirements
-
 import skimage.io as io  # to read the .mhd and .raw data
 import numpy as np
 import tensorflow as tf
@@ -184,6 +182,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # y_4ch: list[numpy.ndarray]
+
         y_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          [self.list_labels_dir[image_path] for image_path in dir_list]))
 
