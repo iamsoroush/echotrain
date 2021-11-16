@@ -2,6 +2,7 @@ import keras_tuner as kt
 import os
 from .hypermodel_unet_baseline import HyperModel
 from tensorflow import keras
+import yaml
 
 
 class HPOBaseline:
@@ -47,7 +48,19 @@ class HPOBaseline:
 
     @staticmethod
     def get_tuner_summary(tuner):
-        return tuner.result_summary()
+        return tuner.results_summary()
 
-    def export_config(self):
-        pass
+    def export_config(self, main_config_bath, tuner):
+        hps = ['lr', 'loss_function', 'activation_function', 'kernel_initializer', 'kernel_regularizer']
+        best_results = {'hpo_best_results': {}}
+        result_file = os.path.join(self.directory, 'best_hp_config.yaml')
+        for hp in hps:
+            best_results['hpo_best_results'][hp] = tuner.get_best_hyperparameters()[0].get(hp)
+
+        with open(main_config_bath, 'r') as yamlfile:
+            cur_yaml = yaml.safe_load(yamlfile)
+            cur_yaml.update(best_results)
+            print(cur_yaml)
+
+        with open(result_file, 'w') as yamlfile:
+            yaml.safe_dump(cur_yaml, yamlfile)
