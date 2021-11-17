@@ -64,7 +64,8 @@ class HPOBaseline:
                      )
         return tuner
 
-    def get_best_hp(self, tuner):
+    @staticmethod
+    def get_best_hp(tuner):
         """
 
         Args:
