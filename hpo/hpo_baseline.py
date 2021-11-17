@@ -6,6 +6,11 @@ import yaml
 
 
 class HPOBaseline:
+    """
+    This class get config file, tune the model with designated hyperparamethers, and
+    export a new config file with optimized hyperparamethers.
+
+    """
 
     def __init__(self, config):
         self.config = config
@@ -22,6 +27,11 @@ class HPOBaseline:
         self.epoch_tuner = hpo_config.epoch_tuner
 
     def generate_tuner(self):
+        """
+
+        Returns: a keras tuner with random search with designated parameters in config file.
+
+        """
         tuner = kt.RandomSearch(
             HyperModel(self.config),
             objective=kt.Objective(self.objective, direction=self.direction),
@@ -33,6 +43,17 @@ class HPOBaseline:
         return tuner
 
     def search_hp(self, train_generator, validation_generator, n_iter_train, n_iter_val):
+        """
+
+        Args:
+            train_generator: train data generator
+            validation_generator: validation data generator
+            n_iter_train: number of iter of train data generator
+            n_iter_val: number of iter of validation data generator
+
+        Returns:a tuner with optimized hyperparamethers.
+
+        """
         tuner = self.generate_tuner()
         tuner.search(train_generator,
                      steps_per_epoch=n_iter_train,
@@ -44,13 +65,37 @@ class HPOBaseline:
         return tuner
 
     def get_best_hp(self, tuner):
+        """
+
+        Args:
+            tuner: keras tuner
+
+        Returns: best hyperparameters of searched tuner.
+
+        """
         return tuner.get_best_hyperparameters()[0]
 
     @staticmethod
     def get_tuner_summary(tuner):
+        """
+
+        Args:
+            tuner: keras tuner
+
+        Returns: summary of tuner.
+
+        """
         return tuner.results_summary()
 
     def export_config(self, main_config_bath, tuner):
+        """
+        Create config file with optimized hyperparamethers
+
+        Args:
+            main_config_bath: the first config file directory
+            tuner: searched tuner
+
+        """
         result_file = os.path.join(self.directory, 'best_hp_config.yaml')
         best_hp = tuner.get_best_hyperparameters()[0]
         best_hp_values = best_hp.values
