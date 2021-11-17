@@ -26,7 +26,7 @@ def create_properties():
 
     # Preprocessor
     print('preparing pre-processor ...')
-    preprocessor_class = locate(f'{preprocessor_class_path}')
+    preprocessor_class = locate({preprocessor_class_path})
     preprocessor = preprocessor_class(config_file)
     train_data_gen = preprocessor.add_preprocess(train_data_gen, True)
     val_data_gen = preprocessor.add_preprocess(val_data_gen, False)
