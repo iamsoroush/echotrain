@@ -16,7 +16,7 @@ class Augmentation:
 
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, hp=None):
 
         """
         :param config: augmentation part of config file: config.pre_process.augmentation, containing:
@@ -25,7 +25,7 @@ class Augmentation:
         """
 
         self._load_params(config)
-
+        self.hp = hp
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
             A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)
@@ -77,9 +77,12 @@ class Augmentation:
         if config is not None:
             aug_config = config.pre_process.augmentation
 
-            self.rotation_range = aug_config.rotation_range
-            self.rotation_proba = aug_config.rotation_proba
-            self.flip_proba = aug_config.flip_proba
+            self.rotation_range = self.hp.Int('rotation_proba',min_value=0, max_value=45, step=5,
+                                              default=aug_config.rotation_range)
+            self.rotation_proba = self.hp.Float('rotation_proba',min_value=0.3, max_value=0.7,step=0.1,
+                                                default=aug_config.rotation_proba)
+            self.flip_proba = self.hp.Float('flip_proba',min_value=0.3, max_value=0.7,step=0.1,
+                                                default=aug_config.flip_proba)
 
     def _set_defaults(self):
         self.rotation_range = 45
