@@ -5,25 +5,42 @@ import tensorflow as tf
 from model.baseline_unet import UNetBaseline
 from .hypermodel_unet_baseline import HyperModel
 import numpy as np
+from model.loss import dice_coef_loss
+import tensorflow.keras as tfk
 
 
 class PreprocessingTuner(kt.Tuner):
 
     def run_trial(self, trial, train_data_gen, n_iter_train, *args, **kwargs):
         hp = trial.hyperparameters
-        augmentation = Augmentation(*args, hp=hp)
+        unet = UNetBaseline(*args, hp=hp)
+        model = unet.generate_training_model()
         preprocessor = PreProcessor(*args, hp=hp)
-        model = self.hypermodel.build(trial.hyperparameters)
         train_data_gen = preprocessor.add_preprocess(train_data_gen, True)
-        lr = hp.Float("learning_rate", 1e-4, 1e-2, sampling="log", default=1e-3)
-        optimizer = tf.keras.optimizers.Adam(lr)
+        lr = unet.learning_rate
+
+        optimizer_type = unet.optimizer_type
+        if optimizer_type == 'adam':
+            optimizer = tfk.optimizers.Adam(learning_rate=lr)
+        if optimizer_type == 'sgd':
+            optimizer = tfk.optimizers.SGD(learning_rate=lr)
+        if optimizer_type == 'rmsprop':
+            optimizer = tfk.optimizers.RMSprop(learning_rate=lr)
+        if optimizer_type == 'adagrad':
+            optimizer = tfk.optimizers.Adagrad(learning_rate=lr)
+
+        loss_type = unet.loss_type
+        if loss_type == 'binary_crossentropy':
+            loss_fn = tf.keras.losses.BinaryCrossentropy()
+        if loss_type == 'dice_coef_loss':
+            loss_fn = dice_coef_loss
+
         epoch_loss_metric = tf.keras.metrics.Mean()
-        loss_fn = tf.keras.losses.BinaryCrossentropy(from_logits=True,name='loss')
 
         def run_train_step(data):
             # images = tf.dtypes.cast(data[0], "float32") / 255.0
-            images = data[0].reshape(-1 , 128 , 128 , 1)
-            labels = data[1].reshape(-1 , 128 , 128 , 1)
+            images = data[0].reshape(-1, 128, 128, 1)
+            labels = data[1].reshape(-1, 128, 128, 1)
             with tf.GradientTape() as tape:
                 logits = model(images)
                 loss = loss_fn(labels, logits)
@@ -33,7 +50,7 @@ class PreprocessingTuner(kt.Tuner):
             gradients = tape.gradient(loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_variables))
             epoch_loss_metric.update_state(loss)
-            print("my loss is :" , loss)
+            print("my loss is :", loss)
             return loss
 
         for epoch in range(2):
