@@ -23,9 +23,9 @@ class Augmentation:
           rotation_range - the range limitation for rotation in augmentation
           flip_proba - probability for flipping
         """
-
-        self._load_params(config)
         self.hp = hp
+        self._load_params(config)
+
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
             A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)

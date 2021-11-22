@@ -29,10 +29,10 @@ class PreProcessor:
         """
 
         """
-
-        self._load_params(config)
         self.hp = hp
         self.config = config
+        self._load_params(config)
+
         # Augmentation
         self.aug = Augmentation(config, self.hp)
 
