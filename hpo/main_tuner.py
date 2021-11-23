@@ -1,15 +1,12 @@
 import keras_tuner as kt
-from model.augmentation import Augmentation
 from model.pre_processing import PreProcessor
 import tensorflow as tf
 from model.baseline_unet import UNetBaseline
-from .hypermodel_unet_baseline import HyperModel
-import numpy as np
 from model.loss import dice_coef_loss
 import tensorflow.keras as tfk
 
 
-class PreprocessingTuner(kt.Tuner):
+class MainTuner(kt.Tuner):
 
     def run_trial(self, trial, train_data_gen, n_iter_train, *args, **kwargs):
         hp = trial.hyperparameters
@@ -39,8 +36,8 @@ class PreprocessingTuner(kt.Tuner):
 
         def run_train_step(data):
             # images = tf.dtypes.cast(data[0], "float32") / 255.0
-            images = data[0].reshape(-1, 128, 128, 1)
-            labels = data[1].reshape(-1, 128, 128, 1)
+            images = data[0]
+            labels = data[1]
             with tf.GradientTape() as tape:
                 logits = model(images)
                 loss = loss_fn(labels, logits)

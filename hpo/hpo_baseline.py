@@ -3,7 +3,7 @@ import os
 from .hypermodel_unet_baseline import HyperModel
 from tensorflow import keras
 import yaml
-from hpo.preprocessing_tuner import PreprocessingTuner
+from hpo.main_tuner import MainTuner
 
 
 class HPOBaseline:
@@ -43,7 +43,7 @@ class HPOBaseline:
 
         return tuner
 
-    def search_hp(self, train_generator, validation_generator, n_iter_train, n_iter_val, searching_type = 'model'):
+    def search_hp(self, train_generator, validation_generator, n_iter_train, n_iter_val, searching_type='model'):
         """
 
         Args:
@@ -122,10 +122,9 @@ class HPOBaseline:
 
     def generate_tuner_for_preprocessing(self):
 
-        tuner = PreprocessingTuner(oracle=kt.oracles.BayesianOptimization(objective=kt.Objective("loss", "min")
-                                                                          , max_trials=2),
-                                   hypermodel=HyperModel,
-                                   directory="results",
-                                   project_name="mnist_custom_training")
+        tuner = MainTuner(oracle=kt.oracles.BayesianOptimization(objective=kt.Objective("loss", "min")
+                                                                 , max_trials=2),
+                          hypermodel=HyperModel,
+                          directory="results",
+                          project_name="mnist_custom_training")
         return tuner
-
