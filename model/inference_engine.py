@@ -1,5 +1,6 @@
 from pathlib import Path
 from pydoc import locate
+import keras_tuner as kt
 
 import yaml
 import numpy as np
@@ -31,6 +32,7 @@ class EchoInference:
 
         self.config, self.model_class, self.preprocessor_class = None, None, None
         self._check_config_file(exported_dir)
+        self.hp = kt.HyperParameters()
 
         self.model_obj, self.model = self._load_model(exported_dir)
         self.preprocessor = self._load_preprocessor()
@@ -134,7 +136,7 @@ class EchoInference:
         except IndexError:
             raise Exception(f'could not find a checkpoint(.hdf5) file on {base_dir}')
 
-        model_obj = model_class(config=self.config)
+        model_obj = model_class(config=self.config, hp=self.hp)
         model = model_obj.load_model(checkpoint_path=checkpoint_path)
         return model_obj, model
 
@@ -149,7 +151,7 @@ class EchoInference:
         preprocessor_class = locate(self.preprocessor_class)
         assert preprocessor_class is not None, f'could not import class {self.preprocessor_class}'
 
-        preprocessor = preprocessor_class(config=self.config)
+        preprocessor = preprocessor_class(config=self.config, hp=self.hp)
         return preprocessor
 
 

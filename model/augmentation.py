@@ -26,9 +26,9 @@ class Augmentation(BaseClass):
 
     """
 
-    def __init__(self, config=None):
-        super().__init__(config)
-
+    def __init__(self, config=None, hp=None):
+        super().__init__(config, hp)
+        self.hp = hp
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
             A.ShiftScaleRotate(0, 0, border_mode=0, rotate_limit=self.rotation_range, p=self.rotation_proba)
@@ -81,9 +81,12 @@ class Augmentation(BaseClass):
     def _load_params(self, config):
         aug_config = config.pre_process.augmentation
 
-        self.rotation_range = aug_config.rotation_range
-        self.rotation_proba = aug_config.rotation_proba
-        self.flip_proba = aug_config.flip_proba
+        self.rotation_range = self.hp.Int('rotation_proba',min_value=0, max_value=45, step=5,
+                                              default=aug_config.rotation_range)
+        self.rotation_proba = self.hp.Float('rotation_proba',min_value=0.3, max_value=0.7,step=0.1,
+                                                default=aug_config.rotation_proba)
+        self.flip_proba = self.hp.Float('flip_proba',min_value=0.3, max_value=0.7,step=0.1,
+                                                default=aug_config.flip_proba)
 
     def _set_defaults(self):
         self.rotation_range = 45
