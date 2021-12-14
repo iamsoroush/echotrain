@@ -2,6 +2,9 @@ from tensorflow.keras import backend as K
 import tensorflow as tf
 import numpy as np
 from sklearn.utils.extmath import cartesian
+from scipy.spatial.distance import cdist
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 
 
 def get_iou_coef(threshold=0.5, smooth=0.001):
@@ -126,7 +129,8 @@ def get_hausdorff_distance(w, h, threshold=0.5):
             gt_points = K.cast(tf.where(y_true > threshold), dtype=tf.float32)
             y_pred = K.flatten(y_pred)
             p = y_pred
-            d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            # d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            d_matrix = tf.convert_to_tensor(cdist(all_img_locations, gt_points), tf.float32)
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
             k_max = K.max(p_k_min)
@@ -164,7 +168,8 @@ def get_mad(w, h, threshold=0.5):
             gt_points = K.cast(tf.where(y_true > 0.5), dtype=tf.float32)
             y_pred = K.flatten(y_pred)
             p = y_pred
-            d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            # d_matrix = _pw_euc_distance_tf(all_img_locations, gt_points)
+            d_matrix = tf.convert_to_tensor(cdist(all_img_locations, gt_points), tf.float32)
             k_min = tf.cast(K.min(d_matrix, 1), 'float32')
             p_k_min = p * k_min
             k_mean = K.mean(p_k_min)
@@ -217,3 +222,12 @@ def _pw_euc_distance_tf(mat_1, mat_2):
     # return pairwise euclidead difference matrix
     distance_mat = tf.sqrt(tf.maximum(na - 2 * tf.matmul(mat_1, mat_2, False, True) + nb, 0.0))
     return distance_mat
+
+def mae (y_true, y_pred):
+    return mean_absolute_error(y_true, y_pred)
+
+def mse (y_true, y_pred):
+    return mean_squared_error(y_true, y_pred)
+
+def r2_score (y_true, y_pred):
+    return r2_score(y_true,y_pred)

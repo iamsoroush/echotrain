@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+
+from echotrain.model.base_class import BaseClass
 
 
-class ModelBase(ABC):
+class ModelBase(BaseClass):
 
     """Model's abstract class
 
@@ -14,20 +16,6 @@ class ModelBase(ABC):
         metrics: a list of metrics to use
 
     """
-
-    def __init__(self, config):
-
-        """
-
-        :param config: a Python object with attributes as config values
-
-        """
-
-        self.config = config
-        self.input_h = config.input_h
-        self.input_w = config.input_w
-        self.n_channels = config.n_channels
-        self.inference_threshold = config.model.inference_threshold
 
     @abstractmethod
     def generate_training_model(self):
@@ -62,13 +50,13 @@ class ModelBase(ABC):
 
         return model
 
+    @abstractmethod
     def post_process(self, predicted):
 
         """Post processes the output of self.model.predict
 
-        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
-        :returns ret: np.ndarray(input_h, input_w, 1).int8
-
+        :param predicted: np.ndarray(input_h, input_w, n_channels).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, n_channels).int8
         """
 
-        return (predicted > self.inference_threshold).astype(int)
+        pass

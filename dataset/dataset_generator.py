@@ -1,5 +1,3 @@
-# requirements
-
 import skimage.io as io  # to read the .mhd and .raw data
 import numpy as np
 import tensorflow as tf
@@ -12,11 +10,13 @@ class DatasetGenerator(tf.keras.utils.Sequence):
     """
     making data generators for both train_set and test_set
 
-    HOW TO:
-    train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
-                                      input_size, n_channels, to_fit, shuffle, seed)
-    val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
-                                    input_size, n_channels, to_fit, shuffle, seed)
+    Example:
+
+        train_data_gen = DatasetGenerator(x_train_dir, y_train_dir, batch_size,
+                                          input_size, n_channels, to_fit, shuffle, seed)
+        val_data_gen = DatasetGenerator(x_val_dir, y_val_dir, batch_size,
+                                        input_size, n_channels, to_fit, shuffle, seed)
+
     """
 
     def __init__(self,
@@ -182,6 +182,7 @@ class DatasetGenerator(tf.keras.utils.Sequence):
         # reading segmentation labels of .mhd format with the help of SimpleITK plugin,
         # and makes all of them channel last order.
         # y_4ch: list[numpy.ndarray]
+
         y_4ch = list(map(lambda x: io.imread(x, plugin='simpleitk'),
                          [self.list_labels_dir[image_path] for image_path in dir_list]))
 

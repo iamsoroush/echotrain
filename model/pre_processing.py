@@ -28,11 +28,13 @@ class PreProcessor:
 
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, hp=None):
 
         """
-        """
 
+        """
+        self.hp = hp
+        self.config = config
         self._load_params(config)
 
         # GaussianBlur
@@ -60,7 +62,7 @@ class PreProcessor:
         # Gamma Correction
         self.do_gammaCorrection = False
         # Augmentation
-        self.aug = Augmentation(config)
+        self.aug = Augmentation(config, self.hp)
 
     def img_preprocess(self, image, inference=False):
 
@@ -223,7 +225,8 @@ class PreProcessor:
             self.max = config.pre_process.max
             self.min = config.pre_process.min
             self.do_resizing = config.pre_process.do_resizing
-            self.do_normalization = config.pre_process.do_normalization
+            self.do_normalization = self.hp.Boolean('do_normalization',
+                                                    default=self.config.pre_process.do_normalization)
 
     def _set_defaults(self):
         self.input_h = 256

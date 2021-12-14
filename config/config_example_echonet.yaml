@@ -1,5 +1,5 @@
-input_h: 256
-input_w: 256
+input_h: 128
+input_w: 128
 n_channels: 1
 
 model_class: model.baseline_unet.UNetBaseline
@@ -8,7 +8,7 @@ dataset_class: dataset.dataset_echonet.EchoNetDataset
 
 data_handler:
   target_dataset_name: "EchoNet_Dynamic"
-  dataset_dir: "D:/AIMedic/FinalProject_echocardiogram/echoC_Dataset/echonet_dynamic/EchoNet-Dynamic"
+  dataset_dir: 'EchoNet-Dynamic'
   batch_size: 8
   to_fit: True
   shuffle: True
@@ -33,9 +33,9 @@ pre_process:
   do_resizing: True
   do_normalization: True
   augmentation:
-    rotation_proba: 0.5
+    rotation_proba: 0.0
     rotation_range: 45
-    flip_proba: 0.5
+    flip_proba: 0.0
 
 trainer:
   epochs: 30
@@ -49,7 +49,7 @@ trainer:
   export:
     metric: "val_loss"
     mode: "min"
-  mlflow:
-    tracking_uri: '/content/drive/MyDrive/AIMedic - Moazed/Experiments/MLFlow Experiments'
-    experiment_name: 'echo_seg'
-#    run_name: 'baseline-0'
+
+mlflow:
+  tracking_uri: '/content/drive/MyDrive/AIMedic/Experiments/MLFlow Experiments'
+  experiment_name: 'echo_seg_echonet_dynamic'

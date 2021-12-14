@@ -1,7 +1,7 @@
 # requirements
 
-from dataset_generator import DatasetGenerator
-from dataset_base import DatasetBase
+from echotrain.dataset.dataset_generator import DatasetGenerator
+from echotrain.dataset.dataset_base import DatasetBase
 import random
 import numpy as np
 import pandas as pd
@@ -10,27 +10,23 @@ from tqdm import tqdm
 
 
 class EchoNetDataset(DatasetBase):
+
     """
-    This class makes our dataset ready to use by given desired values to its parameters
+    This class makes our dataset ready to use by giving desired values to its parameters
     and by calling the "create_data_generators" or "create_test_data_generator" function,
-    reads the data from the given directory as follow:
+    reads the data from the given directory as follows:
 
-    HOW TO:
-    dataset = EchoNetDataset(config)
+    Example:
 
-    # for training set:
-    train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators()
+        dataset = EchoNetDataset(config)
 
-    # for test set:
-    test_gen = dataset.create_test_data_generator()
-    """
+        # for training set:
+        train_gen, val_gen, n_iter_train, n_iter_val= dataset.create_data_generators()
 
-    def __init__(self, config=None):
+        # for test set:
+        test_gen = dataset.create_test_data_generator()
 
-        """
-        Handles data ingestion: preparing, pre-processing, augmentation, data generators
-
-        if config==None, default values will be invoked using self._set_efault_values
+    Attributes:
 
         batch_size: batch size, int
         input_size: input image resolution, (h, w)
@@ -38,18 +34,23 @@ class EchoNetDataset(DatasetBase):
         to_fit: for predicting time, bool
         shuffle: if True the dataset will shuffle with random_state of seed, bool
         seed: seed, int
-        stage: stage of heart in image, can be end_systolic(ES) or end_dyastolic(ED), list
+        stage: stage of heart in image, can be end_systolic(ES) or end_diastolic(ED), list
         view: view of the hear image, can be four chamber view (4CH), list
         df_dataset: information dataframe of the whole dataset, pd.DataFrame
-        _clean_data_df: contains the desired field inforamtions with image and labels full pathes
+        _clean_data_df: contains the desired field information with image and labels full pathes
         train_df_: information dataframe of train set, pd.DataFrame
         val_df_: information dataframe of validation set, pd.DataFrame
         test_df_: information dataframe of test set, pd.DataFrame
+
+    """
+
+    def __init__(self, config=None):
+
+        """
+        Handles data loading: loading, preparing, data generators
         """
 
-        super(EchoNetDataset, self).__init__(config)
-
-        self._load_config(config)
+        super().__init__(config)
 
         self.df_dataset = None
         self._build_data_frame()
@@ -84,21 +85,38 @@ class EchoNetDataset(DatasetBase):
         # # adding 'train' and 'validation' status to the data-frame
         # self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
 
-    def create_data_generators(self):
+    def _load_params(self, config):
+        cfg_dh = config.data_handler
+        self.stage = cfg_dh.dataset_features.stage
+        self.view = cfg_dh.dataset_features.view
+        self.batch_size = cfg_dh.batch_size
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = config.n_channels
+        # self.split_ratio = cfg_dh.split_ratio
+        self.seed = cfg_dh.seed
+        self.shuffle = cfg_dh.shuffle
+        self.to_fit = cfg_dh.to_fit
+        self.dataset_dir = cfg_dh.dataset_dir
+        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
-        """Creates data generators based on batch_size, input_size
+    def _set_defaults(self):
 
-        :returns train_data_gen: training data generator which yields (batch_size, h, w, c) tensors
-        :returns val_data_gen: validation data generator which yields (batch_size, h, w, c) tensors
-        :returns n_iter_train: number of iterations per epoch for train_data_gen
-        :returns n_iter_val: number of iterations per epoch for val_data_gen
+        """Default values for parameters"""
 
-        """
+        self.stage = ['ED', 'ES']
+        self.view = ['4CH']
 
-        train_data_gen, n_iter_train = self.create_train_data_generator()
-        val_data_gen, n_iter_val = self.create_validation_data_generator()
-
-        return train_data_gen, val_data_gen, n_iter_train, n_iter_val
+        self.batch_size = 8
+        self.input_h = 128
+        self.input_w = 128
+        self.n_channels = 1
+        self.seed = 101
+        self.shuffle = True
+        self.to_fit = True
+        self.dataset_dir = 'EchoNet-Dynamic'
+        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
     def create_train_data_generator(self):
 
@@ -153,11 +171,7 @@ class EchoNetDataset(DatasetBase):
 
     @property
     def raw_df(self):
-
-        """
-
-        :return pandas.DataFrame of all features of each data in dataset
-        """
+        """:return pandas.DataFrame of all features of each data in dataset"""
 
         return self.df_dataset
 
@@ -173,50 +187,9 @@ class EchoNetDataset(DatasetBase):
     def test_df(self):
         return self.test_df_
 
-    def _load_config(self, config):
-
-        """Load all parameters from config file"""
-
-        self._set_default_params()
-
-        if config is not None:
-            cfg_dh = config.data_handler
-            self.stage = cfg_dh.dataset_features.stage
-            self.view = cfg_dh.dataset_features.view
-            self.batch_size = cfg_dh.batch_size
-            self.input_h = config.input_h
-            self.input_w = config.input_w
-            # self.input_size = (self.input_h, self.input_w)
-            self.n_channels = config.n_channels
-            # self.split_ratio = cfg_dh.split_ratio
-            self.seed = cfg_dh.seed
-            self.shuffle = cfg_dh.shuffle
-            self.to_fit = cfg_dh.to_fit
-            self.dataset_dir = cfg_dh.dataset_dir
-            self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
-
     @property
     def input_size(self):
         return self.input_h, self.input_w
-
-    def _set_default_params(self):
-
-        """Default values for parameters"""
-
-        self.stage = ['ED', 'ES']
-        self.view = ["4CH"]
-
-        self.batch_size = 8
-        self.input_h = 256
-        self.input_w = 256
-        # self.input_size = (self.input_h, self.input_w)
-        self.n_channels = 1
-        # self.split_ratio = 0.8
-        self.seed = 101
-        self.shuffle = True
-        self.to_fit = True
-        self.dataset_dir = 'EchoNet-Dynamic'
-        self.info_df_dir = os.path.join(self.dataset_dir, 'info_df.csv')
 
     def _fetch_data(self):
 
@@ -251,6 +224,7 @@ class EchoNetDataset(DatasetBase):
         #                                                            data_dir['mhd_label_filename'])])
 
         x_dir = list(self._clean_data_df['image_path'].unique())
+
         y_dir = list(self._clean_data_df['label_path'].unique())
 
         list_images_dir = x_dir
@@ -320,7 +294,7 @@ class EchoNetDataset(DatasetBase):
                     continue
                 case_file_list = file_list_df[file_list_df['FileName'] == case]
                 case_volume_tracing = volume_tracing_df[volume_tracing_df['FileName'] == f'{case}.avi']
-                ED_ES_num_frames = case_volume_tracing['Frame'].unique()
+                ed_es_num_frames = case_volume_tracing['Frame'].unique()
 
                 for stage in stages:
                     df['case_id'].append(case)
@@ -331,8 +305,8 @@ class EchoNetDataset(DatasetBase):
                     df['video_file_dir'].append(f'Videos/{case}.avi')
                     df['view'].append('4CH')
                     df['stage'].append(stage)
-                    df['ed_frame'].append(ED_ES_num_frames[0])
-                    df['es_frame'].append(ED_ES_num_frames[1])
+                    df['ed_frame'].append(ed_es_num_frames[0])
+                    df['es_frame'].append(ed_es_num_frames[1])
                     df['lv_edv'].append(float(case_file_list['EDV']))
                     df['lv_esv'].append(float(case_file_list['ESV']))
                     df['lv_ef'].append(float(case_file_list['EF']))
@@ -342,23 +316,6 @@ class EchoNetDataset(DatasetBase):
 
             self.df_dataset = pd.DataFrame(df)
             self.df_dataset.to_csv(self.info_df_dir, index=False)
-
-    # def _add_train_val_to_data_frame(self, train_dir, val_dir):
-    #
-    #     """
-    #     adding the updates of the status of the patients
-    #
-    #     :param train_dir: train set directory
-    #     :param val_dir: validation set directory
-    #     """
-    #
-    #     for each_dir in train_dir:
-    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
-    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'train'
-    #
-    #     for each_dir in val_dir:
-    #         case_id = each_dir.replace('\\', '/').split('/')[-2]
-    #         self.df_dataset.loc[self.df_dataset['case_id'] == case_id, 'status'] = 'validation'
 
     def _shuffle_func(self, x, y):
         """
@@ -383,34 +340,6 @@ class EchoNetDataset(DatasetBase):
         random.Random(seed).shuffle(y_list)
         y = dict(y_list)
         return x, y
-
-    # @staticmethod
-    # def _split(x, y, split_ratio):
-    #     """
-    #     splits the dataset into train and validation set by the corresponding ratio
-    #     the ratio is "train portion/whole data"
-    #
-    #     :param x: list of images, np.ndarray
-    #     :param y: list of segmentation labels, np.ndarray
-    #     :param split_ratio: split ratio for trainset, float
-    #
-    #     :return x_train: images train_set, np.ndarray
-    #     :return y_train: segmentation labels train_set, np.ndarray
-    #     :return x_val: images validation_set, np.ndarray
-    #     :return y_val: segmentation labels validation_set, np.ndarray
-    #     """
-    #
-    #     # set train size by split_ratio var
-    #     train_size = round(len(x) * split_ratio)
-    #
-    #     # splitting
-    #     x_train = x[:train_size]
-    #     y_train = dict(list(y.items())[:train_size])
-    #
-    #     x_val = x[train_size:]
-    #     y_val = dict(list(y.items())[train_size:])
-    #
-    #     return x_train, y_train, x_val, y_val
 
     def _split_indexes(self):
         """
