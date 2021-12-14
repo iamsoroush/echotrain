@@ -1,6 +1,6 @@
 import os
-from model.base_model import UNet
-from model.pre_processing import PreProcessor
+from echotrain.model.base_model import UNet
+from echotrain.model.pre_processing import PreProcessor
 
 
 class InferenceBase:

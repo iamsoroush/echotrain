@@ -1,9 +1,9 @@
 import tensorflow.keras as tfk
 import tensorflow.keras.layers as tfkl
 
-from .model_base import ModelBase
-from .metric import get_dice_coeff, get_iou_coef
-from .loss import dice_coef_loss
+from echotrain.model.model_base import ModelBase
+from echotrain.model.metric import get_dice_coeff, get_iou_coef
+from echotrain.model.loss import dice_coef_loss
 
 
 class UNetBaseline(ModelBase):
@@ -76,6 +76,37 @@ class UNetBaseline(ModelBase):
             self.kernel_regularizer = tfk.regularizers.l1_l2()
         if kernel_regularizer_selection == 'None':
             self.kernel_regularizer = None
+
+    def _load_params(self, config):
+        self.optimizer_type = config.model.optimizer.type
+        self.learning_rate = config.model.optimizer.initial_lr
+        self.loss_type = config.model.loss_type
+        self.metrics = config.model.metrics
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        self.n_chanels = config.n_channels
+        self.inference_threshold = config.model.inference_threshold
+
+    def _set_defaults(self):
+        self.optimizer_type = 'adam'
+        self.learning_rate = 0.001
+        self.loss_type = 'binary_crossentropy'
+        self.metrics = ['iou']
+        self.input_h = 128
+        self.input_w = 128
+        self.n_channels = 1
+        self.inference_threshold = 0.5
+
+    def post_process(self, predicted):
+
+        """Post processes the output of self.model.predict
+
+        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, 1).int8
+
+        """
+
+        return (predicted > self.inference_threshold).astype(int)
 
     def generate_training_model(self):
 

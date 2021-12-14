@@ -1,7 +1,10 @@
 import albumentations as A
+import numpy as np
+
+from echotrain.model.base_class import BaseClass
 
 
-class Augmentation:
+class Augmentation(BaseClass):
 
     """
     This class is implementing augmentation on the batches of data
@@ -14,17 +17,17 @@ class Augmentation:
         y = masks(batch)
         data = augmented batch
 
+    Augmentation part of config file:
+
+        config.pre_process.augmentation, containing:
+
+            rotation_range - the range limitation for rotation in augmentation
+            flip_proba - probability for flipping
+
     """
 
-    def __init__(self, config=None, hp=None):
-
-        """
-        :param config: augmentation part of config file: config.pre_process.augmentation, containing:
-          rotation_range - the range limitation for rotation in augmentation
-          flip_proba - probability for flipping
-        """
-        self.hp = hp
-        self._load_params(config)
+    def __init__(self, config=None):
+        super().__init__(config)
 
         self.transform = A.Compose([
             A.Flip(p=self.flip_proba),
@@ -47,7 +50,11 @@ class Augmentation:
         x = batch[0]
         y = batch[1]
 
-        x = x.astype('float32')
+        if 'list' in str(type(x)) or 'list' in str(type(y)):
+            x = np.array(x, dtype='float32')
+            y = np.array(y, dtype='float32')
+        else:
+            x = x.astype('float32')
 
         # implementing augmentation on every image and mask of the batch
         for i in range(len(x)):
@@ -72,10 +79,7 @@ class Augmentation:
             yield augmented_batch
 
     def _load_params(self, config):
-        self._set_defaults()
-
-        if config is not None:
-            aug_config = config.pre_process.augmentation
+        aug_config = config.pre_process.augmentation
 
             self.rotation_range = self.hp.Int('rotation_proba',min_value=0, max_value=45, step=5,
                                               default=aug_config.rotation_range)

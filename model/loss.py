@@ -1,4 +1,4 @@
-from .metric import get_iou_coef, get_dice_coeff, get_soft_dice, get_soft_iou
+from echotrain.model.metric import get_iou_coef, get_dice_coeff, get_soft_dice, get_soft_iou
 
 
 def iou_coef_loss(y_true, y_pred):

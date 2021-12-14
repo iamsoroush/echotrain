@@ -1,10 +1,7 @@
-import sys
-sys.path.append('..')
-
 import pandas as pd
 
-from model import metric
-from model import loss
+from echotrain.model import metric
+from echotrain.model import loss
 
 from .evaluator_base import EvaluatorBase
 from .eval_funcs import *
@@ -13,6 +10,7 @@ from tqdm import tqdm
 
 
 class Evaluator(EvaluatorBase):
+
     """
     This class is for evaluating the model and data according to the metrics and losses
 

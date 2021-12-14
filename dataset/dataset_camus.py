@@ -1,5 +1,3 @@
-# requirements
-
 from .dataset_generator import DatasetGenerator
 from .dataset_base import DatasetBase
 from glob import glob  # for listing the directory of dataset
@@ -51,9 +49,7 @@ class CAMUSDataset(DatasetBase):
 
         """
 
-        super(CAMUSDataset, self).__init__(config)
-
-        self._load_config(config)
+        super().__init__(config)
 
         self.df_dataset = None
         self._build_data_frame()
@@ -82,6 +78,45 @@ class CAMUSDataset(DatasetBase):
 
         # adding 'train' and 'validation' status to the data-frame
         self._add_train_val_to_data_frame(self.x_train_dir, self.x_val_dir)
+
+    def _set_defaults(self):
+
+        """Default values for parameters"""
+
+        self.age = [10, 100]
+        self.sex = ['M', 'F']
+        self.stage = ['ED', 'ES']
+        self.view = ["4CH"]
+        self.image_quality = ["Poor", "Medium", "Good"]
+
+        self.batch_size = 8
+        self.input_h = 256
+        self.input_w = 256
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = 1
+        self.split_ratio = 0.8
+        self.seed = 101
+        self.shuffle = True
+        self.to_fit = True
+        self.dataset_dir = 'training'
+
+    def _load_params(self, config):
+        cfg_dh = config.data_handler
+        self.age = cfg_dh.dataset_features.age
+        self.sex = cfg_dh.dataset_features.sex
+        self.stage = cfg_dh.dataset_features.stage
+        self.view = cfg_dh.dataset_features.view
+        self.image_quality = cfg_dh.dataset_features.image_quality
+        self.batch_size = cfg_dh.batch_size
+        self.input_h = config.input_h
+        self.input_w = config.input_w
+        # self.input_size = (self.input_h, self.input_w)
+        self.n_channels = config.n_channels
+        self.split_ratio = cfg_dh.split_ratio
+        self.seed = cfg_dh.seed
+        self.shuffle = cfg_dh.shuffle
+        self.to_fit = cfg_dh.to_fit
+        self.dataset_dir = cfg_dh.dataset_dir
 
     def create_train_data_generator(self):
 
@@ -151,54 +186,9 @@ class CAMUSDataset(DatasetBase):
     def validation_df(self):
         return self.val_df_
 
-    def _load_config(self, config):
-
-        """Load all parameters from config file"""
-
-        self._set_default_params()
-
-        if config is not None:
-            cfg_dh = config.data_handler
-            self.age = cfg_dh.dataset_features.age
-            self.sex = cfg_dh.dataset_features.sex
-            self.stage = cfg_dh.dataset_features.stage
-            self.view = cfg_dh.dataset_features.view
-            self.image_quality = cfg_dh.dataset_features.image_quality
-            self.batch_size = cfg_dh.batch_size
-            self.input_h = config.input_h
-            self.input_w = config.input_w
-            # self.input_size = (self.input_h, self.input_w)
-            self.n_channels = config.n_channels
-            self.split_ratio = cfg_dh.split_ratio
-            self.seed = cfg_dh.seed
-            self.shuffle = cfg_dh.shuffle
-            self.to_fit = cfg_dh.to_fit
-            self.dataset_dir = cfg_dh.dataset_dir
-
     @property
     def input_size(self):
         return self.input_h, self.input_w
-
-    def _set_default_params(self):
-
-        """Default values for parameters"""
-
-        self.age = [10, 100]
-        self.sex = ['M', 'F']
-        self.stage = ['ED', 'ES']
-        self.view = ["4CH"]
-        self.image_quality = ["Poor", "Medium", "Good"]
-
-        self.batch_size = 8
-        self.input_h = 256
-        self.input_w = 256
-        # self.input_size = (self.input_h, self.input_w)
-        self.n_channels = 1
-        self.split_ratio = 0.8
-        self.seed = 101
-        self.shuffle = True
-        self.to_fit = True
-        self.dataset_dir = 'training'
 
     def _fetch_data(self):
 

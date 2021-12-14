@@ -2,58 +2,56 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Concatenate, Input, MaxPooling2D, UpSampling2D
 from tensorflow.keras.optimizers import Adam
 
-from .model_base import ModelBase
-from .metric import get_iou_coef, get_dice_coeff
-from .loss import dice_coef_loss
+from echotrain.model.model_base import ModelBase
+from echotrain.model.metric import get_iou_coef, get_dice_coeff
+from echotrain.model.loss import dice_coef_loss
 
 
 class UNet(ModelBase):
+    """
 
-    def __init__(self, config):
+    Example::
 
-        """
-        HOWTO:
         first you have to call UNet class: unet=UNet(config=config)
         then 2 methods have been provided:
-                get_model_graph(): this method gives you non_compiled unet model
-                generate_training_model(): this method gives you compiled model with
-                attributes designated in config.(you can see options you have at Attributes section below.)
+            get_model_graph(): this method gives you non_compiled unet model
+            generate_training_model(): this method gives you compiled model with
+            attributes designated in config.(you can see options you have at Attributes section below.)
 
 
-        :param config:
+    Attributes:
+        input_h:height of your image
+        input_w:width of your image
+        n_channels:number of channels of image
+        optimizer:
+            type: can be "adam"
+            initial_lr:default would be 0.001
+        metrics: 'acc', 'dice_coef', 'iou', '2d_hausdorff' is supported
+        loss:'binary_crossentropy', 'dice_coef_loss' is supported
+    """
 
-        Attributes:
-            input_h:height of your image
-            input_w:width of your image
-            n_channels:number of channels of image
-            optimizer:
-                type: can be "adam"
-                initial_lr:default would be 0.001
-            metrics: 'acc', 'dice_coef', 'iou', '2d_hausdorff' is supported
-            loss:'binary_crossentropy', 'dice_coef_loss' is supported
+    def post_process(self, predicted):
+
+        """Post processes the output of self.model.predict
+
+        :param predicted: np.ndarray(input_h, input_w, 1).float64, output of the model
+        :returns ret: np.ndarray(input_h, input_w, 1).int8
+
         """
 
-        super(UNet, self).__init__(config=config)
+        return (predicted > self.inference_threshold).astype(int)
 
-        try:
-            self.optimizer_type = config.model.optimizer.type
-        except AttributeError:
-            self.optimizer_type = 'adam'
+    def _load_params(self, config):
+        self.optimizer_type = self.config.model.optimizer.type
+        self.learning_rate = self.config.model.optimizer.initial_lr
+        self.loss_type = self.config.model.loss_type
+        self.metrics = self.config.model.metrics
 
-        try:
-            self.learning_rate = config.model.optimizer.initial_lr
-        except AttributeError:
-            self.learning_rate = 0.001
-
-        try:
-            self.loss_type = config.model.loss_type
-        except AttributeError:
-            self.loss_type = 'binary_crossentropy'
-
-        try:
-            self.metrics = config.model.metrics
-        except AttributeError:
-            self.metrics = ['iou']
+    def _set_defaults(self):
+        self.optimizer_type = 'adam'
+        self.learning_rate = 0.001
+        self.loss_type = 'binary_crossentropy'
+        self.metrics = ['iou']
 
     def generate_training_model(self):
         """
@@ -149,39 +147,4 @@ class UNet(ModelBase):
         if self.loss_type == 'binary_crossentropy':
             return 'binary_crossentropy'
         if self.loss_type == 'dice_coef_loss':
-            return self._dice_coef_loss
-
-    def _iou_coef(self, y_true, y_pred, smooth=1):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :param smooth:
-         :return:calculate Intersection over Union for y_true and y_pred
-         """
-        intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-        union = K.sum(y_true, [1, 2, 3]) + K.sum(y_pred, [1, 2, 3]) - intersection
-        iou = K.mean((intersection + smooth) / (union + smooth), axis=0)
-        return iou
-
-    def _dice_coef(self, y_true, y_pred, smooth=1):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :param smooth:
-         :return: calculate dice coefficient between y_true and y_pred
-         """
-        y_true_f = K.flatten(y_true)
-        y_pred_f = K.flatten(y_pred)
-        intersection = K.sum(y_true_f * y_pred_f)
-        return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-
-    def _dice_coef_loss(self, y_true, y_pred):
-        """
-
-         :param y_true: label image from the dataset
-         :param y_pred: model segmented image prediction
-         :return: dice coefficient loss function
-         """
-        return -1 * (self._dice_coef(y_true, y_pred))
+            return dice_coef_loss

@@ -69,11 +69,13 @@ class EFModel_RP(EFBase):
                 minor_axis_length
                 orientation
         """
-        rp = [regionprops(frame.astype(np.int64))[0].area, regionprops(frame.astype(np.int64))[0].convex_area,
-              regionprops(frame.astype(np.int64))[0].eccentricity,
-              regionprops(frame.astype(np.int64))[0].major_axis_length,
-              regionprops(frame.astype(np.int64))[0].minor_axis_length,
-              regionprops(frame.astype(np.int64))[0].orientation]
+        label_frame = frame.astype(np.int64).reshape(112, 112)
+        rp = [regionprops(label_frame)[0].area,
+              regionprops(label_frame)[0].convex_area,
+              regionprops(label_frame)[0].eccentricity,
+              regionprops(label_frame)[0].major_axis_length,
+              regionprops(label_frame)[0].minor_axis_length,
+              regionprops(label_frame)[0].orientation]
         rp = np.array(rp).reshape(1, -1)
         return rp
 
