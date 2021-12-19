@@ -38,7 +38,7 @@ class UNetBaseline(ModelBase):
         self.conv_padding = 'same'
 
         # conv_trans_kernel_size = hp.Int('conv_trans_kernel_size', min_value=2, max_value=7, step=1)
-        self.conv_trans_kernel_size = (3, 3)
+        self.conv_trans_kernel_size = (2, 2)
         self.conv_trans_strides = (2, 2)
         self.conv_trans_padding = 'same'
 

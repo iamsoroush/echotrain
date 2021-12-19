@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 
 class BaseClass(ABC):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, hp=None):
         self._set_defaults()
+        self.hp = hp
         self.config = config
         if config is not None:
             self._load_params(config)

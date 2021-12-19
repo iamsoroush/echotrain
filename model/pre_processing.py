@@ -41,24 +41,26 @@ class PreProcessor:
         """
         pre-processing on input image
 
-        :param image: input image, np.array
+        :param image: input image, np.array with shape of (w, h, 1) or (w, h, 3)
         :param inference: resize if the user is in inference phase
 
         :return: pre_processed_img
         """
 
         pre_processed_img = image.copy()
-
-        # converting the images to grayscale
-        if len(image.shape) != 2 and image.shape[-1] != 1:
-            pre_processed_img = self._convert_to_gray(pre_processed_img)
+        converted_to_gray = False
 
         # resizing
         if self.do_resizing or inference:
             pre_processed_img = self._resize(pre_processed_img)
 
+        # converting the images to grayscale
+        if len(image.shape) != 2 and image.shape[-1] != 1:
+            pre_processed_img = self._convert_to_gray(pre_processed_img)
+            converted_to_gray = True
+
         # normalization on the given image
-        if self.do_normalization:
+        if not converted_to_gray and self.do_normalization:
             pre_processed_img = self._rescale(pre_processed_img, self.min, self.max)
 
         return pre_processed_img
