@@ -79,6 +79,7 @@ class Augmentation(BaseClass):
             yield augmented_batch
 
     def _load_params(self, config):
+
         aug_config = config.pre_process.augmentation
 
         self.rotation_range = self.hp.Int('rotation_proba',min_value=0, max_value=45, step=5,

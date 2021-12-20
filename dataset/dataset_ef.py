@@ -2,7 +2,7 @@ from pydoc import locate
 import numpy as np
 from dataset.dataset_generator import DatasetGenerator
 from model.pre_processing import PreProcessor
-
+import keras_tuner as kt
 
 class EFDataset:
     """
@@ -130,8 +130,8 @@ class EFDataset:
 
         """
         gen = DatasetGenerator(x, main_y, self.batch_size, (self.input_h, self.input_w), self.n_channels)
-
-        preprocessor = PreProcessor(self.config)
+        hp = kt.HyperParameters()
+        preprocessor = PreProcessor(self.config, hp)
 
         if type == 'image':
             x = gen.generate_x(x)
