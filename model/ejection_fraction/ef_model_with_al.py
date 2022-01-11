@@ -27,7 +27,7 @@ class EFModel_AL(EFBase):
         self.config = config
         self._get_config()
 
-    def area_length_volume(frame):
+    def area_length_volume(self, frame):
         """
 
         Args:
