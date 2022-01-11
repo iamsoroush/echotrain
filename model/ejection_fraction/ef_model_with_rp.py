@@ -36,7 +36,7 @@ class EFModel_RP(EFBase):
     def train(self):
 
         ef_dataset = EFDataset(self.config)
-        labels, volumes = ef_dataset.volume_dataset('label','train')
+        labels, volumes = ef_dataset.volume_dataset('label', 'train')
         rps = []
         for label in labels:
             rps.append(self._frame_to_rp(label))
