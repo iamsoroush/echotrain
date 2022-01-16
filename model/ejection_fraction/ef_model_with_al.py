@@ -1,21 +1,5 @@
 from model.ejection_fraction.ejection_fraction_base import EFBase
-from tensorflow.keras.models import load_model
-from dataset.dataset_ef import EFDataset
-import os
-import shutil
 from skimage.measure import regionprops
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import GradientBoostingRegressor, AdaBoostRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.dummy import DummyRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-import pandas as pd
-import skimage.io as io
-import pickle
 import numpy as np
 
 
